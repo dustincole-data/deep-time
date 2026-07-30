@@ -187,7 +187,7 @@ Smaller than 06 sized it, for one structural reason: **the withheld ten are labe
 
 ### Verification
 
-`.scratch/deep-time/` holds no code for this ticket; the gap check was a throwaway script run from the session scratchpad over all 54 arrivals:
+`.scratch/prototypes/milestone-check/check.py` — the set, in one list, with the floor asserted over all 54 arrivals:
 
 ```
 arrivals=54  M=30 I=19 F=5

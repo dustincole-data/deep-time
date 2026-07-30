@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deep Time — v3, one scale, never changed</title>
+<!--
+  THROWAWAY PROTOTYPE v3 — Deep Time ticket 01 (scroll & scale mechanic).
+  Dustin's direction: keep it true to scale the whole way, never rescale, explain
+  the scale, carry a true-scale bar on the right for the entire journey, and
+  resolve the crushed end as a labelled fan where every moment points at its real
+  position.  115,000 px  ·  1 px = 40,000 years  ·  no exceptions.
+
+  ART IS PROCEDURAL ON PURPOSE — ticket 03 owns visual identity and gates image
+  generation. Every environment here is a placeholder in a real art slot.
+  Dates are commonly-cited placeholders; ticket 02 owns the verified set.
+-->
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:auto}
+  body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:#05070a;color:#f4f1ea;overflow-x:hidden;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  #spacer{width:1px}
+  #sky{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block}
+  #grain{position:fixed;inset:0;z-index:1;pointer-events:none;
+    background:radial-gradient(130% 100% at 50% 40%,transparent 45%,rgba(0,0,0,.5) 100%)}
+
+  /* ---------------- intro: explain the scale ---------------- */
+  #intro{position:fixed;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;
+    padding:0 7vw;background:#05070a;color:#f4f1ea}
+  #intro .in{max-width:640px}
+  #intro .huge{font-size:clamp(34px,6.6vw,74px);font-weight:700;letter-spacing:-.04em;
+    font-variant-numeric:tabular-nums;line-height:1;margin-bottom:.42em}
+  #intro .sub{font-size:11px;letter-spacing:.3em;text-transform:uppercase;opacity:.55;margin-bottom:3em}
+  #intro p{font-size:clamp(15px,1.85vw,20px);line-height:1.62;opacity:.9;margin-bottom:.75em}
+  #intro p b{font-variant-numeric:tabular-nums;font-weight:650}
+  #intro .go{margin-top:2.6em;font-size:11px;letter-spacing:.3em;text-transform:uppercase;opacity:.5}
+
+  /* ---------------- milestones ---------------- */
+  #flow{position:fixed;inset:0;z-index:2;pointer-events:none}
+  .ms{position:absolute;width:38%;will-change:transform,opacity}
+  .ms.L{left:5%;text-align:left}
+  .ms.R{left:53%;text-align:right}
+  .ms .rule{height:1px;background:currentColor;opacity:.45;width:42px;margin-bottom:13px}
+  .ms.R .rule{margin-left:auto}
+  .ms .d{font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;opacity:.72;
+    font-variant-numeric:tabular-nums;margin-bottom:.6em}
+  .ms .n{font-size:clamp(22px,2.8vw,38px);line-height:1.08;letter-spacing:-.022em;font-weight:650;
+    text-shadow:0 2px 26px rgba(0,0,0,.45)}
+  .ms .s{font-size:clamp(13px,1.1vw,15px);line-height:1.5;opacity:.78;margin-top:.72em;max-width:28em}
+  .ms.R .s{margin-left:auto}
+
+  /* ---------------- HUD ---------------- */
+  #hud{position:fixed;z-index:3;left:max(20px,3.2vw);bottom:max(74px,7.5vh);pointer-events:none;
+    text-shadow:0 2px 24px rgba(0,0,0,.5)}
+  #big{font-size:clamp(36px,6.2vw,76px);font-weight:680;letter-spacing:-.038em;
+    font-variant-numeric:tabular-nums;line-height:.94}
+  #bigu{font-size:clamp(11px,1.3vw,14px);letter-spacing:.22em;text-transform:uppercase;opacity:.72;margin-top:.7em}
+  #env{font-size:clamp(13px,1.45vw,17px);font-weight:600;opacity:.9;margin-top:1.25em}
+  #meta{font-size:11.5px;font-variant-numeric:tabular-nums;opacity:.6;margin-top:.45em;letter-spacing:.03em;line-height:1.75}
+
+  /* ---------------- the true-scale bar, right, the whole way ---------------- */
+  #tsb{position:fixed;z-index:3;right:max(18px,2vw);top:13vh;bottom:19vh;width:4px;pointer-events:none}
+  #tsbtrack{position:absolute;inset:0;background:currentColor;opacity:.16;border-radius:2px}
+  #tsbfill{position:absolute;left:0;top:0;width:4px;background:currentColor;opacity:.62;border-radius:2px}
+  #tsbhead{position:absolute;left:-7px;width:18px;height:2px;background:currentColor;box-shadow:0 0 0 3px rgba(0,0,0,.22)}
+  .tsbtick{position:absolute;left:-3px;width:10px;height:1px;background:currentColor;opacity:0;transition:opacity .35s}
+  .tsbtick.on{opacity:.75}
+  #tsbcap{position:absolute;right:0;top:-3.4em;font-size:9.5px;text-align:right;
+    letter-spacing:.2em;text-transform:uppercase;opacity:.55;white-space:nowrap}
+  #tsbnum{position:absolute;right:0;bottom:-2.8em;font-size:11px;text-align:right;
+    font-variant-numeric:tabular-nums;opacity:.7;white-space:nowrap}
+
+  /* ---------------- the finale ---------------- */
+  #fin{position:fixed;inset:0;z-index:5;opacity:0;pointer-events:none;
+    background:rgba(4,6,10,.9);backdrop-filter:blur(5px);color:#f4f1ea}
+  #finsvg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  #finhead{position:absolute;left:max(20px,3.4vw);top:5.5vh;max-width:38%}
+  #finhead h2{font-size:clamp(19px,2.5vw,31px);font-weight:680;letter-spacing:-.028em;line-height:1.16}
+  #finhead p{font-size:clamp(12px,1.05vw,14.5px);line-height:1.62;opacity:.72;margin-top:1.1em;max-width:26em}
+  #finhead p b{font-variant-numeric:tabular-nums;font-weight:650;opacity:1}
+  .frow{position:absolute;text-align:right;white-space:nowrap;opacity:0}
+  .frow .fd{font-size:10px;letter-spacing:.1em;opacity:.55;font-variant-numeric:tabular-nums;margin-right:.85em}
+  .frow .fn{font-size:11.5px;font-weight:600;letter-spacing:-.005em}
+  #finrail{position:absolute;background:currentColor;opacity:.4;border-radius:2px}
+  .fdot{position:absolute;width:9px;height:1.5px;background:currentColor;opacity:0;border-radius:1px}
+  #finfoot{position:absolute;left:max(20px,3.4vw);bottom:5.5vh;max-width:40%;opacity:0}
+  #finfoot .kick{font-size:10px;letter-spacing:.28em;text-transform:uppercase;opacity:.5;margin-bottom:.9em}
+  #finfoot .line{font-size:clamp(14px,1.55vw,19px);line-height:1.55}
+  #finfoot .line b{font-variant-numeric:tabular-nums;font-weight:680}
+  #finnote{position:absolute;right:max(18px,2vw);bottom:2vh;font-size:9.5px;letter-spacing:.14em;
+    text-transform:uppercase;opacity:.3}
+
+  /* ---------------- prototype chrome ---------------- */
+  #bar{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:20;display:flex;align-items:center;
+    background:#fff;color:#14171a;border-radius:999px;box-shadow:0 8px 30px rgba(0,0,0,.5);font-size:12.5px;padding:3px;max-width:94vw}
+  #bar button{border:0;background:transparent;color:inherit;font:inherit;padding:7px 12px;cursor:pointer;border-radius:999px;line-height:1;white-space:nowrap}
+  #bar button:hover{background:#edeae5}
+  #scale{padding:7px 12px;font-weight:650;white-space:nowrap;border-left:1px solid #e3e0da;font-variant-numeric:tabular-nums}
+  #watch{padding:7px 12px;border-left:1px solid #e3e0da;font-variant-numeric:tabular-nums;opacity:.7;white-space:nowrap}
+  #note{position:fixed;right:12px;top:12px;z-index:20;max-width:250px;background:rgba(5,7,10,.8);
+    border:1px solid rgba(255,255,255,.15);border-radius:9px;padding:10px 12px;font-size:11px;line-height:1.55;color:#eae7e0;backdrop-filter:blur(8px)}
+  #note b{letter-spacing:.13em;font-size:9.5px;text-transform:uppercase;opacity:.62;display:block;margin-bottom:.55em}
+  #note button{position:absolute;right:4px;top:2px;border:0;background:transparent;color:#eae7e0;opacity:.5;cursor:pointer;font-size:14px;line-height:1}
+
+  @media (max-width:760px){
+    .ms{width:82%;left:6% !important;text-align:left !important}
+    .ms.R .rule{margin-left:0} .ms.R .s{margin-left:0}
+    #hud{bottom:max(80px,9vh);left:6%}
+    #tsb{right:10px;top:11vh;bottom:22vh;width:3px}
+    #tsbcap,#tsbnum{font-size:8.5px}
+    #finhead{max-width:64%;top:3.5vh}
+    #finfoot{max-width:70%;bottom:3.5vh}
+    #note{max-width:190px;font-size:10px}
+    #scale,#watch{display:none}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="sky"></canvas>
+<div id="grain"></div>
+<div id="flow"></div>
+
+<div id="hud">
+  <div id="big">4.60</div>
+  <div id="bigu">billion years ago</div>
+  <div id="env">A world of magma</div>
+  <div id="meta"></div>
+</div>
+
+<div id="tsb">
+  <div id="tsbcap">Earth’s history · true scale</div>
+  <div id="tsbtrack"></div>
+  <div id="tsbfill"></div>
+  <div id="tsbhead"></div>
+  <div id="tsbnum">0.00%</div>
+</div>
+
+<div id="intro"><div class="in">
+  <div class="huge">4,600,000,000</div>
+  <div class="sub">years</div>
+  <p>This page is <b>115,000</b> pixels tall.</p>
+  <p>One pixel is <b>40,000</b> years.</p>
+  <p>The scale never changes. Not in the middle, not at the end, not to make a point.</p>
+  <div class="go">Scroll ↓</div>
+</div></div>
+
+<div id="fin">
+  <svg id="finsvg"></svg>
+  <div id="finhead">
+    <h2>Forty moments. Nothing rescaled.</h2>
+    <p>Every line points to where that moment actually falls on the bar — the same bar that has been on your right the whole way. The labels are spread out so you can read them. The points they aim at are not.</p>
+  </div>
+  <div id="finrail"></div>
+  <div id="finfoot">
+    <div class="kick">One pixel = 40,000 years</div>
+    <div class="line">The last ten of those moments — us, all of us — happened in the final <b>80 pixels</b> of a <b>115,000</b> pixel page. Everything humans have farmed, written, built or remembered happened in the last <b>third of one pixel</b>.</div>
+  </div>
+  <div id="finnote">Rough placeholder — ticket 04 owns how the reveal is staged</div>
+</div>
+
+<div id="spacer"></div>
+
+<div id="note">
+  <button onclick="this.parentNode.remove()">&times;</button>
+  <b>Prototype v3 — ticket 01</b>
+  One scale, 40,000 years per pixel, never changed. Environments are drawn in code as placeholders — ticket 03 owns the real art. Dates placeholder (ticket 02).
+</div>
+
+<div id="bar">
+  <button id="top">Restart</button>
+  <button id="end">Jump to end</button>
+  <span id="scale">1 px = 40,000 yr</span>
+  <span id="watch">0:00 · 0%</span>
+</div>
+
+<script>
+'use strict';
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ============================================================
+   ONE SCALE. 40,000 years per pixel. Never changed.
+   ============================================================ */
+const T0      = 4.6e9;
+const YRPX    = 40000;
+const RUN     = T0/YRPX;        // 115,000 px
+const INTRO   = 1600;           // the explainer, before time starts
+const FIN     = 7000;           // the finale
+const RUN_END = INTRO + RUN;
+const TOTAL   = RUN_END + FIN;
+const FIN_CUT = 7.0e6;          // below this, moments are too close to draw — the finale shows them
+
+function yearAt(sy){
+  if (sy <= INTRO) return T0;
+  if (sy >= RUN_END) return 0;
+  return T0 - (sy-INTRO)*YRPX;
+}
+
+/* ============================================================
+   MILESTONES — placeholder dates, ticket 02 owns the real set
+   ============================================================ */
+const MS = [
+  [4.60e9,'Earth accretes','Dust and rock collapse into a molten planet with no sky worth the name.'],
+  [4.51e9,'The Moon is torn out','A Mars-sized body strikes. The debris becomes a Moon that hangs enormous and close.'],
+  [4.40e9,'First oceans','The crust cools enough that water can finally stay.'],
+  [4.00e9,'The oldest surviving rock',''],
+  [3.70e9,'Something is alive','Carbon signatures in Greenland sediment — the earliest trace we can read.'],
+  [3.50e9,'Stromatolites','Microbial mats build the first structures life leaves behind.'],
+  [2.70e9,'Photosynthesis','Cyanobacteria begin splitting water and letting the oxygen go.'],
+  [2.40e9,'The Great Oxidation','Free oxygen floods the air and poisons most of the life that made it.'],
+  [2.30e9,'The first global freeze',''],
+  [1.80e9,'The first complex cell','One cell swallows another and, instead of digesting it, keeps it.'],
+  [1.20e9,'Sex',''],
+  [7.20e8,'Snowball Earth','Ice reaches the tropics. The planet is a white marble.'],
+  [5.75e8,'The first big bodies','Ediacaran life — soft, strange, and larger than anything before it.'],
+  [5.39e8,'The Cambrian explosion','Almost every animal body plan still in use appears at once.'],
+  [4.70e8,'Plants reach land',''],
+  [4.30e8,'Animals follow them',''],
+  [3.75e8,'Fins become limbs',''],
+  [3.59e8,'The coal forests','The carbon we are burning today is buried here.'],
+  [3.20e8,'The first reptiles',''],
+  [2.52e8,'The Great Dying','Around nine in ten species end. Life takes millions of years to recover.'],
+  [2.30e8,'The first dinosaurs',''],
+  [2.25e8,'The first mammals','Small, nocturnal, and about to spend 160 million years staying out of the way.'],
+  [2.01e8,'A second extinction',''],
+  [1.50e8,'The first birds',''],
+  [1.30e8,'Flowers',''],
+  [6.60e7,'The asteroid','Ten kilometres of rock ends the dinosaurs in an afternoon.'],
+  [5.50e7,'The first primates',''],
+  [3.40e7,'Antarctica freezes',''],
+  [2.00e7,'Grass spreads',''],
+  [7.00e6,'Our line splits from the chimpanzees',''],
+  [3.20e6,'Lucy walks upright',''],
+  [2.60e6,'The first stone tools',''],
+  [8.00e5,'Fire, kept',''],
+  [3.00e5,'Homo sapiens',''],
+  [6.50e4,'Out of Africa',''],
+  [4.00e4,'Cave art',''],
+  [1.20e4,'Farming',''],
+  [5.50e3,'Writing',''],
+  [2.50e2,'The Industrial Revolution',''],
+  [0,     'Now','']
+];
+const msY = ya => INTRO + (T0-ya)/YRPX;
+
+/* ============================================================
+   ENVIRONMENTS — 13 procedural placeholders for the art slots
+   ============================================================ */
+const ENVS = [
+ {at:4.60e9, name:'A world of magma', sky:['#2b0904','#82200a'], hz:'#150402', gnd:'#210704', ridge:1.05,
+  p:{vy:-30,vx:5,sz:2.3,c:[255,150,60],a:.85,gl:1,wb:.7,n:150,sh:'dot'}, cre:'volcano', moon:150, sun:['#ff5a1e',.30,46,.5]},
+ {at:4.40e9, name:'The first oceans', sky:['#1a0b08','#511d13'], hz:'#0d0605', gnd:'#140806', ridge:.85,
+  p:{vy:-16,vx:7,sz:1.9,c:[255,190,140],a:.5,gl:.6,wb:.9,n:100,sh:'dot'}, cre:'volcano', moon:122, sun:['#ff7a3a',.28,42,.42]},
+ {at:3.70e9, name:'The Archean sea', sky:['#0b1715','#16332b'], hz:'#07100e', gnd:'#0a1715', ridge:.68,
+  p:{vy:-7,vx:4,sz:1.5,c:[150,220,200],a:.36,gl:.3,wb:1.3,n:85,sh:'dot'}, cre:'stroma', moon:98, sun:['#ffb066',.26,35,.35]},
+ {at:2.40e9, name:'The sky turns', sky:['#123128','#2f5e52'], hz:'#0a1c18', gnd:'#0e2721', ridge:.6,
+  p:{vy:-32,vx:2,sz:3.5,c:[195,242,255],a:.55,gl:.5,wb:1.7,n:135,sh:'ring'}, cre:'stroma', moon:82, sun:['#ffd39a',.24,31,.45]},
+ {at:1.60e9, name:'The quiet billion', sky:['#16313e','#2c5c72'], hz:'#0d1e26', gnd:'#122b35', ridge:.5,
+  p:{vy:-4,vx:6,sz:1.4,c:[190,225,235],a:.3,gl:.2,wb:1,n:70,sh:'dot'}, cre:'none', moon:71, sun:['#ffe2b8',.23,29,.4]},
+ {at:7.00e8, name:'Snowball Earth', sky:['#15242f','#82a4b8'], hz:'#93b3c4', gnd:'#c7dbe4', ridge:.72,
+  p:{vy:17,vx:9,sz:2.7,c:[255,255,255],a:.7,gl:.2,wb:2.5,n:175,sh:'flake'}, cre:'none', moon:61, sun:['#dfeaf2',.20,27,.5]},
+ {at:5.00e8, name:'Cambrian seas', sky:['#0d2c34','#1c6166'], hz:'#08181d', gnd:'#0c2c2d', ridge:.56,
+  p:{vy:-3,vx:8,sz:1.7,c:[170,240,225],a:.42,gl:.35,wb:1.9,n:115,sh:'dot'}, cre:'trilo', moon:53, sun:['#ffeec4',.22,27,.4]},
+ {at:3.60e8, name:'The coal forests', sky:['#122b1a','#2e5732'], hz:'#08140c', gnd:'#0c1f11', ridge:.95,
+  p:{vy:-2,vx:10,sz:2.1,c:[210,240,170],a:.42,gl:.25,wb:2.3,n:125,sh:'dot'}, cre:'fern', moon:47, sun:['#e8f0b8',.20,27,.35]},
+ {at:2.00e8, name:'The age of dinosaurs', sky:['#302c13','#816f2e'], hz:'#171505', gnd:'#23200b', ridge:.88,
+  p:{vy:-1,vx:12,sz:1.9,c:[255,235,170],a:.42,gl:.3,wb:1.7,n:105,sh:'dot'}, cre:'sauro', moon:41, sun:['#ffe9a3',.20,29,.45]},
+ {at:5.00e7, name:'A world of mammals', sky:['#16334f','#4e8bb3'], hz:'#0d2033', gnd:'#193c2b', ridge:.7,
+  p:{vy:-1,vx:14,sz:1.7,c:[220,240,255],a:.35,gl:.2,wb:1.5,n:95,sh:'dot'}, cre:'mammal', moon:35, sun:['#ffffff',.18,27,.5]},
+ {at:1.50e6, name:'The ice ages', sky:['#1d3448','#95b7cd'], hz:'#5f7e94', gnd:'#adc5d5', ridge:.78,
+  p:{vy:15,vx:11,sz:2.5,c:[255,255,255],a:.6,gl:.15,wb:2.7,n:155,sh:'flake'}, cre:'mammoth', moon:31, sun:['#eef5fa',.18,25,.45]},
+ {at:1.00e4, name:'Us', sky:['#24415f','#d2dce2'], hz:'#3b4d57', gnd:'#5e6c72', ridge:.5,
+  p:{vy:-2,vx:7,sz:1.5,c:[255,240,210],a:.35,gl:.5,wb:.9,n:75,sh:'dot'}, cre:'human', moon:29, sun:['#ffffff',.16,25,.55]},
+ {at:0,     name:'Now', sky:['#101d2d','#e9edf1'], hz:'#26313a', gnd:'#3a444b', ridge:.42,
+  p:{vy:-3,vx:5,sz:1.7,c:[255,220,160],a:.5,gl:.8,wb:.5,n:85,sh:'dot'}, cre:'city', moon:27, sun:['#ffffff',.15,25,.6]}
+];
+const hex=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+ENVS.forEach(e=>{ e._sky=[hex(e.sky[0]),hex(e.sky[1])]; e._hz=hex(e.hz); e._gnd=hex(e.gnd); e._sunc=hex(e.sun[0]); });
+
+const lerp=(a,b,t)=>a+(b-a)*t;
+const lerp3=(a,b,t)=>[lerp(a[0],b[0],t),lerp(a[1],b[1],t),lerp(a[2],b[2],t)];
+const rgb=c=>'rgb('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+')';
+const rgba=(c,a)=>'rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+','+a+')';
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const smooth=(e0,e1,x)=>{const t=clamp((x-e0)/(e1-e0),0,1);return t*t*(3-2*t);};
+
+const EV={};
+function envAt(y){
+  let i=0; for(;i<ENVS.length-1;i++){ if(y>ENVS[i+1].at) break; }
+  const A=ENVS[i], B=ENVS[Math.min(i+1,ENVS.length-1)];
+  const t=A.at===B.at?0:clamp((A.at-y)/(A.at-B.at),0,1);
+  EV.A=A; EV.B=B; EV.t=t; EV.name=t<.5?A.name:B.name;
+  EV.sky0=lerp3(A._sky[0],B._sky[0],t); EV.sky1=lerp3(A._sky[1],B._sky[1],t);
+  EV.hz=lerp3(A._hz,B._hz,t); EV.gnd=lerp3(A._gnd,B._gnd,t);
+  EV.ridge=lerp(A.ridge,B.ridge,t); EV.moon=lerp(A.moon,B.moon,t); EV.sunc=lerp3(A._sunc,B._sunc,t);
+  EV.suny=lerp(A.sun[1],B.sun[1],t); EV.sunr=lerp(A.sun[2],B.sun[2],t); EV.suna=lerp(A.sun[3],B.sun[3],t);
+  const p=A.p,q=B.p;
+  EV.p={vy:lerp(p.vy,q.vy,t),vx:lerp(p.vx,q.vx,t),sz:lerp(p.sz,q.sz,t),c:lerp3(p.c,q.c,t),
+        a:lerp(p.a,q.a,t),gl:lerp(p.gl,q.gl,t),wb:lerp(p.wb,q.wb,t),n:lerp(p.n,q.n,t),sh:t<.5?p.sh:q.sh};
+  return EV;
+}
+
+/* ============================================================
+   CANVAS
+   ============================================================ */
+const cv=document.getElementById('sky'), cx=cv.getContext('2d');
+let W=0,H=0,DPR=1,MOB=false;
+function sizeCanvas(){
+  MOB = window.innerWidth < 760;
+  DPR = Math.min(window.devicePixelRatio||1, MOB?1.5:2);
+  W = cv.clientWidth||window.innerWidth; H = cv.clientHeight||window.innerHeight;
+  cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
+  cx.setTransform(DPR,0,0,DPR,0,0);
+}
+// iOS URL-bar collapse squashes a fixed canvas — re-sync from its own box, not window resize.
+new ResizeObserver(()=>{ sizeCanvas(); layoutFinale(); draw(true); }).observe(cv);
+sizeCanvas();
+
+let _s=1; const rnd=()=>{ _s=(_s*16807)%2147483647; return _s/2147483647; };
+function ridge(seed,amp,freq){
+  _s=seed; const pts=[]; const a=[rnd()*6.3,rnd()*6.3,rnd()*6.3,rnd()*6.3];
+  for(let i=0;i<=64;i++){ const u=i/64;
+    pts.push(Math.sin(u*freq+a[0])*.55+Math.sin(u*freq*2.3+a[1])*.28+Math.sin(u*freq*4.7+a[2])*.13+Math.sin(u*freq*9.1+a[3])*.06); }
+  return {pts,amp};
+}
+const R_FAR=ridge(7,1,4.4), R_MID=ridge(23,.62,7.6), R_NEAR=ridge(91,.34,12.5);
+function drawRidge(r,baseY,colour,off,scale){
+  const n=r.pts.length-1, span=W*1.6, x0=-((off)%span);
+  cx.beginPath(); let firstX=null,lastX=0;
+  for(let k=0;k<2;k++) for(let i=0;i<=n;i++){
+    const x=x0+k*span+(i/n)*span, yy=baseY-r.pts[i]*r.amp*scale;
+    if(firstX===null){firstX=x;cx.moveTo(x,yy);} else cx.lineTo(x,yy); lastX=x;
+  }
+  cx.lineTo(lastX,H+20); cx.lineTo(firstX,H+20); cx.closePath(); cx.fillStyle=colour; cx.fill();
+}
+
+/* silhouettes — placeholders for the real art */
+function volcano(x,b,s){cx.beginPath();cx.moveTo(x-s,b);cx.lineTo(x-s*.16,b-s*.92);cx.lineTo(x+s*.16,b-s*.92);cx.lineTo(x+s,b);cx.closePath();cx.fill();}
+function stroma(x,b,s){for(let i=-1;i<=1;i++){const h=s*(i===0?1:.66),w=s*.22;cx.beginPath();cx.moveTo(x+i*s*.42-w,b);cx.lineTo(x+i*s*.42-w*.6,b-h);cx.quadraticCurveTo(x+i*s*.42,b-h-w*.9,x+i*s*.42+w*.6,b-h);cx.lineTo(x+i*s*.42+w,b);cx.closePath();cx.fill();}}
+function trilo(x,y,s){cx.beginPath();cx.ellipse(x,y,s,s*.52,0,0,6.3);cx.fill();cx.beginPath();cx.arc(x-s*.62,y,s*.4,0,6.3);cx.fill();}
+function fern(x,b,s){cx.lineWidth=Math.max(1.2,s*.045);cx.strokeStyle=cx.fillStyle;cx.beginPath();cx.moveTo(x,b);cx.lineTo(x,b-s);cx.stroke();for(let i=1;i<=5;i++){const yy=b-s*(i/5.6),l=s*.42*(1-i/7);cx.beginPath();cx.moveTo(x,yy);cx.quadraticCurveTo(x-l*.6,yy-l*.2,x-l,yy-l*.55);cx.stroke();cx.beginPath();cx.moveTo(x,yy);cx.quadraticCurveTo(x+l*.6,yy-l*.2,x+l,yy-l*.55);cx.stroke();}}
+function sauro(x,b,s){cx.beginPath();cx.ellipse(x,b-s*.44,s*.42,s*.2,0,0,6.3);cx.fill();
+  cx.lineWidth=s*.1;cx.strokeStyle=cx.fillStyle;cx.lineCap='round';
+  cx.beginPath();cx.moveTo(x+s*.34,b-s*.5);cx.quadraticCurveTo(x+s*.72,b-s*.9,x+s*.66,b-s*1.18);cx.stroke();
+  cx.beginPath();cx.moveTo(x-s*.36,b-s*.48);cx.quadraticCurveTo(x-s*.86,b-s*.5,x-s*1.0,b-s*.2);cx.stroke();
+  cx.lineWidth=s*.075;[-.22,-.02,.16,.3].forEach(o=>{cx.beginPath();cx.moveTo(x+s*o,b-s*.32);cx.lineTo(x+s*o,b);cx.stroke();});
+  cx.beginPath();cx.ellipse(x+s*.68,b-s*1.22,s*.1,s*.062,-.3,0,6.3);cx.fill();}
+function mammal(x,b,s){cx.beginPath();cx.ellipse(x,b-s*.42,s*.42,s*.24,0,0,6.3);cx.fill();
+  cx.lineWidth=s*.1;cx.strokeStyle=cx.fillStyle;cx.lineCap='round';
+  [-.26,-.08,.12,.28].forEach(o=>{cx.beginPath();cx.moveTo(x+s*o,b-s*.3);cx.lineTo(x+s*o,b);cx.stroke();});
+  cx.beginPath();cx.ellipse(x+s*.5,b-s*.62,s*.16,s*.13,.3,0,6.3);cx.fill();
+  cx.beginPath();cx.moveTo(x+s*.46,b-s*.74);cx.lineTo(x+s*.54,b-s*.94);cx.lineTo(x+s*.6,b-s*.72);cx.closePath();cx.fill();
+  cx.lineWidth=s*.055;cx.beginPath();cx.moveTo(x-s*.42,b-s*.5);cx.quadraticCurveTo(x-s*.66,b-s*.6,x-s*.68,b-s*.82);cx.stroke();}
+function mammoth(x,b,s){cx.beginPath();cx.moveTo(x-s*.46,b-s*.4);cx.quadraticCurveTo(x-s*.3,b-s*.92,x+s*.06,b-s*.86);
+  cx.quadraticCurveTo(x+s*.42,b-s*.8,x+s*.46,b-s*.42);cx.lineTo(x+s*.46,b-s*.3);cx.lineTo(x-s*.46,b-s*.3);cx.closePath();cx.fill();
+  cx.lineWidth=s*.12;cx.strokeStyle=cx.fillStyle;cx.lineCap='round';
+  [-.3,-.1,.14,.32].forEach(o=>{cx.beginPath();cx.moveTo(x+s*o,b-s*.34);cx.lineTo(x+s*o,b);cx.stroke();});
+  cx.beginPath();cx.ellipse(x+s*.52,b-s*.62,s*.2,s*.19,0,0,6.3);cx.fill();
+  cx.lineWidth=s*.085;cx.beginPath();cx.moveTo(x+s*.62,b-s*.5);cx.quadraticCurveTo(x+s*.74,b-s*.26,x+s*.6,b-s*.1);cx.stroke();
+  cx.lineWidth=s*.06;cx.beginPath();cx.moveTo(x+s*.6,b-s*.56);cx.quadraticCurveTo(x+s*.88,b-s*.44,x+s*.84,b-s*.66);cx.stroke();}
+function human(x,b,s){cx.beginPath();cx.arc(x,b-s*.86,s*.13,0,6.3);cx.fill();
+  cx.lineWidth=s*.1;cx.strokeStyle=cx.fillStyle;cx.lineCap='round';
+  cx.beginPath();cx.moveTo(x,b-s*.72);cx.lineTo(x,b-s*.4);cx.stroke();
+  cx.beginPath();cx.moveTo(x,b-s*.4);cx.lineTo(x-s*.14,b);cx.moveTo(x,b-s*.4);cx.lineTo(x+s*.14,b);cx.stroke();
+  cx.beginPath();cx.moveTo(x-s*.16,b-s*.46);cx.lineTo(x,b-s*.66);cx.lineTo(x+s*.16,b-s*.46);cx.stroke();}
+function city(x,b,s){_s=Math.round(Math.abs(x))+17;rnd();for(let i=0;i<8;i++){const w=s*(.09+rnd()*.09),h=s*(.3+rnd()*.7);cx.fillRect(x-s*.55+i*s*.14,b-h,w,h);}}
+
+const CRE={
+  volcano:{n:3,sp:.004,draw:(x,b,s)=>volcano(x,b,s*1.5),sc:120,ground:true},
+  stroma :{n:5,sp:.006,draw:stroma,sc:46,ground:true},
+  trilo  :{n:7,sp:.020,draw:(x,b,s,sd)=>trilo(x,b-70-sd*300,s*.5),sc:34,ground:false},
+  fern   :{n:6,sp:.005,draw:fern,sc:120,ground:true},
+  sauro  :{n:3,sp:.011,draw:sauro,sc:88,ground:true},
+  mammal :{n:4,sp:.014,draw:mammal,sc:44,ground:true},
+  mammoth:{n:3,sp:.010,draw:mammoth,sc:62,ground:true},
+  human  :{n:4,sp:.012,draw:human,sc:52,ground:true},
+  city   :{n:3,sp:.002,draw:city,sc:150,ground:true},
+  none   :{n:0}
+};
+function drawCre(kind,alpha,hzY,tms,colour){
+  const C=CRE[kind]; if(!C||!C.n||alpha<=.01) return;
+  cx.save(); cx.globalAlpha=alpha; cx.fillStyle=colour; cx.strokeStyle=colour;
+  const span=W+320, cnt=MOB?Math.max(1,C.n-1):C.n;
+  for(let i=0;i<cnt;i++){
+    const seed=(i*0.61803398875)%1;
+    const x=((tms*C.sp*(0.6+seed*0.8)+seed*span)%span)-160;
+    const s=C.sc*(0.72+seed*0.6)*(MOB?.78:1);
+    C.draw(x, C.ground?hzY+s*0.06:hzY, s, seed);
+  }
+  cx.restore();
+}
+
+const MAXP=200, P=[];
+for(let i=0;i<MAXP;i++) P.push({x:Math.random(),y:Math.random(),ph:Math.random()*6.3,r:Math.random()});
+let lastT=0;
+function drawParticles(dt){
+  const p=EV.p, n=Math.round(p.n*(MOB?.55:1));
+  cx.save();
+  for(let i=0;i<n;i++){
+    const q=P[i];
+    q.y += (p.vy*5*dt/1000)/(H||800);
+    q.x += (p.vx*5*dt/1000)/(W||1200);
+    if(q.y<-.05)q.y=1.05; if(q.y>1.05)q.y=-.05;
+    if(q.x>1.05)q.x=-.05; if(q.x<-.05)q.x=1.05;
+    q.ph+=dt*.0016;
+    const x=q.x*W+Math.sin(q.ph)*p.wb*7, y=q.y*H, s=p.sz*(.5+q.r), a=p.a*(.4+q.r*.6);
+    if(p.gl>.4){cx.shadowBlur=s*5*p.gl;cx.shadowColor=rgba(p.c,a);} else cx.shadowBlur=0;
+    cx.fillStyle=rgba(p.c,a); cx.strokeStyle=rgba(p.c,a);
+    if(p.sh==='ring'){cx.lineWidth=Math.max(.8,s*.28);cx.beginPath();cx.arc(x,y,s,0,6.3);cx.stroke();}
+    else if(p.sh==='flake'){cx.beginPath();cx.arc(x,y,s*.62,0,6.3);cx.fill();}
+    else {cx.beginPath();cx.arc(x,y,s,0,6.3);cx.fill();}
+  }
+  cx.restore(); cx.shadowBlur=0;
+}
+
+/* ============================================================
+   DOM
+   ============================================================ */
+const $=s=>document.getElementById(s);
+const flow=$('flow'), bigEl=$('big'), biguEl=$('bigu'), envEl=$('env'), metaEl=$('meta'),
+      tsb=$('tsb'), tsbfill=$('tsbfill'), tsbhead=$('tsbhead'), tsbnum=$('tsbnum'),
+      intro=$('intro'), fin=$('fin'), finsvg=$('finsvg'), watchEl=$('watch');
+
+$('spacer').style.height=(TOTAL+window.innerHeight)+'px';
+window.addEventListener('resize',()=>{ $('spacer').style.height=(TOTAL+window.innerHeight)+'px'; });
+
+function dateLabel(y){
+  if(y<=0) return 'today';
+  if(y>=1e9) return (y/1e9).toFixed(2)+' billion years ago';
+  if(y>=1e6) return (y/1e6>=100?Math.round(y/1e6):(y/1e6).toFixed(1))+' million years ago';
+  if(y>=1e3) return Math.round(y).toLocaleString('en-US')+' years ago';
+  return Math.round(y)+' years ago';
+}
+function shortDate(y){
+  if(y<=0) return 'now';
+  if(y>=1e9) return (y/1e9).toFixed(2)+' Ga';
+  if(y>=1e6) return (y/1e6>=100?Math.round(y/1e6):(y/1e6).toFixed(1))+' Ma';
+  if(y>=1e4) return Math.round(y/1e3)+' ka';
+  if(y>=1e3) return (y/1e3).toFixed(1)+' ka';
+  return Math.round(y)+' yr';
+}
+function bigParts(y){
+  if(y<=0) return ['Now',''];
+  if(y>=1e9) return [(y/1e9).toFixed(2),'billion years ago'];
+  if(y>=1e6) return [(y/1e6>=100?Math.round(y/1e6).toString():(y/1e6).toFixed(1)),'million years ago'];
+  return [Math.round(y).toLocaleString('en-US'),'years ago'];
+}
+function pct(v){
+  if(v<99) return v.toFixed(2)+'%';
+  if(v<99.99) return v.toFixed(4)+'%';
+  if(v<99.9999) return v.toFixed(6)+'%';
+  return v.toFixed(7)+'%';
+}
+
+/* -------- scroll cards: only the moments the page has room to draw -------- */
+const cards=[];
+(function(){
+  let li=0;
+  MS.forEach((m,i)=>{
+    if(m[0] < FIN_CUT) return;                       // too close to draw honestly — the finale has them
+    const el=document.createElement('div');
+    el.className='ms '+(li%2?'R':'L');
+    el.innerHTML='<div class="rule"></div><div class="d"></div><div class="n"></div><div class="s"></div>';
+    el.querySelector('.d').textContent=dateLabel(m[0]);
+    el.querySelector('.n').textContent=m[1];
+    el.querySelector('.s').textContent=m[2]||'';
+    el.style.opacity=0; el.style.transform='translate3d(0,-9999px,0)';
+    flow.appendChild(el);
+    cards.push({el, ya:m[0], y:msY(m[0]), lvl:Math.floor(li/2)%2, dwell:520});
+    li++;
+  });
+  for(let i=0;i<cards.length;i++){
+    const gap = i<cards.length-1 ? cards[i+1].y-cards[i].y : 900;
+    cards[i].dwell = clamp(gap*0.92, 150, 660);
+  }
+})();
+
+/* -------- the true-scale bar: a tick per moment, lit as you pass it -------- */
+const ticks = MS.map(m=>{
+  const d=document.createElement('div');
+  d.className='tsbtick';
+  d.style.top=((T0-m[0])/T0*100)+'%';
+  tsb.appendChild(d);
+  return {el:d, y:msY(m[0]), on:false};
+});
+
+/* ============================================================
+   THE FINALE — every moment, pointing at where it really is
+   ============================================================ */
+const frows=[], fdots=[], flines=[];
+(function build(){
+  MS.forEach((m,i)=>{
+    const r=document.createElement('div');
+    r.className='frow';
+    r.innerHTML='<span class="fd">'+shortDate(m[0])+'</span><span class="fn">'+m[1]+'</span>';
+    fin.appendChild(r); frows.push(r);
+    const d=document.createElement('div'); d.className='fdot'; fin.appendChild(d); fdots.push(d);
+    const ln=document.createElementNS('http://www.w3.org/2000/svg','line');
+    ln.setAttribute('stroke','currentColor'); ln.setAttribute('stroke-width','1');
+    ln.setAttribute('opacity','0'); finsvg.appendChild(ln); flines.push(ln);
+  });
+})();
+
+let FG=null;
+function layoutFinale(){
+  const railX = W - (MOB?26:64);
+  const top=H*(MOB?.14:.10), bot=H*(MOB?.90:.90), span=bot-top;
+  const rowRight = railX - (MOB?54:330);   // long leader lines make the collapse visible
+  FG={railX, top, span};
+  const rail=$('finrail');
+  rail.style.left=railX+'px'; rail.style.top=top+'px'; rail.style.height=span+'px'; rail.style.width='3px';
+  MS.forEach((m,i)=>{
+    const ry = top + (i/(MS.length-1))*span;
+    const ty = top + ((T0-m[0])/T0)*span;
+    const r=frows[i];
+    r.style.left='0px'; r.style.width=rowRight+'px'; r.style.top=(ry-8)+'px';
+    fdots[i].style.left=(railX-3)+'px'; fdots[i].style.top=(ty-0.75)+'px';
+    const ln=flines[i];
+    ln.setAttribute('x1',rowRight+8); ln.setAttribute('y1',ry);
+    ln.setAttribute('x2',railX-2);    ln.setAttribute('y2',ty);
+  });
+}
+layoutFinale();
+
+const finSched = i => i < MS.length-10 ? (i/(MS.length-10))*0.62 : 0.72;
+
+/* ============================================================
+   FRAME
+   ============================================================ */
+let sy=0, t0=null, done=false;
+
+function draw(force){
+  const nsy=window.scrollY||window.pageYOffset||0;
+  const moved=nsy!==sy; sy=nsy;
+  if(!force && !moved && RM) return;
+
+  const y=yearAt(sy);
+  envAt(y);
+  const now=performance.now();
+  const dt=Math.min(48, now-(lastT||now)); lastT=now;
+  const tms=RM?0:now;
+
+  /* ---- scene ---- */
+  const hzY=H*0.70;
+  const g=cx.createLinearGradient(0,0,0,hzY);
+  g.addColorStop(0,rgb(EV.sky0)); g.addColorStop(1,rgb(EV.sky1));
+  // cover the whole canvas: the ridge polygons don't always reach the ground band,
+  // and an unpainted strip keeps stale pixels from earlier frames forever.
+  cx.fillStyle=g; cx.fillRect(0,0,W,H);
+
+  cx.save();
+  const sx=W*0.79, syy=H*EV.suny;
+  const gg=cx.createRadialGradient(sx,syy,0,sx,syy,EV.sunr*7);
+  gg.addColorStop(0,rgba(EV.sunc,EV.suna)); gg.addColorStop(1,rgba(EV.sunc,0));
+  cx.fillStyle=gg; cx.fillRect(sx-EV.sunr*7,syy-EV.sunr*7,EV.sunr*14,EV.sunr*14);
+  cx.globalAlpha=Math.min(1,EV.suna+.35); cx.fillStyle=rgb(EV.sunc);
+  cx.beginPath(); cx.arc(sx,syy,EV.sunr*(MOB?.7:1),0,6.3); cx.fill();
+  cx.restore();
+
+  if(y<4.51e9){                                    // the Moon: huge and close, then receding
+    const mr=EV.moon*(MOB?.66:1)*.82, mx=W*0.27, my=H*0.135;
+    cx.save(); cx.globalAlpha=.44;
+    cx.fillStyle=rgba(lerp3(EV.sky1,[255,255,255],.55),1);
+    cx.beginPath(); cx.arc(mx,my,mr,0,6.3); cx.fill();
+    cx.globalAlpha=.16; cx.fillStyle=rgb(EV.sky0);
+    cx.beginPath(); cx.arc(mx-mr*.28,my-mr*.18,mr*.9,0,6.3); cx.fill();
+    cx.restore();
+  }
+
+  const hz1=cx.createLinearGradient(0,hzY-H*0.20,0,hzY+8);
+  hz1.addColorStop(0,rgba(EV.sky1,0)); hz1.addColorStop(1,rgba(lerp3(EV.sky1,[255,255,255],.22),.5));
+  cx.fillStyle=hz1; cx.fillRect(0,hzY-H*0.20,W,H*0.20+8);
+
+  drawRidge(R_FAR, hzY+6,  rgba(lerp3(EV.hz,EV.sky1,.46),1), sy*0.055, EV.ridge*H*0.15);
+  drawRidge(R_MID, hzY+18, rgba(lerp3(EV.hz,EV.sky1,.20),1), sy*0.115, EV.ridge*H*0.11);
+
+  const gg2=cx.createLinearGradient(0,hzY+16,0,H);
+  gg2.addColorStop(0,rgb(lerp3(EV.gnd,EV.sky1,.22))); gg2.addColorStop(1,rgb(lerp3(EV.gnd,[0,0,0],.35)));
+  cx.fillStyle=gg2; cx.fillRect(0,hzY+16,W,H-hzY);
+
+  const creCol=rgba(lerp3(EV.gnd,[0,0,0],.55),1);
+  if(EV.A.cre===EV.B.cre) drawCre(EV.A.cre,.92,hzY+16,tms,creCol);
+  else { drawCre(EV.A.cre,(1-EV.t)*.92,hzY+16,tms,creCol); drawCre(EV.B.cre,EV.t*.92,hzY+16,tms,creCol); }
+
+  drawRidge(R_NEAR,H+4, rgba(lerp3(EV.gnd,[0,0,0],.4),1), sy*0.24, EV.ridge*H*0.06);
+  drawParticles(dt);
+
+  /* ---- intro ---- */
+  const iq = clamp((sy-INTRO*0.28)/(INTRO*0.5),0,1);
+  intro.style.opacity=String(1-iq);
+  intro.style.display = iq>=1 ? 'none' : 'flex';
+
+  /* ---- milestone cards ---- */
+  for(const n of cards){
+    const raw=n.y-sy;
+    const vd = raw>0 ? raw : (raw < -n.dwell ? raw+n.dwell : 0);
+    if(Math.abs(vd)>H*0.62){
+      if(n.el.style.opacity!=='0'){ n.el.style.opacity='0'; n.el.style.transform='translate3d(0,-9999px,0)'; }
+      continue;
+    }
+    const anchor=H*(n.lvl?.50:.245);
+    n.el.style.transform='translate3d(0,'+(anchor+vd)+'px,0)';
+    n.el.style.opacity=String(1-smooth(H*0.14,H*0.58,Math.abs(vd)));
+  }
+
+  /* ---- HUD + the bar on the right ---- */
+  const bp=bigParts(y);
+  bigEl.textContent=bp[0]; biguEl.textContent=bp[1];
+  envEl.textContent=EV.name;
+  const elapsed=(T0-y)/T0*100;
+  metaEl.innerHTML='1 pixel = 40,000 years · never rescaled<br>'+pct(elapsed)+' of Earth’s history elapsed';
+  tsbfill.style.height=elapsed+'%';
+  tsbhead.style.top=elapsed+'%';
+  tsbnum.textContent=pct(elapsed);
+  for(const t of ticks){ const on=sy>=t.y; if(on!==t.on){ t.on=on; t.el.classList.toggle('on',on);} }
+
+  const lum=0.299*EV.sky1[0]+0.587*EV.sky1[1]+0.114*EV.sky1[2];
+  document.body.style.color = lum>150 ? '#12161a' : '#f4f1ea';
+
+  /* ---- finale ---- */
+  if(sy>RUN_END){
+    const q=clamp((sy-RUN_END)/(FIN*0.86),0,1);
+    fin.style.opacity=String(smooth(0,.06,q));
+    flow.style.opacity=String(1-smooth(0,.06,q));
+    $('hud').style.opacity=String(1-smooth(0,.06,q));
+    tsb.style.opacity=String(1-smooth(0,.06,q));
+    for(let i=0;i<MS.length;i++){
+      const s0=finSched(i), a=smooth(s0,s0+0.085,q);
+      frows[i].style.opacity=String(a);
+      fdots[i].style.opacity=String(a*0.9);
+      flines[i].setAttribute('opacity', String(a*0.42));
+    }
+    $('finfoot').style.opacity=String(smooth(.86,.95,q));
+  } else if(fin.style.opacity!=='0'){
+    fin.style.opacity='0'; flow.style.opacity='1'; $('hud').style.opacity='1'; tsb.style.opacity='1';
+  }
+
+  tick();
+}
+
+function loop(){ draw(false); requestAnimationFrame(loop); }
+if(RM){ window.addEventListener('scroll',()=>draw(true),{passive:true}); draw(true); } else loop();
+
+function tick(){
+  if(t0===null && sy>20) t0=performance.now();
+  const p=Math.min(100,Math.round(sy/TOTAL*100));
+  if(p>=100) done=true;
+  const s=t0===null?0:Math.floor((performance.now()-t0)/1000);
+  watchEl.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')+' · '+p+'%';
+}
+
+$('top').onclick=()=>{ window.scrollTo(0,0); t0=null; done=false; };
+$('end').onclick=()=>{ window.scrollTo(0,RUN_END+FIN*0.9); };
+window.scrollTo(0,0);
+draw(true);
+</script>
+</body>
+</html>

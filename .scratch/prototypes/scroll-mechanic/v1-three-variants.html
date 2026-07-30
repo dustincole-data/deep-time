@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deep Time — scroll mechanic prototype</title>
+<!--
+  THROWAWAY PROTOTYPE — Deep Time ticket 01 (scroll & scale mechanic).
+  Three variants of scroll-to-time mapping, switchable via ?variant=A|B|C.
+  Judge PACING ONLY. Colour, type, layout are placeholders (ticket 03 owns art).
+  Milestone dates are commonly-cited placeholders (ticket 02 owns verified dates).
+  Delete this file once the mechanic is chosen.
+-->
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:auto}
+  body{
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:#0a0a0b;color:#f2efe9;overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  #spacer{width:1px}
+
+  /* ---------- fixed stage ---------- */
+  #stage{position:fixed;inset:0;overflow:hidden;z-index:1}
+  #bg{position:absolute;inset:0;transition:none}
+  #vignette{position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 45%,transparent 40%,rgba(0,0,0,.45) 100%);pointer-events:none}
+
+  /* ---------- milestone flow ---------- */
+  #flow{position:absolute;inset:0;pointer-events:none}
+  .ms{position:absolute;left:0;right:0;text-align:center;padding:0 6vw;will-change:transform,opacity}
+  .ms .d{font-variant-numeric:tabular-nums;font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.62;margin-bottom:.5em}
+  .ms .n{font-size:clamp(21px,3.4vw,36px);line-height:1.15;letter-spacing:-.015em;font-weight:600}
+  .ms .s{font-size:clamp(12px,1.4vw,15px);opacity:.6;margin-top:.5em;max-width:34em;margin-left:auto;margin-right:auto}
+
+  /* ---------- HUD ---------- */
+  #hud{position:absolute;left:max(20px,4vw);bottom:max(76px,10vh);pointer-events:none}
+  #big{font-size:clamp(30px,5.6vw,64px);font-weight:650;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
+  #bigu{font-size:clamp(11px,1.5vw,15px);letter-spacing:.16em;text-transform:uppercase;opacity:.7;margin-top:.5em}
+  #chap{font-size:clamp(11px,1.5vw,14px);letter-spacing:.18em;text-transform:uppercase;opacity:.5;margin-top:1.1em}
+  #elapsed{font-size:13px;font-variant-numeric:tabular-nums;opacity:.75;margin-top:.35em;letter-spacing:.02em}
+
+  /* ---------- left rail: scroll progress ---------- */
+  #lrail{position:absolute;left:0;top:0;bottom:0;width:3px;background:rgba(255,255,255,.10)}
+  #lfill{position:absolute;left:0;top:0;width:3px;background:currentColor;opacity:.55}
+
+  /* ---------- right rail: TRUE SCALE (variant C) ---------- */
+  #trail{position:absolute;right:max(16px,3.5vw);top:12vh;bottom:22vh;width:120px;display:none}
+  #trail.on{display:block}
+  #tbar{position:absolute;left:0;top:0;bottom:0;width:6px;background:rgba(255,255,255,.13);border-radius:3px;overflow:hidden}
+  #tfill{position:absolute;left:0;top:0;width:6px;background:currentColor;opacity:.85}
+  #tmark{position:absolute;left:-5px;width:16px;height:2px;background:currentColor;box-shadow:0 0 0 3px rgba(0,0,0,.25)}
+  .ttick{position:absolute;left:10px;font-size:9.5px;letter-spacing:.06em;opacity:.5;white-space:nowrap;transform:translateY(-50%);font-variant-numeric:tabular-nums}
+  .ttick::before{content:"";position:absolute;left:-10px;top:50%;width:7px;height:1px;background:currentColor;opacity:.6}
+  #tcap{position:absolute;left:0;top:-4.4em;font-size:10px;letter-spacing:.16em;text-transform:uppercase;opacity:.62;width:150px;line-height:1.5}
+  #tnum{position:absolute;left:0;bottom:-3.2em;font-size:15px;font-variant-numeric:tabular-nums;font-weight:600;letter-spacing:-.01em}
+
+  /* ---------- reveal coda ---------- */
+  #coda{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;padding:0 6vw}
+  #coda .inner{max-width:1000px;width:100%}
+  #coda h2{font-size:clamp(18px,2.4vw,26px);font-weight:600;letter-spacing:-.02em;margin-bottom:2.2em}
+  #scalebar{position:relative;height:16px;background:rgba(255,255,255,.14);border-radius:2px}
+  #scalebar .seg{position:absolute;top:0;bottom:0;background:currentColor;opacity:.85;border-radius:2px 0 0 2px}
+  #scalebar .pin{position:absolute;top:-10px;bottom:-10px;width:1px;background:currentColor;opacity:.8}
+  #scalebar .lab{position:absolute;top:-2.6em;font-size:10.5px;letter-spacing:.06em;white-space:nowrap;transform:translateX(-50%);opacity:.75}
+  #codaline{margin-top:3.2em;font-size:clamp(14px,1.8vw,19px);line-height:1.55;max-width:44em;opacity:.9}
+  #codaline b{font-variant-numeric:tabular-nums}
+
+  /* ---------- prototype chrome ---------- */
+  #switch{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:50;
+    display:flex;align-items:center;gap:2px;background:#fff;color:#111;border-radius:999px;
+    box-shadow:0 6px 26px rgba(0,0,0,.45);font-size:12.5px;padding:3px;max-width:94vw}
+  #switch button{border:0;background:transparent;color:#111;font:inherit;padding:7px 11px;cursor:pointer;border-radius:999px;line-height:1}
+  #switch button:hover{background:#eceae6}
+  #label{padding:7px 10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #watch{padding:7px 11px;border-left:1px solid #e2dfda;font-variant-numeric:tabular-nums;opacity:.72;white-space:nowrap}
+  #note{position:fixed;right:12px;top:12px;z-index:50;max-width:270px;background:rgba(10,10,11,.82);
+    border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:10px 12px;font-size:11px;line-height:1.55;color:#e9e5dd;backdrop-filter:blur(6px)}
+  #note b{letter-spacing:.1em;font-size:10px;text-transform:uppercase;opacity:.65;display:block;margin-bottom:.5em}
+  #note button{position:absolute;right:4px;top:2px;border:0;background:transparent;color:#e9e5dd;opacity:.5;cursor:pointer;font-size:14px;line-height:1}
+  @media (max-width:640px){
+    #trail{right:10px;width:80px}
+    #tcap{width:110px;font-size:9px;top:-5.4em}
+    #hud{bottom:max(84px,12vh)}
+    #note{max-width:210px;font-size:10px}
+    #watch{display:none}
+  }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="bg"></div>
+  <div id="flow"></div>
+  <div id="vignette"></div>
+
+  <div id="hud">
+    <div id="big">4.60</div>
+    <div id="bigu">billion years ago</div>
+    <div id="chap"></div>
+    <div id="elapsed"></div>
+  </div>
+
+  <div id="lrail"><div id="lfill"></div></div>
+
+  <div id="trail">
+    <div id="tcap">Earth's history<br>actually elapsed</div>
+    <div id="tbar"><div id="tfill"></div></div>
+    <div id="tmark"></div>
+    <div id="tnum">0.00%</div>
+  </div>
+
+  <div id="coda"><div class="inner">
+    <h2 id="codah"></h2>
+    <div id="scalebar"></div>
+    <div id="codaline"></div>
+  </div></div>
+</div>
+
+<div id="spacer"></div>
+
+<div id="note">
+  <button onclick="this.parentNode.remove()">&times;</button>
+  <b>Prototype — ticket 01</b>
+  Judge <strong>pacing</strong> only. Colour/type are placeholders (ticket 03 owns art). Dates are commonly-cited placeholders (ticket 02 owns verified dates).
+</div>
+
+<div id="switch">
+  <button id="prev" aria-label="previous variant">&larr;</button>
+  <span id="label"></span>
+  <button id="next" aria-label="next variant">&rarr;</button>
+  <span id="watch">0:00 · 0%</span>
+</div>
+
+<script>
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+const T0 = 4.6e9; // years
+
+/* ---------------- placeholder milestones (ticket 02 owns the verified set) ------------- */
+const MS = [
+  [4.60e9,'Earth accretes','Dust and planetesimals collapse into a molten world.'],
+  [4.51e9,'The Moon-forming impact','A Mars-sized body hits. The debris becomes the Moon.'],
+  [4.40e9,'First oceans','The crust cools enough for liquid water to stay.'],
+  [4.00e9,'Oldest surviving rocks',''],
+  [3.70e9,'Earliest evidence of life','Carbon signatures in Greenland sediment.'],
+  [3.50e9,'Stromatolites','Microbial mats — the first structures life leaves behind.'],
+  [2.70e9,'Oxygenic photosynthesis','Cyanobacteria start splitting water.'],
+  [2.40e9,'The Great Oxidation Event','Free oxygen poisons the biosphere that made it.'],
+  [2.30e9,'Huronian glaciation','The first global freeze.'],
+  [1.80e9,'First eukaryotes','A cell swallows another and keeps it.'],
+  [1.20e9,'Sexual reproduction',''],
+  [7.20e8,'Snowball Earth','Ice reaches the tropics.'],
+  [5.75e8,'Ediacaran biota','The first large, soft, multicellular bodies.'],
+  [5.39e8,'The Cambrian explosion','Almost every animal body plan, at once.'],
+  [4.70e8,'First land plants',''],
+  [4.30e8,'First land animals',''],
+  [3.75e8,'First tetrapods','Fins become limbs.'],
+  [3.59e8,'Carboniferous coal forests','The carbon we are burning now was buried here.'],
+  [3.20e8,'First reptiles',''],
+  [2.52e8,'The Permian–Triassic extinction','Roughly 90% of species end.'],
+  [2.30e8,'First dinosaurs',''],
+  [2.25e8,'First mammals',''],
+  [2.01e8,'Triassic–Jurassic extinction',''],
+  [1.50e8,'First birds',''],
+  [1.30e8,'First flowering plants',''],
+  [6.60e7,'The K–Pg impact','Ten kilometres of rock, and the end of the dinosaurs.'],
+  [5.50e7,'First primates',''],
+  [3.40e7,'Antarctica freezes',''],
+  [2.00e7,'Grasslands spread',''],
+  [7.00e6,'Hominins split from chimpanzees',''],
+  [3.20e6,'"Lucy" walks upright',''],
+  [2.60e6,'First stone tools',''],
+  [8.00e5,'Controlled fire','Contested — evidence ranges widely.'],
+  [3.00e5,'Homo sapiens',''],
+  [6.50e4,'Out of Africa',''],
+  [4.00e4,'Cave art','Someone decides a wall should mean something.'],
+  [1.20e4,'Agriculture',''],
+  [5.50e3,'Writing',''],
+  [2.50e2,'The Industrial Revolution',''],
+  [0,'Now','']
+];
+
+/* ---------------- background eras ---------------- */
+const ERAS = [
+  {n:'Hadean',      f:4.600e9, t:4.031e9, a:[28,11,7],   b:[64,20,9]},
+  {n:'Archean',     f:4.031e9, t:2.500e9, a:[40,24,15],  b:[22,31,29]},
+  {n:'Proterozoic', f:2.500e9, t:5.388e8, a:[22,35,34],  b:[28,50,62]},
+  {n:'Paleozoic',   f:5.388e8, t:2.519e8, a:[15,45,39],  b:[22,62,47]},
+  {n:'Mesozoic',    f:2.519e8, t:6.600e7, a:[39,52,28],  b:[62,56,26]},
+  {n:'Cenozoic',    f:6.600e7, t:1.200e4, a:[24,43,62],  b:[44,67,86]},
+  {n:'Civilisation',f:1.200e4, t:0,       a:[44,67,86],  b:[200,207,213]}
+];
+function eraAt(y){
+  for(const e of ERAS){ if(y<=e.f && (y>e.t || e.t===0)) return e; }
+  return ERAS[0];
+}
+
+/* ---------------- warped chapters (variants B & C) ---------------- */
+const CH = [
+  {n:'Hadean',        f:4.600e9, t:4.000e9, w:.13},
+  {n:'Archean',       f:4.000e9, t:2.500e9, w:.13},
+  {n:'Proterozoic',   f:2.500e9, t:5.388e8, w:.14},
+  {n:'Paleozoic',     f:5.388e8, t:2.519e8, w:.14},
+  {n:'Mesozoic',      f:2.519e8, t:6.600e7, w:.13},
+  {n:'Cenozoic',      f:6.600e7, t:2.600e6, w:.13},
+  {n:'Human origins', f:2.600e6, t:1.200e4, w:.10},
+  {n:'Civilisation',  f:1.200e4, t:0,       w:.10}
+];
+(function(){ let acc=0; for(const c of CH){ c.p0=acc; acc+=c.w; c.p1=acc; } })();
+
+function warpYearsAt(p){
+  p = Math.min(1,Math.max(0,p));
+  for(const c of CH){ if(p<=c.p1||c===CH[CH.length-1]){ const k=(p-c.p0)/c.w; return c.f-(c.f-c.t)*Math.min(1,Math.max(0,k)); } }
+  return 0;
+}
+function warpPAt(y){
+  for(const c of CH){ if(y<=c.f && (y>c.t || c.t===0)){ return c.p0 + c.w*((c.f-y)/(c.f-c.t)); } }
+  return y>CH[0].f ? 0 : 1;
+}
+function chapAt(p){ for(const c of CH){ if(p<=c.p1) return c; } return CH[CH.length-1]; }
+
+/* ---------------- variants ---------------- */
+const V = {
+  A:{key:'A', name:'Pure linear',  base:100000, coda:0,
+     yearsAt:p=>T0*(1-p), pAt:y=>1-y/T0,
+     showElapsed:true, showTrueRail:false, chapLabel:p=>eraAt(T0*(1-p)).n},
+  B:{key:'B', name:'Warped + final reveal', base:60000, coda:6000,
+     yearsAt:warpYearsAt, pAt:warpPAt,
+     showElapsed:false, showTrueRail:false, chapLabel:p=>chapAt(p).n},
+  C:{key:'C', name:'Warped + true-scale rail', base:60000, coda:3000,
+     yearsAt:warpYearsAt, pAt:warpPAt,
+     showElapsed:false, showTrueRail:true, chapLabel:p=>chapAt(p).n}
+};
+const ORDER=['A','B','C'];
+const params=new URLSearchParams(location.search);
+let vk=(params.get('variant')||'A').toUpperCase();
+if(!V[vk]) vk='A';
+const cfg=V[vk];
+
+/* ---------------- build ---------------- */
+const $=s=>document.querySelector(s);
+const spacer=$('#spacer'), flow=$('#flow'), bg=$('#bg');
+let vh=window.innerHeight;
+
+function layout(){
+  vh=window.innerHeight;
+  spacer.style.height=(cfg.base+cfg.coda+vh)+'px';
+}
+layout();
+window.addEventListener('resize',()=>{layout();frame(true);});
+
+// milestone nodes
+const nodes=MS.map(m=>{
+  const el=document.createElement('div');
+  el.className='ms';
+  el.innerHTML='<div class="d"></div><div class="n"></div><div class="s"></div>';
+  el.querySelector('.n').textContent=m[1];
+  el.querySelector('.s').textContent=m[2]||'';
+  el.querySelector('.d').textContent=dateLabel(m[0]);
+  el.style.opacity=0;
+  flow.appendChild(el);
+  return {el, y:cfg.pAt(m[0])*cfg.base, ya:m[0]};
+});
+
+function dateLabel(y){
+  if(y<=0) return 'today';
+  if(y>=1e9) return (y/1e9).toFixed(2)+' billion years ago';
+  if(y>=1e6) return (y/1e6>=100?Math.round(y/1e6):(y/1e6).toFixed(1))+' million years ago';
+  return Math.round(y).toLocaleString('en-US')+' years ago';
+}
+function bigParts(y){
+  if(y<=0) return ['Now',''];
+  if(y>=1e9) return [(y/1e9).toFixed(2),'billion years ago'];
+  if(y>=1e6) return [(y/1e6>=100?Math.round(y/1e6).toString():(y/1e6).toFixed(1)),'million years ago'];
+  if(y>=1e4) return [Math.round(y/1e3).toLocaleString('en-US')+',000','years ago'];
+  return [Math.round(y).toLocaleString('en-US'),'years ago'];
+}
+function pct(v){
+  if(v<99) return v.toFixed(2)+'%';
+  if(v<99.99) return v.toFixed(4)+'%';
+  if(v<99.9999) return v.toFixed(6)+'%';
+  return v.toFixed(7)+'%';
+}
+
+// true-scale rail ticks (variant C)
+if(cfg.showTrueRail){
+  $('#trail').classList.add('on');
+  const tb=$('#trail');
+  CH.forEach(c=>{
+    const f=(T0-c.t)/T0;
+    const d=document.createElement('div');
+    d.className='ttick';
+    d.style.top=(f*100)+'%';
+    d.textContent='end of '+c.n+' — '+pct(f*100);
+    tb.appendChild(d);
+  });
+}
+
+/* ---------------- coda ---------------- */
+const codaEl=$('#coda'), bar=$('#scalebar');
+if(cfg.coda>0){
+  $('#codah').textContent = cfg.key==='B'
+    ? 'That was 4.6 billion years, unevenly paced. Here it is honestly.'
+    : 'The rail was telling you this the whole way.';
+  const segs=[
+    [5.388e8,'Cambrian'],
+    [6.6e7,'K–Pg'],
+    [3.0e5,'Homo sapiens'],
+    [1.2e4,'Agriculture']
+  ];
+  segs.forEach(([y,lab])=>{
+    const f=(T0-y)/T0;
+    const pin=document.createElement('div'); pin.className='pin'; pin.style.left=(f*100)+'%'; bar.appendChild(pin);
+    const l=document.createElement('div'); l.className='lab'; l.style.left=(f*100)+'%'; l.textContent=lab+' '+pct(f*100); bar.appendChild(l);
+  });
+  const seg=document.createElement('div'); seg.className='seg'; seg.style.left='0'; seg.style.width='100%'; bar.insertBefore(seg,bar.firstChild);
+  $('#codaline').innerHTML = cfg.key==='B'
+    ? 'Everything after the Cambrian — every animal you can name — is the last <b>11.7%</b>. Every human being who has ever lived fits in the last <b>0.0065%</b>. All of agriculture, writing, cities and machines is the final <b>0.00026%</b> — a quarter of one thousandth of one percent. It is thinner than the line above.'
+    : 'You crossed <b>88%</b> of Earth’s history in the first three chapters. The remaining five chapters — everything with a face, a spine, a name — share the last <b>11.7%</b>. Human civilisation is the final <b>0.00026%</b>.';
+}
+
+/* ---------------- frame loop ---------------- */
+const bigEl=$('#big'), biguEl=$('#bigu'), chapEl=$('#chap'), elEl=$('#elapsed'),
+      lfill=$('#lfill'), tfill=$('#tfill'), tmark=$('#tmark'), tnum=$('#tnum'),
+      stage=$('#stage');
+let ticking=false, lastY=-1;
+
+function lerp(a,b,t){return a+(b-a)*t}
+function frame(force){
+  ticking=false;
+  const sy=window.scrollY||window.pageYOffset;
+  if(!force && sy===lastY) return;
+  lastY=sy;
+
+  const p=Math.min(1,Math.max(0,sy/cfg.base));
+  const y=cfg.yearsAt(p);
+
+  // background
+  const e=eraAt(y);
+  const t=e.t===e.f?1:Math.min(1,Math.max(0,(e.f-y)/(e.f-e.t)));
+  const r=Math.round(lerp(e.a[0],e.b[0],t)), g=Math.round(lerp(e.a[1],e.b[1],t)), b2=Math.round(lerp(e.a[2],e.b[2],t));
+  bg.style.background='rgb('+r+','+g+','+b2+')';
+  const lum=(0.299*r+0.587*g+0.114*b2);
+  stage.style.color = lum>150 ? '#14171a' : '#f2efe9';
+
+  // milestones
+  for(const n of nodes){
+    const d=n.y-sy;
+    if(Math.abs(d)>vh*1.05){ if(n.el.style.opacity!=='0'){n.el.style.opacity='0';n.el.style.transform='translate3d(0,-9999px,0)';} continue; }
+    const k=Math.abs(d)/vh;
+    n.el.style.opacity=String(Math.max(0,1-Math.pow(k,1.35)));
+    n.el.style.transform='translate3d(0,'+(vh*0.5+d-40)+'px,0)';
+  }
+
+  // HUD
+  const bp=bigParts(y);
+  bigEl.textContent=bp[0]; biguEl.textContent=bp[1];
+  chapEl.textContent=cfg.chapLabel(p);
+  const trueEl=(T0-y)/T0*100;
+  elEl.textContent = cfg.showElapsed ? 'Earth’s history elapsed  '+pct(trueEl) : '';
+
+  lfill.style.height=(p*100)+'%';
+  if(cfg.showTrueRail){
+    tfill.style.height=(trueEl)+'%';
+    tmark.style.top=(trueEl)+'%';
+    tnum.textContent=pct(trueEl);
+  }
+
+  // coda
+  if(cfg.coda>0){
+    const q=Math.min(1,Math.max(0,(sy-cfg.base)/(cfg.coda*0.35)));
+    codaEl.style.opacity=q;
+    flow.style.opacity=1-q;
+    $('#hud').style.opacity=1-q;
+  }
+
+  // stopwatch
+  updateWatch(sy);
+}
+window.addEventListener('scroll',()=>{ if(!ticking){ticking=true;requestAnimationFrame(()=>frame(false));} },{passive:true});
+
+/* ---------------- stopwatch ---------------- */
+const watch=$('#watch');
+let t0=null, done=false;
+function updateWatch(sy){
+  if(t0===null && sy>10) t0=performance.now();
+  const total=cfg.base+cfg.coda;
+  const p=Math.min(100,Math.round(sy/total*100));
+  if(p>=100) done=true;
+  const s=t0===null?0:Math.floor((performance.now()-t0)/1000);
+  if(!done||watch.dataset.f!=='1'){
+    watch.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')+' · '+p+'%';
+    if(done) watch.dataset.f='1';
+  }
+}
+setInterval(()=>{ if(t0!==null&&!done) updateWatch(window.scrollY||0); },1000);
+
+/* ---------------- switcher ---------------- */
+$('#label').textContent=cfg.key+' — '+cfg.name;
+function go(d){
+  const i=(ORDER.indexOf(vk)+d+ORDER.length)%ORDER.length;
+  location.search='?variant='+ORDER[i];
+}
+$('#prev').onclick=()=>go(-1);
+$('#next').onclick=()=>go(1);
+addEventListener('keydown',ev=>{
+  const tg=ev.target;
+  if(tg&&(tg.tagName==='INPUT'||tg.tagName==='TEXTAREA'||tg.isContentEditable))return;
+  if(ev.key==='ArrowLeft')go(-1);
+  if(ev.key==='ArrowRight')go(1);
+});
+
+window.scrollTo(0,0);
+frame(true);
+</script>
+</body>
+</html>

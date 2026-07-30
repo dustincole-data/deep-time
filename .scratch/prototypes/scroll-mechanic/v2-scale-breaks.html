@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deep Time — v2, true linear with scale breaks</title>
+<!--
+  THROWAWAY PROTOTYPE v2 — Deep Time ticket 01 (scroll & scale mechanic).
+  Direction from Dustin: true linear, organised end, entertaining while scrolling,
+  milestones dwell on screen. Reference: neal.fun/deep-sea.
+
+  ART IS PROCEDURAL ON PURPOSE. Ticket 03 owns visual identity and gates image
+  generation, so every environment here is drawn in canvas as a placeholder for
+  the real art slots. Judge PACING, DENSITY and the SCALE-BREAK device.
+  Dates are commonly-cited placeholders; ticket 02 owns the verified set.
+-->
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:#05070a;color:#f4f1ea;overflow-x:hidden;-webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  #spacer{width:1px}
+  #sky{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block}
+  #grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.5;
+    background:radial-gradient(130% 100% at 50% 40%,transparent 45%,rgba(0,0,0,.55) 100%)}
+
+  /* ---------------- milestones ---------------- */
+  #flow{position:fixed;inset:0;z-index:2;pointer-events:none}
+  .ms{position:absolute;width:40%;will-change:transform,opacity}
+  .ms.L{left:5.5%;text-align:left}
+  .ms.R{left:54.5%;text-align:right}
+  .ms .rule{height:1px;background:currentColor;opacity:.45;width:44px;margin-bottom:14px}
+  .ms.R .rule{margin-left:auto}
+  .ms .d{font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;opacity:.72;
+    font-variant-numeric:tabular-nums;margin-bottom:.62em}
+  .ms .n{font-size:clamp(23px,2.9vw,40px);line-height:1.08;letter-spacing:-.022em;font-weight:650;
+    text-shadow:0 2px 26px rgba(0,0,0,.45)}
+  .ms .s{font-size:clamp(13px,1.15vw,15.5px);line-height:1.5;opacity:.78;margin-top:.75em;max-width:30em}
+  .ms.R .s{margin-left:auto}
+
+  /* ---------------- HUD ---------------- */
+  #hud{position:fixed;z-index:3;left:max(20px,3.4vw);bottom:max(74px,7.5vh);pointer-events:none;
+    text-shadow:0 2px 24px rgba(0,0,0,.5)}
+  #big{font-size:clamp(38px,6.4vw,78px);font-weight:680;letter-spacing:-.038em;
+    font-variant-numeric:tabular-nums;line-height:.94}
+  #bigu{font-size:clamp(11px,1.3vw,14px);letter-spacing:.22em;text-transform:uppercase;opacity:.72;margin-top:.7em}
+  #env{font-size:clamp(13px,1.5vw,17px);font-weight:600;letter-spacing:.01em;opacity:.9;margin-top:1.3em}
+  #meta{font-size:11.5px;font-variant-numeric:tabular-nums;opacity:.62;margin-top:.45em;letter-spacing:.03em;line-height:1.7}
+
+  /* scroll rail = true share of Earth's history */
+  #rail{position:fixed;z-index:3;left:0;top:0;bottom:0;width:2px;background:rgba(255,255,255,.13)}
+  #railfill{position:absolute;left:0;top:0;width:2px;background:currentColor;opacity:.6}
+
+  /* ---------------- scale break ---------------- */
+  #brk{position:fixed;inset:0;z-index:4;display:flex;align-items:center;justify-content:center;
+    opacity:0;pointer-events:none;padding:0 6vw;backdrop-filter:blur(3px);background:rgba(3,5,9,.62);
+    color:#f4f1ea}
+  #brk .in{max-width:720px;width:100%;text-align:center}
+  #brk .kick{font-size:11px;letter-spacing:.36em;text-transform:uppercase;opacity:.6;margin-bottom:2.2em}
+  #brk .rem{font-size:clamp(16px,2.1vw,23px);line-height:1.45;font-weight:550;margin-bottom:2.4em}
+  #brk .rem b{font-variant-numeric:tabular-nums}
+  #rulerwrap{position:relative;height:60px;margin-bottom:2.4em}
+  #rulerwrap .lab{position:absolute;left:50%;transform:translateX(-50%);font-size:11px;
+    letter-spacing:.18em;text-transform:uppercase;font-variant-numeric:tabular-nums;opacity:.85}
+  #rulerwrap .lab.a{top:0}
+  #rulerwrap .lab.b{bottom:0}
+  #ruler{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);height:3px;background:currentColor;border-radius:2px}
+  #brk .zoom{font-size:clamp(30px,5.4vw,58px);font-weight:700;letter-spacing:-.035em;font-variant-numeric:tabular-nums}
+  #brk .zoomu{font-size:11px;letter-spacing:.3em;text-transform:uppercase;opacity:.62;margin-top:.9em}
+
+  /* ---------------- coda ---------------- */
+  #coda{position:fixed;inset:0;z-index:4;display:flex;align-items:center;justify-content:center;
+    opacity:0;pointer-events:none;padding:0 6vw;background:rgba(4,6,10,.72);backdrop-filter:blur(4px);
+    color:#f4f1ea}
+  #coda .in{max-width:960px;width:100%}
+  #coda h2{font-size:clamp(19px,2.5vw,30px);font-weight:650;letter-spacing:-.025em;line-height:1.25;margin-bottom:2.6em}
+  .nest{margin-bottom:1.5em}
+  .nest .cap{font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;opacity:.62;margin-bottom:.6em;font-variant-numeric:tabular-nums}
+  .nest .bar{position:relative;height:13px;background:rgba(255,255,255,.15);border-radius:2px;overflow:visible}
+  .nest .bar i{position:absolute;top:0;bottom:0;background:currentColor;opacity:.9;border-radius:2px;min-width:1px}
+  .nest .bar u{position:absolute;top:-7px;bottom:-7px;width:1px;background:currentColor;opacity:.55;text-decoration:none}
+  #codaline{margin-top:2.6em;font-size:clamp(14px,1.65vw,19px);line-height:1.6;max-width:46em;opacity:.92}
+  #codaline b{font-variant-numeric:tabular-nums}
+  #codanote{margin-top:2.2em;font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.42}
+
+  /* ---------------- prototype chrome ---------------- */
+  #bar{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:20;display:flex;align-items:center;
+    background:#fff;color:#14171a;border-radius:999px;box-shadow:0 8px 30px rgba(0,0,0,.5);font-size:12.5px;padding:3px;max-width:94vw}
+  #bar button{border:0;background:transparent;color:inherit;font:inherit;padding:7px 12px;cursor:pointer;border-radius:999px;line-height:1;white-space:nowrap}
+  #bar button:hover{background:#edeae5}
+  #act{padding:7px 12px;font-weight:650;white-space:nowrap;border-left:1px solid #e3e0da}
+  #watch{padding:7px 12px;border-left:1px solid #e3e0da;font-variant-numeric:tabular-nums;opacity:.7;white-space:nowrap}
+  #note{position:fixed;right:12px;top:12px;z-index:20;max-width:262px;background:rgba(5,7,10,.8);
+    border:1px solid rgba(255,255,255,.15);border-radius:9px;padding:10px 12px;font-size:11px;line-height:1.55;color:#eae7e0;backdrop-filter:blur(8px)}
+  #note b{letter-spacing:.13em;font-size:9.5px;text-transform:uppercase;opacity:.62;display:block;margin-bottom:.55em}
+  #note button{position:absolute;right:4px;top:2px;border:0;background:transparent;color:#eae7e0;opacity:.5;cursor:pointer;font-size:14px;line-height:1}
+
+  @media (max-width:760px){
+    .ms{width:88%;left:6% !important;text-align:left !important}
+    .ms.R .rule{margin-left:0}
+    .ms.R .s{margin-left:0}
+    #hud{bottom:max(80px,9vh);left:6%}
+    #note{max-width:198px;font-size:10px}
+    #act,#watch{display:none}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="sky"></canvas>
+<div id="grain"></div>
+<div id="flow"></div>
+
+<div id="hud">
+  <div id="big">4.60</div>
+  <div id="bigu">billion years ago</div>
+  <div id="env">A world of magma</div>
+  <div id="meta"></div>
+</div>
+
+<div id="rail"><div id="railfill"></div></div>
+
+<div id="brk"><div class="in">
+  <div class="kick">Scale change</div>
+  <div class="rem" id="brkrem"></div>
+  <div id="rulerwrap">
+    <div class="lab a" id="brka"></div>
+    <div id="ruler"></div>
+    <div class="lab b" id="brkb"></div>
+  </div>
+  <div class="zoom" id="brkz"></div>
+  <div class="zoomu">closer</div>
+</div></div>
+
+<div id="coda"><div class="in">
+  <h2>Three passes. Each one invisible inside the last.</h2>
+  <div id="nests"></div>
+  <div id="codaline"></div>
+  <div id="codanote">Rough placeholder — ticket 04 owns how the reveal is staged</div>
+</div></div>
+
+<div id="spacer"></div>
+
+<div id="note">
+  <button onclick="this.parentNode.remove()">&times;</button>
+  <b>Prototype v2 — ticket 01</b>
+  True linear, three passes, announced scale breaks. Every environment is drawn in code as a placeholder — ticket 03 owns the real art. Dates placeholder (ticket 02).
+</div>
+
+<div id="bar">
+  <button id="top">Restart</button>
+  <button id="v1">v1 variants</button>
+  <span id="act">Pass 1 of 3</span>
+  <span id="watch">0:00 · 0%</span>
+</div>
+
+<script>
+'use strict';
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const T0 = 4.6e9;
+
+/* ============================================================
+   ACTS — true linear inside each pass, scale break between
+   ============================================================ */
+const A1 = 99850, BK = 2600, A2 = 24768, A3 = 16250, CODA = 5200;
+const S1S=0,        S1E=A1;
+const B1S=S1E,      B1E=S1E+BK;
+const S2S=B1E,      S2E=S2S+A2;
+const B2S=S2E,      B2E=S2E+BK;
+const S3S=B2E,      S3E=S3S+A3;
+const CS =S3E,      TOTAL=CS+CODA;
+
+const ACTS = [
+  {i:1, from:4.6e9, to:7.0e6, s:S1S, px:A1, rate:46000,  rateTxt:'46,000 years per pixel'},
+  {i:2, from:7.0e6, to:6.5e4, s:S2S, px:A2, rate:280,    rateTxt:'280 years per pixel'},
+  {i:3, from:6.5e4, to:0,     s:S3S, px:A3, rate:4,      rateTxt:'4 years per pixel'}
+];
+
+function yearAt(sy){
+  if (sy <= S1E) return 4.6e9 - (sy/A1)*(4.6e9-7.0e6);
+  if (sy <= B1E) return 7.0e6;
+  if (sy <= S2E) return 7.0e6 - ((sy-S2S)/A2)*(7.0e6-6.5e4);
+  if (sy <= B2E) return 6.5e4;
+  if (sy <= S3E) return 6.5e4 - ((sy-S3S)/A3)*6.5e4;
+  return 0;
+}
+function actAt(sy){ if(sy<=B1E) return ACTS[0]; if(sy<=B2E) return ACTS[1]; return ACTS[2]; }
+
+/* ============================================================
+   MILESTONES — placeholder dates, ticket 02 owns the real set
+   ============================================================ */
+const MS = [
+  [4.60e9,'Earth accretes','Dust and rock collapse into a molten planet with no sky worth the name.'],
+  [4.51e9,'The Moon is torn out','A Mars-sized body strikes. The debris becomes a Moon that hangs enormous and close.'],
+  [4.40e9,'First oceans','The crust cools enough that water can finally stay.'],
+  [4.00e9,'The oldest surviving rock',''],
+  [3.70e9,'Something is alive','Carbon signatures in Greenland sediment — the earliest trace we can read.'],
+  [3.50e9,'Stromatolites','Microbial mats build the first structures life leaves behind.'],
+  [2.70e9,'Photosynthesis','Cyanobacteria begin splitting water and letting the oxygen go.'],
+  [2.40e9,'The Great Oxidation','Free oxygen floods the air and poisons most of the life that made it.'],
+  [2.30e9,'The first global freeze',''],
+  [1.80e9,'The first complex cell','One cell swallows another and, instead of digesting it, keeps it.'],
+  [1.20e9,'Sex',''],
+  [7.20e8,'Snowball Earth','Ice reaches the tropics. The planet is a white marble.'],
+  [5.75e8,'The first big bodies','Ediacaran life — soft, strange, and larger than anything before it.'],
+  [5.39e8,'The Cambrian explosion','Almost every animal body plan still in use appears at once.'],
+  [4.70e8,'Plants reach land',''],
+  [4.30e8,'Animals follow them',''],
+  [3.75e8,'Fins become limbs',''],
+  [3.59e8,'The coal forests','The carbon we are burning today is buried here.'],
+  [3.20e8,'The first reptiles',''],
+  [2.52e8,'The Great Dying','Around nine in ten species end. Life takes millions of years to recover.'],
+  [2.30e8,'The first dinosaurs',''],
+  [2.25e8,'The first mammals','Small, nocturnal, and about to spend 160 million years staying out of the way.'],
+  [2.01e8,'A second extinction',''],
+  [1.50e8,'The first birds',''],
+  [1.30e8,'Flowers',''],
+  [6.60e7,'The asteroid','Ten kilometres of rock ends the dinosaurs in an afternoon.'],
+  [5.50e7,'The first primates',''],
+  [3.40e7,'Antarctica freezes',''],
+  [2.00e7,'Grass spreads',''],
+  [7.00e6,'Our line splits from the chimpanzees',''],
+  [3.20e6,'Lucy walks upright',''],
+  [2.60e6,'The first stone tools',''],
+  [8.00e5,'Fire, kept','Contested — the evidence ranges widely.'],
+  [3.00e5,'Homo sapiens',''],
+  [6.50e4,'Out of Africa',''],
+  [4.00e4,'Cave art','Someone decides a wall should mean something.'],
+  [1.20e4,'Farming',''],
+  [5.50e3,'Writing',''],
+  [2.50e2,'The Industrial Revolution','']
+];
+
+/* ============================================================
+   ENVIRONMENTS — 13 procedural placeholders for the art slots
+   ============================================================ */
+const ENVS = [
+ {at:4.60e9, name:'A world of magma', sky:['#2b0904','#82200a'], hz:'#150402', gnd:'#210704', ridge:1.05,
+  p:{vy:-30,vx:5,sz:2.3,c:[255,150,60],a:.85,gl:1,wb:.7,n:150,sh:'dot'}, cre:'volcano', moon:150, sun:['#ff5a1e',.30,46,.5]},
+ {at:4.40e9, name:'The first oceans', sky:['#1a0b08','#511d13'], hz:'#0d0605', gnd:'#140806', ridge:.85,
+  p:{vy:-16,vx:7,sz:1.9,c:[255,190,140],a:.5,gl:.6,wb:.9,n:100,sh:'dot'}, cre:'volcano', moon:122, sun:['#ff7a3a',.28,42,.42]},
+ {at:3.70e9, name:'The Archean sea', sky:['#0b1715','#16332b'], hz:'#07100e', gnd:'#0a1715', ridge:.68,
+  p:{vy:-7,vx:4,sz:1.5,c:[150,220,200],a:.36,gl:.3,wb:1.3,n:85,sh:'dot'}, cre:'stroma', moon:98, sun:['#ffb066',.26,35,.35]},
+ {at:2.40e9, name:'The sky turns', sky:['#123128','#2f5e52'], hz:'#0a1c18', gnd:'#0e2721', ridge:.6,
+  p:{vy:-32,vx:2,sz:3.5,c:[195,242,255],a:.55,gl:.5,wb:1.7,n:135,sh:'ring'}, cre:'stroma', moon:82, sun:['#ffd39a',.24,31,.45]},
+ {at:1.60e9, name:'The quiet billion', sky:['#16313e','#2c5c72'], hz:'#0d1e26', gnd:'#122b35', ridge:.5,
+  p:{vy:-4,vx:6,sz:1.4,c:[190,225,235],a:.3,gl:.2,wb:1,n:70,sh:'dot'}, cre:'none', moon:71, sun:['#ffe2b8',.23,29,.4]},
+ {at:7.00e8, name:'Snowball Earth', sky:['#15242f','#82a4b8'], hz:'#93b3c4', gnd:'#c7dbe4', ridge:.72,
+  p:{vy:17,vx:9,sz:2.7,c:[255,255,255],a:.7,gl:.2,wb:2.5,n:175,sh:'flake'}, cre:'none', moon:61, sun:['#dfeaf2',.20,27,.5]},
+ {at:5.00e8, name:'Cambrian seas', sky:['#0d2c34','#1c6166'], hz:'#08181d', gnd:'#0c2c2d', ridge:.56,
+  p:{vy:-3,vx:8,sz:1.7,c:[170,240,225],a:.42,gl:.35,wb:1.9,n:115,sh:'dot'}, cre:'trilo', moon:53, sun:['#ffeec4',.22,27,.4]},
+ {at:3.60e8, name:'The coal forests', sky:['#122b1a','#2e5732'], hz:'#08140c', gnd:'#0c1f11', ridge:.95,
+  p:{vy:-2,vx:10,sz:2.1,c:[210,240,170],a:.42,gl:.25,wb:2.3,n:125,sh:'dot'}, cre:'fern', moon:47, sun:['#e8f0b8',.20,27,.35]},
+ {at:2.00e8, name:'The age of dinosaurs', sky:['#302c13','#816f2e'], hz:'#171505', gnd:'#23200b', ridge:.88,
+  p:{vy:-1,vx:12,sz:1.9,c:[255,235,170],a:.42,gl:.3,wb:1.7,n:105,sh:'dot'}, cre:'sauro', moon:41, sun:['#ffe9a3',.20,29,.45]},
+ {at:5.00e7, name:'A world of mammals', sky:['#16334f','#4e8bb3'], hz:'#0d2033', gnd:'#193c2b', ridge:.7,
+  p:{vy:-1,vx:14,sz:1.7,c:[220,240,255],a:.35,gl:.2,wb:1.5,n:95,sh:'dot'}, cre:'mammal', moon:35, sun:['#ffffff',.18,27,.5]},
+ {at:1.50e6, name:'The ice ages', sky:['#1d3448','#95b7cd'], hz:'#5f7e94', gnd:'#adc5d5', ridge:.78,
+  p:{vy:15,vx:11,sz:2.5,c:[255,255,255],a:.6,gl:.15,wb:2.7,n:155,sh:'flake'}, cre:'mammoth', moon:31, sun:['#eef5fa',.18,25,.45]},
+ {at:1.00e4, name:'Us', sky:['#24415f','#d2dce2'], hz:'#3b4d57', gnd:'#5e6c72', ridge:.5,
+  p:{vy:-2,vx:7,sz:1.5,c:[255,240,210],a:.35,gl:.5,wb:.9,n:75,sh:'dot'}, cre:'human', moon:29, sun:['#ffffff',.16,25,.55]},
+ {at:0,     name:'Now', sky:['#101d2d','#e9edf1'], hz:'#26313a', gnd:'#3a444b', ridge:.42,
+  p:{vy:-3,vx:5,sz:1.7,c:[255,220,160],a:.5,gl:.8,wb:.5,n:85,sh:'dot'}, cre:'city', moon:27, sun:['#ffffff',.15,25,.6]}
+];
+const hex=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+ENVS.forEach(e=>{ e._sky=[hex(e.sky[0]),hex(e.sky[1])]; e._hz=hex(e.hz); e._gnd=hex(e.gnd); e._sunc=hex(e.sun[0]); });
+
+const lerp=(a,b,t)=>a+(b-a)*t;
+const lerp3=(a,b,t)=>[lerp(a[0],b[0],t),lerp(a[1],b[1],t),lerp(a[2],b[2],t)];
+const rgb=c=>'rgb('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+')';
+const rgba=(c,a)=>'rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+','+a+')';
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const smooth=(e0,e1,x)=>{const t=clamp((x-e0)/(e1-e0),0,1);return t*t*(3-2*t);};
+
+// blended environment for a given year
+const EV = {};
+function envAt(y){
+  let i=0;
+  for(;i<ENVS.length-1;i++){ if(y>ENVS[i+1].at) break; }
+  const A=ENVS[i], B=ENVS[Math.min(i+1,ENVS.length-1)];
+  const t = A.at===B.at?0:clamp((A.at-y)/(A.at-B.at),0,1);
+  EV.A=A; EV.B=B; EV.t=t;
+  EV.name = t<.5?A.name:B.name;
+  EV.sky0=lerp3(A._sky[0],B._sky[0],t); EV.sky1=lerp3(A._sky[1],B._sky[1],t);
+  EV.hz=lerp3(A._hz,B._hz,t); EV.gnd=lerp3(A._gnd,B._gnd,t);
+  EV.ridge=lerp(A.ridge,B.ridge,t); EV.moon=lerp(A.moon,B.moon,t);
+  EV.sunc=lerp3(A._sunc,B._sunc,t);
+  EV.suny=lerp(A.sun[1],B.sun[1],t); EV.sunr=lerp(A.sun[2],B.sun[2],t); EV.suna=lerp(A.sun[3],B.sun[3],t);
+  const p=A.p,q=B.p;
+  EV.p={vy:lerp(p.vy,q.vy,t),vx:lerp(p.vx,q.vx,t),sz:lerp(p.sz,q.sz,t),
+        c:lerp3(p.c,q.c,t),a:lerp(p.a,q.a,t),gl:lerp(p.gl,q.gl,t),wb:lerp(p.wb,q.wb,t),
+        n:lerp(p.n,q.n,t),sh:t<.5?p.sh:q.sh};
+  return EV;
+}
+
+/* ============================================================
+   CANVAS
+   ============================================================ */
+const cv=document.getElementById('sky'), cx=cv.getContext('2d');
+let W=0,H=0,DPR=1,MOB=false;
+function sizeCanvas(){
+  MOB = window.innerWidth < 760;
+  DPR = Math.min(window.devicePixelRatio||1, MOB?1.5:2);
+  W = cv.clientWidth || window.innerWidth;
+  H = cv.clientHeight || window.innerHeight;
+  cv.width = Math.round(W*DPR); cv.height = Math.round(H*DPR);
+  cx.setTransform(DPR,0,0,DPR,0,0);
+}
+// iOS URL-bar collapse silently squashes a fixed canvas — re-sync from its own box,
+// not from window 'resize' (see the canvas-resync scar).
+new ResizeObserver(()=>{ sizeCanvas(); draw(true); }).observe(cv);
+sizeCanvas();
+
+// deterministic pseudo-random
+let _s=1;
+const rnd=()=>{ _s=(_s*16807)%2147483647; return _s/2147483647; };
+
+// ridgelines
+function ridge(seed, amp, freq){
+  _s=seed; const pts=[];
+  const a=[rnd()*6.3,rnd()*6.3,rnd()*6.3,rnd()*6.3];
+  for(let i=0;i<=64;i++){
+    const u=i/64;
+    pts.push(Math.sin(u*freq+a[0])*.55 + Math.sin(u*freq*2.3+a[1])*.28
+           + Math.sin(u*freq*4.7+a[2])*.13 + Math.sin(u*freq*9.1+a[3])*.06);
+  }
+  return {pts, amp};
+}
+const R_FAR = ridge(7, 1, 4.4), R_MID = ridge(23, .62, 7.6), R_NEAR = ridge(91, .34, 12.5);
+
+function drawRidge(r, baseY, colour, off, scale){
+  const n=r.pts.length-1, span=W*1.6, x0=-((off)%span);
+  cx.beginPath();
+  let firstX=null, lastX=0;
+  for(let k=0;k<2;k++){
+    for(let i=0;i<=n;i++){
+      const x=x0+k*span+(i/n)*span, yy=baseY - r.pts[i]*r.amp*scale;
+      if(firstX===null){ firstX=x; cx.moveTo(x,yy); } else cx.lineTo(x,yy);
+      lastX=x;
+    }
+  }
+  cx.lineTo(lastX,H+20); cx.lineTo(firstX,H+20); cx.closePath();
+  cx.fillStyle=colour; cx.fill();
+}
+
+/* -------- creature silhouettes (placeholders for real art) -------- */
+function volcano(x,b,s){cx.beginPath();cx.moveTo(x-s,b);cx.lineTo(x-s*.16,b-s*.92);cx.lineTo(x+s*.16,b-s*.92);cx.lineTo(x+s,b);cx.closePath();cx.fill();}
+function stroma(x,b,s){for(let i=-1;i<=1;i++){const h=s*(i===0?1:.66),w=s*.22;cx.beginPath();cx.moveTo(x+i*s*.42-w,b);cx.lineTo(x+i*s*.42-w*.6,b-h);cx.quadraticCurveTo(x+i*s*.42,b-h-w*.9,x+i*s*.42+w*.6,b-h);cx.lineTo(x+i*s*.42+w,b);cx.closePath();cx.fill();}}
+function trilo(x,y,s){cx.beginPath();cx.ellipse(x,y,s,s*.52,0,0,6.3);cx.fill();cx.beginPath();cx.arc(x-s*.62,y,s*.4,0,6.3);cx.fill();}
+function fern(x,b,s){cx.lineWidth=Math.max(1.2,s*.045);cx.strokeStyle=cx.fillStyle;cx.beginPath();cx.moveTo(x,b);cx.lineTo(x,b-s);cx.stroke();for(let i=1;i<=5;i++){const yy=b-s*(i/5.6), l=s*.42*(1-i/7);cx.beginPath();cx.moveTo(x,yy);cx.quadraticCurveTo(x-l*.6,yy-l*.2,x-l,yy-l*.55);cx.stroke();cx.beginPath();cx.moveTo(x,yy);cx.quadraticCurveTo(x+l*.6,yy-l*.2,x+l,yy-l*.55);cx.stroke();}}
+function conifer(x,b,s){for(let i=0;i<3;i++){const w=s*(.36-i*.09),yy=b-s*(i*.27);cx.beginPath();cx.moveTo(x-w,yy);cx.lineTo(x,yy-s*.46);cx.lineTo(x+w,yy);cx.closePath();cx.fill();}cx.fillRect(x-s*.035,b-s*.06,s*.07,s*.08);}
+function sauro(x,b,s){cx.beginPath();cx.ellipse(x,b-s*.44,s*.42,s*.2,0,0,6.3);cx.fill();
+  cx.lineWidth=s*.1;cx.strokeStyle=cx.fillStyle;cx.lineCap='round';
+  cx.beginPath();cx.moveTo(x+s*.34,b-s*.5);cx.quadraticCurveTo(x+s*.72,b-s*.9,x+s*.66,b-s*1.18);cx.stroke();
+  cx.beginPath();cx.moveTo(x-s*.36,b-s*.48);cx.quadraticCurveTo(x-s*.86,b-s*.5,x-s*1.0,b-s*.2);cx.stroke();
+  cx.lineWidth=s*.075;[-.22,-.02,.16,.3].forEach(o=>{cx.beginPath();cx.moveTo(x+s*o,b-s*.32);cx.lineTo(x+s*o,b);cx.stroke();});
+  cx.beginPath();cx.ellipse(x+s*.68,b-s*1.22,s*.1,s*.062,-.3,0,6.3);cx.fill();}
+function mammal(x,b,s){cx.beginPath();cx.ellipse(x,b-s*.42,s*.42,s*.24,0,0,6.3);cx.fill();
+  cx.lineWidth=s*.1;cx.strokeStyle=cx.fillStyle;cx.lineCap='round';
+  [-.26,-.08,.12,.28].forEach(o=>{cx.beginPath();cx.moveTo(x+s*o,b-s*.3);cx.lineTo(x+s*o,b);cx.stroke();});
+  cx.beginPath();cx.ellipse(x+s*.5,b-s*.62,s*.16,s*.13,.3,0,6.3);cx.fill();
+  cx.beginPath();cx.moveTo(x+s*.46,b-s*.74);cx.lineTo(x+s*.54,b-s*.94);cx.lineTo(x+s*.6,b-s*.72);cx.closePath();cx.fill();
+  cx.lineWidth=s*.055;cx.beginPath();cx.moveTo(x-s*.42,b-s*.5);cx.quadraticCurveTo(x-s*.66,b-s*.6,x-s*.68,b-s*.82);cx.stroke();}
+function mammoth(x,b,s){cx.beginPath();cx.moveTo(x-s*.46,b-s*.4);cx.quadraticCurveTo(x-s*.3,b-s*.92,x+s*.06,b-s*.86);
+  cx.quadraticCurveTo(x+s*.42,b-s*.8,x+s*.46,b-s*.42);cx.lineTo(x+s*.46,b-s*.3);cx.lineTo(x-s*.46,b-s*.3);cx.closePath();cx.fill();
+  cx.lineWidth=s*.12;cx.strokeStyle=cx.fillStyle;cx.lineCap='round';
+  [-.3,-.1,.14,.32].forEach(o=>{cx.beginPath();cx.moveTo(x+s*o,b-s*.34);cx.lineTo(x+s*o,b);cx.stroke();});
+  cx.beginPath();cx.ellipse(x+s*.52,b-s*.62,s*.2,s*.19,0,0,6.3);cx.fill();
+  cx.lineWidth=s*.085;cx.beginPath();cx.moveTo(x+s*.62,b-s*.5);cx.quadraticCurveTo(x+s*.74,b-s*.26,x+s*.6,b-s*.1);cx.stroke();
+  cx.lineWidth=s*.06;cx.beginPath();cx.moveTo(x+s*.6,b-s*.56);cx.quadraticCurveTo(x+s*.88,b-s*.44,x+s*.84,b-s*.66);cx.stroke();}
+function human(x,b,s){cx.beginPath();cx.arc(x,b-s*.86,s*.13,0,6.3);cx.fill();
+  cx.lineWidth=s*.1;cx.strokeStyle=cx.fillStyle;cx.lineCap='round';
+  cx.beginPath();cx.moveTo(x,b-s*.72);cx.lineTo(x,b-s*.4);cx.stroke();
+  cx.beginPath();cx.moveTo(x,b-s*.4);cx.lineTo(x-s*.14,b);cx.moveTo(x,b-s*.4);cx.lineTo(x+s*.14,b);cx.stroke();
+  cx.beginPath();cx.moveTo(x-s*.16,b-s*.46);cx.lineTo(x,b-s*.66);cx.lineTo(x+s*.16,b-s*.46);cx.stroke();}
+function city(x,b,s){_s=Math.round(x)+17;for(let i=0;i<7;i++){const w=s*(.1+rnd()*.1),h=s*(.25+rnd()*.75),xx=x-s*.5+i*s*.15;
+  cx.fillRect(xx,b-h,w,h);}}
+function grass(x,b,s){cx.lineWidth=Math.max(1,s*.06);cx.strokeStyle=cx.fillStyle;_s=Math.round(x)+3;
+  for(let i=0;i<7;i++){const o=(rnd()-.5)*s*.9,h=s*(.5+rnd()*.5);cx.beginPath();cx.moveTo(x+o,b);cx.quadraticCurveTo(x+o+h*.2,b-h*.6,x+o+h*.45,b-h);cx.stroke();}}
+
+const CRE = {
+  volcano:{n:3, sp:.004, draw:(x,b,s)=>volcano(x,b,s*1.5), sc:120, ground:true},
+  stroma :{n:5, sp:.006, draw:stroma, sc:46, ground:true},
+  trilo  :{n:7, sp:.020, draw:(x,b,s,sd)=>trilo(x,b-70-sd*300,s*.5), sc:34, ground:false},
+  fern   :{n:6, sp:.005, draw:fern, sc:120, ground:true},
+  sauro  :{n:3, sp:.011, draw:sauro, sc:88, ground:true},
+  mammal :{n:4, sp:.014, draw:mammal, sc:44, ground:true},
+  mammoth:{n:3, sp:.010, draw:mammoth, sc:62, ground:true},
+  human  :{n:4, sp:.012, draw:human, sc:52, ground:true},
+  city   :{n:3, sp:.002, draw:city, sc:150, ground:true},
+  none   :{n:0}
+};
+function drawCre(kind, alpha, hzY, tms, colour){
+  const C=CRE[kind]; if(!C||!C.n||alpha<=.01) return;
+  cx.save(); cx.globalAlpha=alpha; cx.fillStyle=colour; cx.strokeStyle=colour;
+  const span=W+320, cnt=MOB?Math.max(1,C.n-1):C.n;
+  for(let i=0;i<cnt;i++){
+    const seed=(i*0.61803398875)%1;                 // golden-ratio spread, not clumped
+    const x=((tms*C.sp*(0.6+seed*0.8) + seed*span) % span) - 160;
+    const s=C.sc*(0.72+seed*0.6)*(MOB?.78:1);
+    C.draw(x, C.ground?hzY+s*0.06:hzY, s, seed);
+  }
+  cx.restore();
+}
+
+/* -------- particles -------- */
+const MAXP=200;
+const P=[];
+for(let i=0;i<MAXP;i++) P.push({x:Math.random(),y:Math.random(),ph:Math.random()*6.3,r:Math.random()});
+let lastT=0;
+function drawParticles(dt){
+  const p=EV.p, n=Math.round(p.n*(MOB?.55:1));
+  cx.save();
+  for(let i=0;i<n;i++){
+    const q=P[i];
+    q.y += (p.vy*5 * dt/1000) / (H||800);   // vy/vx are px per second (×5)
+    q.x += (p.vx*5 * dt/1000) / (W||1200);
+    if(q.y<-.05) q.y=1.05; if(q.y>1.05) q.y=-.05;
+    if(q.x>1.05) q.x=-.05; if(q.x<-.05) q.x=1.05;
+    q.ph += dt*.0016;
+    const wob=Math.sin(q.ph)*p.wb*7;
+    const x=q.x*W+wob, y=q.y*H, s=p.sz*(.5+q.r);
+    const a=p.a*(.4+q.r*.6);
+    if(p.gl>.4){ cx.shadowBlur=s*5*p.gl; cx.shadowColor=rgba(p.c,a); } else cx.shadowBlur=0;
+    cx.fillStyle=rgba(p.c,a); cx.strokeStyle=rgba(p.c,a);
+    if(p.sh==='ring'){ cx.lineWidth=Math.max(.8,s*.28); cx.beginPath(); cx.arc(x,y,s,0,6.3); cx.stroke(); }
+    else if(p.sh==='flake'){ cx.beginPath(); cx.arc(x,y,s*.62,0,6.3); cx.fill(); }
+    else { cx.beginPath(); cx.arc(x,y,s,0,6.3); cx.fill(); }
+  }
+  cx.restore(); cx.shadowBlur=0;
+}
+
+/* ============================================================
+   DOM refs
+   ============================================================ */
+const $=s=>document.getElementById(s);
+const flow=$('flow'), bigEl=$('big'), biguEl=$('bigu'), envEl=$('env'), metaEl=$('meta'),
+      railfill=$('railfill'), brk=$('brk'), coda=$('coda'), actEl=$('act'), watchEl=$('watch');
+
+$('spacer').style.height=(TOTAL+window.innerHeight)+'px';
+window.addEventListener('resize',()=>{ $('spacer').style.height=(TOTAL+window.innerHeight)+'px'; });
+
+/* -------- milestone nodes, lanes, dwell -------- */
+function msY(ya){
+  for(const a of ACTS){ if(ya<=a.from && (ya>a.to || a.to===0)) return a.s + (a.from-ya)/(a.from-a.to)*a.px; }
+  return 0;
+}
+const nodes = MS.map((m,i)=>{
+  const el=document.createElement('div');
+  el.className='ms '+(i%2?'R':'L');
+  el.innerHTML='<div class="rule"></div><div class="d"></div><div class="n"></div><div class="s"></div>';
+  el.querySelector('.d').textContent=dateLabel(m[0]);
+  el.querySelector('.n').textContent=m[1];
+  el.querySelector('.s').textContent=m[2]||'';
+  el.style.opacity=0; el.style.transform='translate3d(0,-9999px,0)';
+  flow.appendChild(el);
+  return {el, ya:m[0], y:msY(m[0]), lane:i%2, lvl:Math.floor(i/2)%2, dwell:520};
+});
+// adaptive dwell so dense stretches never stack
+for(let i=0;i<nodes.length;i++){
+  const gap = (i<nodes.length-1) ? nodes[i+1].y-nodes[i].y : 900;
+  nodes[i].dwell = clamp(gap*0.92, 110, 640);
+}
+
+function dateLabel(y){
+  if(y<=0) return 'today';
+  if(y>=1e9) return (y/1e9).toFixed(2)+' billion years ago';
+  if(y>=1e6) return (y/1e6>=100?Math.round(y/1e6):(y/1e6).toFixed(1))+' million years ago';
+  if(y>=1e3) return Math.round(y).toLocaleString('en-US')+' years ago';
+  return Math.round(y)+' years ago';
+}
+function bigParts(y){
+  if(y<=0) return ['Now',''];
+  if(y>=1e9) return [(y/1e9).toFixed(2),'billion years ago'];
+  if(y>=1e6) return [(y/1e6>=100?Math.round(y/1e6).toString():(y/1e6).toFixed(1)),'million years ago'];
+  if(y>=1e4) return [Math.round(y).toLocaleString('en-US'),'years ago'];
+  if(y>=1e3) return [Math.round(y).toLocaleString('en-US'),'years ago'];
+  return [Math.round(y).toLocaleString('en-US'),'years ago'];
+}
+function pct(v){
+  if(v<99) return v.toFixed(2)+'%';
+  if(v<99.99) return v.toFixed(4)+'%';
+  if(v<99.9999) return v.toFixed(6)+'%';
+  return v.toFixed(7)+'%';
+}
+
+/* -------- scale-break copy -------- */
+const BREAKS=[
+  {s:B1S,e:B1E, rem:'At <b>46,000</b> years per pixel, everything still to come — every hominin, every human, every year of everything you have ever heard of — fits in <b>152 pixels</b>.',
+   a:'46,000 years per pixel', b:'280 years per pixel', z:'164×'},
+  {s:B2S,e:B2E, rem:'At <b>280</b> years per pixel, all of cave art, farming, writing, cities and machines fits in <b>232 pixels</b>.',
+   a:'280 years per pixel', b:'4 years per pixel', z:'70×'}
+];
+
+/* -------- coda -------- */
+(function(){
+  const rows=[
+    {cap:'Pass 1 — 4.6 billion years, 46,000 years per pixel', w:100, pins:[88.28,98.57]},
+    {cap:'Pass 2 — 7 million years, 280 years per pixel  ·  0.152% of the bar above', w:0.152, pins:[]},
+    {cap:'Pass 3 — 65,000 years, 4 years per pixel  ·  0.0014% of the bar above', w:0.0014, pins:[]}
+  ];
+  const host=$('nests');
+  rows.forEach(r=>{
+    const d=document.createElement('div'); d.className='nest';
+    d.innerHTML='<div class="cap">'+r.cap+'</div><div class="bar"><i style="left:0;width:'+Math.max(r.w,0.08)+'%"></i></div>';
+    r.pins.forEach(p=>{ const u=document.createElement('u'); u.style.left=p+'%'; d.querySelector('.bar').appendChild(u); });
+    host.appendChild(d);
+  });
+  $('codaline').innerHTML='You just scrolled <b>151,268</b> pixels. <b>99.85%</b> of them were spent before the first hominin. To show you the rest I had to change the scale twice — <b>11,500×</b> in total. Everything a person has ever built sits in the last <b>0.00026%</b> of Earth’s history: a quarter of one thousandth of one percent.';
+})();
+
+/* ============================================================
+   FRAME
+   ============================================================ */
+let sy=0, need=true, t0=null, done=false;
+window.addEventListener('scroll',()=>{ need=true; },{passive:true});
+
+function draw(force){
+  const nsy = window.scrollY||window.pageYOffset||0;
+  const moved = nsy!==sy;
+  sy = nsy;
+  if(!force && !moved && RM) return;
+
+  const y = yearAt(sy);
+  const act = actAt(sy);
+  envAt(y);
+
+  const now = performance.now();
+  const dt = Math.min(48, now-(lastT||now)); lastT=now;
+  const tms = RM ? 0 : now;
+
+  /* ---- canvas ---- */
+  const hzY = H*0.70;
+  const g = cx.createLinearGradient(0,0,0,hzY);
+  g.addColorStop(0,rgb(EV.sky0)); g.addColorStop(1,rgb(EV.sky1));
+  cx.fillStyle=g; cx.fillRect(0,0,W,hzY+2);
+
+  // sun
+  cx.save();
+  const sx=W*0.79, syy=H*EV.suny;
+  const gg=cx.createRadialGradient(sx,syy,0,sx,syy,EV.sunr*7);
+  gg.addColorStop(0,rgba(EV.sunc,EV.suna)); gg.addColorStop(1,rgba(EV.sunc,0));
+  cx.fillStyle=gg; cx.fillRect(sx-EV.sunr*7,syy-EV.sunr*7,EV.sunr*14,EV.sunr*14);
+  cx.globalAlpha=Math.min(1,EV.suna+.35); cx.fillStyle=rgb(EV.sunc);
+  cx.beginPath(); cx.arc(sx,syy,EV.sunr*(MOB?.7:1),0,6.3); cx.fill();
+  cx.restore();
+
+  // moon — enormous and close early, small and far by now
+  if(y < 4.51e9){
+    const mr=EV.moon*(MOB?.66:1)*.82, mx=W*0.27, my=H*0.135;
+    cx.save(); cx.globalAlpha=.44;
+    cx.fillStyle=rgba(lerp3(EV.sky1,[255,255,255],.55),1);
+    cx.beginPath(); cx.arc(mx,my,mr,0,6.3); cx.fill();
+    cx.globalAlpha=.16; cx.fillStyle=rgb(EV.sky0);
+    cx.beginPath(); cx.arc(mx-mr*.28,my-mr*.18,mr*.9,0,6.3); cx.fill();
+    cx.restore();
+  }
+
+  // atmospheric haze sitting on the horizon — gives the ranges depth
+  const hz1=cx.createLinearGradient(0,hzY-H*0.20,0,hzY+8);
+  hz1.addColorStop(0,rgba(EV.sky1,0)); hz1.addColorStop(1,rgba(lerp3(EV.sky1,[255,255,255],.22),.5));
+  cx.fillStyle=hz1; cx.fillRect(0,hzY-H*0.20,W,H*0.20+8);
+
+  const par = sy;
+  drawRidge(R_FAR,  hzY+6,  rgba(lerp3(EV.hz,EV.sky1,.46),1), par*0.055, EV.ridge*H*0.15);
+  drawRidge(R_MID,  hzY+18, rgba(lerp3(EV.hz,EV.sky1,.20),1), par*0.115, EV.ridge*H*0.11);
+
+  // ground band
+  const gg2=cx.createLinearGradient(0,hzY+16,0,H);
+  gg2.addColorStop(0,rgb(lerp3(EV.gnd,EV.sky1,.22))); gg2.addColorStop(1,rgb(lerp3(EV.gnd,[0,0,0],.35)));
+  cx.fillStyle=gg2; cx.fillRect(0,hzY+16,W,H-hzY);
+
+  // creatures — crossfade between the two bracketing environments
+  const creCol = rgba(lerp3(EV.gnd,[0,0,0],.55),1);
+  if(EV.A.cre===EV.B.cre) drawCre(EV.A.cre,.92,hzY+16,tms,creCol);
+  else { drawCre(EV.A.cre,(1-EV.t)*.92,hzY+16,tms,creCol); drawCre(EV.B.cre,EV.t*.92,hzY+16,tms,creCol); }
+
+  drawRidge(R_NEAR, H+4, rgba(lerp3(EV.gnd,[0,0,0],.4),1), par*0.24, EV.ridge*H*0.06);
+  drawParticles(dt);
+
+  /* ---- milestones ---- */
+  const vh=H;
+  for(const n of nodes){
+    const raw = n.y - sy;
+    const vd = raw>0 ? raw : (raw < -n.dwell ? raw+n.dwell : 0);
+    if(Math.abs(vd) > vh*0.62){
+      if(n.el.style.opacity!=='0'){ n.el.style.opacity='0'; n.el.style.transform='translate3d(0,-9999px,0)'; }
+      continue;
+    }
+    const anchor = vh*(n.lvl? .50 : .245);
+    n.el.style.transform='translate3d(0,'+(anchor+vd)+'px,0)';
+    n.el.style.opacity = String(1 - smooth(vh*0.14, vh*0.58, Math.abs(vd)));
+  }
+
+  /* ---- HUD ---- */
+  const bp=bigParts(y);
+  bigEl.textContent=bp[0]; biguEl.textContent=bp[1];
+  envEl.textContent=EV.name;
+  const elapsed=(T0-y)/T0*100;
+  metaEl.innerHTML = act.rateTxt + '<br>' + pct(elapsed) + ' of Earth’s history elapsed';
+  railfill.style.height=(elapsed)+'%';
+
+  // light background → dark text
+  const lum = 0.299*EV.sky1[0]+0.587*EV.sky1[1]+0.114*EV.sky1[2];
+  document.body.style.color = lum>150 ? '#12161a' : '#f4f1ea';
+
+  /* ---- scale break ---- */
+  let inBrk=false;
+  for(const b of BREAKS){
+    if(sy>=b.s-40 && sy<=b.e+40){
+      inBrk=true;
+      const q=clamp((sy-b.s)/(b.e-b.s),0,1);
+      brk.style.opacity = String(Math.min(1, smooth(0,.14,q)) * (1-smooth(.86,1,q)));
+      $('brkrem').innerHTML=b.rem; $('brka').textContent=b.a; $('brkb').textContent=b.b; $('brkz').textContent=b.z;
+      $('ruler').style.width = (280 - 250*smooth(.25,.8,q)) + 'px';
+      $('brka').style.opacity = String(1-smooth(.3,.62,q));
+      $('brkb').style.opacity = String(smooth(.42,.75,q));
+      break;
+    }
+  }
+  if(!inBrk && brk.style.opacity!=='0') brk.style.opacity='0';
+  flow.style.opacity = inBrk ? '0' : '1';
+
+  /* ---- coda ---- */
+  if(sy>CS){
+    const q=clamp((sy-CS)/(CODA*0.3),0,1);
+    coda.style.opacity=String(q); flow.style.opacity=String(1-q);
+    $('hud').style.opacity=String(1-q);
+  } else if(coda.style.opacity!=='0'){
+    coda.style.opacity='0'; $('hud').style.opacity='1';
+  }
+
+  actEl.textContent='Pass '+act.i+' of 3';
+  tick();
+}
+
+/* -------- animation loop (still alive when you stop scrolling) -------- */
+function loop(){ draw(false); requestAnimationFrame(loop); }
+if(RM){ window.addEventListener('scroll',()=>draw(true),{passive:true}); draw(true); }
+else loop();
+
+/* -------- stopwatch -------- */
+function tick(){
+  if(t0===null && sy>20) t0=performance.now();
+  const p=Math.min(100,Math.round(sy/TOTAL*100));
+  if(p>=100) done=true;
+  const s=t0===null?0:Math.floor((performance.now()-t0)/1000);
+  watchEl.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')+' · '+p+'%';
+}
+
+$('top').onclick=()=>{ window.scrollTo(0,0); t0=null; done=false; };
+$('v1').onclick=()=>{ location.href='v1-three-variants.html?variant=A'; };
+window.scrollTo(0,0);
+draw(true);
+</script>
+</body>
+</html>

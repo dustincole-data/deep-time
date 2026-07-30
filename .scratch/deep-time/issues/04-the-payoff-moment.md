@@ -1,7 +1,8 @@
 # 04 — The payoff moment
 
 Type: prototype
-Status: open
+Status: claimed
+Assignee: Dustin
 Parent: [Deep Time — Wayfinder Map](../map.md)
 
 **Unblocked.** [Scroll & scale mechanic](01-scroll-scale-mechanic.md) is resolved, and it settled more of this than expected — the reveal's *form* is now fixed: all forty moments appear at once as labels fanned down the screen, each joined by a leader line to its true position on the persistent right-hand true-scale bar. A rough version exists in the v3 prototype. What remains open below is the **staging**, not the form.

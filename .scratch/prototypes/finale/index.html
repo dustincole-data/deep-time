@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deep Time — the payoff moment (ticket 04)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!--
+  THROWAWAY PROTOTYPE — Deep Time ticket 04 (the payoff moment).
+  Decides STAGING only. The form is fixed by ticket 01: 40 labels fanned down the
+  screen, each joined by a leader line to its TRUE position on the persistent
+  right-hand true-scale bar; 30 cascade, the last 10 land on one pixel.
+
+  Real data: the 30 M-weight milestones + the withheld 10, from ticket 02.
+  1 px = 40,000 yr. INTRO 1,600 + RUN 115,000 + FINALE 7,000 = 123,600 px.
+  This page renders the last 2,400 px of the run, then the whole 7,000 px finale.
+
+  Art is a rough placeholder — ticket 03/08 own it. Nothing here is art direction.
+-->
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:auto}
+  body{font-family:Archivo,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:#05070a;color:#f4f1ea;overflow-x:hidden;-webkit-font-smoothing:antialiased;
+    font-variant-numeric:tabular-nums}
+  #spacer{width:1px}
+  #sky{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block}
+  #vig{position:fixed;inset:0;z-index:1;pointer-events:none;
+    background:radial-gradient(130% 100% at 50% 40%,transparent 45%,rgba(0,0,0,.5) 100%)}
+
+  /* ---- the run's last cards (one box each, per 06's layout contract) ---- */
+  #flow{position:fixed;inset:0;z-index:2;pointer-events:none}
+  .ms{position:absolute;width:34%;will-change:transform,opacity;opacity:0}
+  .ms .art{height:150px;margin-bottom:16px;position:relative}
+  .ms .art i{position:absolute;left:0;bottom:0;display:block;border-radius:50%;
+    background:radial-gradient(60% 60% at 38% 34%,rgba(255,255,255,.5),rgba(255,255,255,.06) 70%,transparent);
+    outline:1px dashed rgba(255,255,255,.16);outline-offset:5px}
+  .ms .rule{height:1px;background:currentColor;opacity:.45;width:42px;margin-bottom:12px}
+  .ms .d{font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;opacity:.72;margin-bottom:.55em}
+  .ms .n{font-size:clamp(21px,2.6vw,35px);line-height:1.09;letter-spacing:-.022em;font-weight:600;
+    text-shadow:0 2px 26px rgba(0,0,0,.45)}
+  .ms .s{font-size:14px;line-height:1.5;opacity:.78;margin-top:.7em;max-width:27em}
+
+  /* ---- HUD clock: reserved zone, bottom-left ---- */
+  #hud{position:fixed;z-index:3;left:max(20px,3.2vw);bottom:max(74px,7.5vh);pointer-events:none;
+    text-shadow:0 2px 24px rgba(0,0,0,.5)}
+  #big{font-size:clamp(36px,6.2vw,72px);font-weight:650;letter-spacing:-.038em;line-height:.94}
+  #bigu{font-size:clamp(11px,1.3vw,14px);letter-spacing:.22em;text-transform:uppercase;opacity:.72;margin-top:.7em}
+  #meta{font-size:11.5px;opacity:.6;margin-top:.75em;letter-spacing:.03em;line-height:1.75}
+
+  /* ---- the true-scale bar: reserved zone, right edge, PERSISTS into the finale ---- */
+  #tsb{position:fixed;z-index:4;right:max(18px,2vw);top:13vh;bottom:19vh;width:4px;pointer-events:none}
+  #tsbtrack{position:absolute;inset:0;background:currentColor;opacity:.18;border-radius:2px}
+  #tsbfill{position:absolute;left:0;top:0;width:4px;background:currentColor;opacity:.6;border-radius:2px}
+  #tsbhead{position:absolute;left:-7px;width:18px;height:2px;background:currentColor;box-shadow:0 0 0 3px rgba(0,0,0,.22)}
+  .tsbtick{position:absolute;left:-3px;width:10px;height:1px;background:currentColor;opacity:.75}
+  /* 06's contract: the caption runs VERTICALLY so it stays inside the bar's own zone */
+  #tsbcap{position:absolute;right:10px;top:0;font-size:9px;letter-spacing:.2em;text-transform:uppercase;
+    opacity:.55;white-space:nowrap;writing-mode:vertical-rl}
+  #tsbnum{position:absolute;right:10px;bottom:0;font-size:10px;opacity:.7;white-space:nowrap;writing-mode:vertical-rl}
+  #tsbend{position:absolute;left:-9px;bottom:-1px;width:22px;height:2px;background:#ffd9a0;opacity:0;
+    box-shadow:0 0 10px 2px rgba(255,200,120,.7)}
+
+  /* ---- the fan ---- */
+  #fan{position:fixed;inset:0;z-index:5;pointer-events:none;opacity:0}
+  #fansvg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .frow{position:absolute;text-align:right;white-space:nowrap;opacity:0;pointer-events:none}
+  .frow .fw{display:inline-block;pointer-events:auto;padding:1px 0 1px 7px;border-radius:3px}
+  .frow .fd{opacity:.5;margin-right:.9em;letter-spacing:.04em}
+  .frow .fn{font-weight:500;letter-spacing:-.004em}
+  .frow.q .fd::after{content:"*";opacity:.85;margin-left:.15em}
+  .frow.ten .fn{font-weight:600;color:#ffd9a0}
+  .frow.ten .fd{color:#ffd9a0}
+  #tenrule{position:absolute;height:1px;background:#ffd9a0;opacity:0}
+  #tencap{position:absolute;font-size:9px;letter-spacing:.24em;text-transform:uppercase;
+    color:#ffd9a0;opacity:0;text-align:right;white-space:nowrap;line-height:1}
+  #tencap span{display:inline-block}
+  #fan.links .frow .fw{cursor:pointer}
+  #fan.links .frow .fw:hover{background:rgba(255,255,255,.1)}
+
+  /* ---- closing line + ending, bottom-left free zone ---- */
+  #close{position:absolute;left:max(20px,3.4vw);bottom:max(20px,5.5vh);max-width:min(430px,42vw);opacity:0}
+  #close .kick{font-size:10px;letter-spacing:.28em;text-transform:uppercase;opacity:.45;margin-bottom:1em}
+  #close .line{font-size:clamp(14px,1.5vw,19px);line-height:1.55;font-weight:400}
+  #close .line b{font-weight:650}
+  #close .ep{font-size:13px;line-height:1.6;opacity:.62;margin-top:1.5em}
+  #close .again{margin-top:1.8em;font-size:10px;letter-spacing:.28em;text-transform:uppercase;opacity:.5}
+  #close .again span{border-bottom:1px solid currentColor;padding-bottom:3px}
+  #fnote{position:absolute;right:max(18px,2vw);bottom:1.4vh;font-size:9px;letter-spacing:.13em;
+    text-transform:uppercase;opacity:.28}
+
+  /* ---- prototype chrome: docked top-left, clear of the fan and the closing block ---- */
+  #bar{position:fixed;left:12px;top:118px;z-index:30;display:flex;flex-direction:column;
+    align-items:stretch;gap:3px;background:#fff;color:#14171a;border-radius:12px;
+    box-shadow:0 8px 30px rgba(0,0,0,.55);font-size:12px;padding:7px;width:246px}
+  #bar .grp{display:flex;align-items:center;flex-wrap:wrap;gap:2px;border-top:1px solid #e8e5e0;padding-top:4px}
+  #bar .grp:first-child{border-top:0;padding-top:0}
+  #bar .lbl{font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;opacity:.5;width:100%;margin-bottom:1px}
+  #bar button{border:0;background:transparent;color:inherit;font:inherit;padding:5px 8px;cursor:pointer;
+    border-radius:8px;line-height:1;white-space:nowrap}
+  #bar button:hover{background:#edeae5}
+  #bar button.on{background:#14171a;color:#fff}
+  #bar.hid{display:none}
+  #hide{position:fixed;left:12px;top:92px;z-index:31;border:0;background:#fff;color:#14171a;
+    border-radius:8px;padding:5px 9px;font:inherit;font-size:11px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+  #readout{position:fixed;left:12px;top:12px;z-index:30;background:rgba(5,7,10,.86);
+    border:1px solid rgba(255,255,255,.16);border-radius:9px;padding:9px 11px;font-size:10.5px;
+    line-height:1.65;color:#eae7e0;width:246px}
+  #readout b{letter-spacing:.13em;font-size:9px;text-transform:uppercase;opacity:.6;display:block;margin-bottom:.5em}
+  #readout .beat{font-weight:650;font-size:12px;letter-spacing:.02em}
+  #check{position:fixed;right:60px;top:12px;z-index:30;background:rgba(5,7,10,.94);
+    border:1px solid rgba(255,255,255,.16);border-radius:9px;padding:10px 12px;font-size:10.5px;
+    line-height:1.7;color:#eae7e0;max-width:300px;display:none;white-space:pre-wrap}
+  #check b{letter-spacing:.13em;font-size:9px;text-transform:uppercase;opacity:.6;display:block;margin-bottom:.5em}
+  .ok{color:#8fe3a8}.bad{color:#ff9a8f}
+
+  @media (max-width:760px){
+    .ms{width:84%;left:6% !important}
+    .ms .s{display:none}
+    .ms .art{height:120px}
+    #hud{bottom:max(78px,9vh);left:6%}
+    #tsb{right:10px;top:11vh;bottom:20vh;width:3px}
+    #tsbfill{width:3px}
+    #tsbcap,#tsbnum{font-size:8.5px}
+    #close{max-width:78vw;bottom:max(16px,4vh)}
+    #readout{font-size:9.5px;width:150px;padding:7px 9px}
+    #bar{font-size:10.5px;width:150px;top:96px}
+    #hide{top:70px}
+    #check{right:8px;left:8px;max-width:none;top:auto;bottom:8px}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="sky"></canvas>
+<div id="vig"></div>
+<div id="flow"></div>
+
+<div id="hud">
+  <div id="big">33.9</div>
+  <div id="bigu">million years ago</div>
+  <div id="meta"></div>
+</div>
+
+<div id="tsb">
+  <div id="tsbcap">true scale</div>
+  <div id="tsbtrack"></div>
+  <div id="tsbfill"></div>
+  <div id="tsbhead"></div>
+  <div id="tsbend"></div>
+  <div id="tsbnum">99.9%</div>
+</div>
+
+<div id="fan">
+  <svg id="fansvg"></svg>
+  <div id="tenrule"></div>
+  <div id="tencap"><span>never drawn on the page you just scrolled</span></div>
+  <div id="close">
+    <div class="kick">every moment, where it really is</div>
+    <div class="line" id="cline"></div>
+    <div class="ep" id="cep"></div>
+    <div class="again"><span>↑ again</span></div>
+  </div>
+  <div id="fnote">prototype · ticket 04</div>
+</div>
+
+<div id="spacer"></div>
+
+<div id="readout"><b>beat</b><div class="beat" id="rbeat">—</div><div id="rpx"></div><div id="rsec"></div></div>
+<div id="check"><b>no-collision sweep</b><div id="cout"></div></div>
+
+<button id="hide">hide controls</button>
+<div id="bar">
+  <div class="grp">
+    <button id="bplay">▶ play</button>
+    <button id="btop">⟲ run-in</button>
+    <button id="bfin">→ finale</button>
+  </div>
+  <div class="grp"><span class="lbl">7 Ma card</span>
+    <button data-k="handoff" data-v="A">hard release</button>
+    <button data-k="handoff" data-v="B">let it finish</button>
+  </div>
+  <div class="grp"><span class="lbl">the ten</span>
+    <button data-k="ten" data-v="A">together</button>
+    <button data-k="ten" data-v="B">fast run</button>
+  </div>
+  <div class="grp"><span class="lbl">line</span>
+    <button data-k="line" data-v="A">pixels</button>
+    <button data-k="line" data-v="B">your clock</button>
+    <button data-k="line" data-v="C">one pixel</button>
+    <button data-k="line" data-v="D">metres</button>
+  </div>
+  <div class="grp"><span class="lbl">placed</span>
+    <button data-k="pos" data-v="beside">beside</button>
+    <button data-k="pos" data-v="after">after</button>
+  </div>
+  <div class="grp"><span class="lbl">left holding</span>
+    <button data-k="end" data-v="A">silence</button>
+    <button data-k="end" data-v="B">what didn't fit</button>
+    <button data-k="end" data-v="C">share</button>
+  </div>
+  <div class="grp"><button id="bcheck">check</button></div>
+</div>
+
+<script>
+'use strict';
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = id => document.getElementById(id);
+
+/* ============================================================
+   ONE SCALE. 40,000 years per pixel. Never changed. (ticket 01)
+   ============================================================ */
+const T0 = 4.6e9, YRPX = 40000;
+const INTRO = 1600, RUN = 115000, FIN = 7000;
+const RUN_END = INTRO + RUN;          // 116,600
+const TOTAL   = RUN_END + FIN;        // 123,600
+
+/* this page shows the last LEAD px of the run, then the whole finale */
+const LEAD = 2400;
+const OFF  = RUN_END - LEAD;          // proto sy 0  ==  real sy 114,200
+const realY = sy => sy + OFF;
+const yearAt = ry => ry >= RUN_END ? 0 : Math.max(0, T0 - (ry - INTRO) * YRPX);
+
+/* ============================================================
+   THE SET — ticket 02, verified. 30 M-weight milestones during the
+   run (these are the ones with ticks on the bar), then the withheld 10.
+   [Ma, px, name, contested?]
+   ============================================================ */
+const M30 = [
+  [4567,   2425,'The Solar System forms',0],
+  [4540,   3100,'Earth reaches full size',0],
+  [4510,   3850,'The Moon is torn out',1],
+  [4404,   6500,'Liquid water',0],
+  [4031,  15825,'The oldest rock we still have',0],
+  [3700,  24100,'The first trace of life',1],
+  [3480,  29600,'Stromatolites',1],
+  [3260,  35100,'A fifty-kilometre asteroid',0],
+  [3000,  41600,'Photosynthesis',1],
+  [2900,  44100,'The first ice age',0],
+  [2430,  55850,'The Great Oxidation begins',1],
+  [2400,  56600,'The Huronian glaciation',0],
+  [2220,  61100,'The Great Oxidation ends',1],
+  [1635,  75725,'The first complex cells',0],
+  [1047,  90425,'Sex',0],
+  [1000,  91600,'Rodinia',0],
+  [717,   98675,'Snowball Earth',0],
+  [635,  100725,'The ice breaks for good',1],
+  [574,  102250,'Charnia',0],
+  [538.8,103130,'The Cambrian begins',0],
+  [470,  104850,'Plants reach land',0],
+  [445,  105475,'The Late Ordovician extinction',0],
+  [375,  107225,'Tiktaalik',0],
+  [251.9,110302,'The Great Dying',0],
+  [227,  110925,'The first dinosaurs, and the first mammals',1],
+  [201.4,111565,'The Triassic–Jurassic extinction',0],
+  [125,  113475,'The first flowers',1],
+  [66.04,114949,'Chicxulub',0],
+  [33.9, 115752,'Antarctica freezes',0],
+  [7,    116425,'The human line splits from the chimpanzees',1]
+];
+/* the withheld ten — label-only, never drawn during the scroll (ticket 01/02) */
+const TEN = [
+  [4.4e6, 'Ardipithecus walks upright',0],
+  [3.3e6, 'The first stone tools',0],
+  [2.8e6, 'The first Homo',0],
+  [1.9e6, 'Homo erectus',0],
+  [8.0e5, 'Fire, kept',1],
+  [3.0e5, 'Homo sapiens',0],
+  [5.12e4,'The oldest known picture',0],
+  [1.2e4, 'Farming',0],
+  [5.4e3, 'Writing',0],
+  [250,   'The industrial revolution',0]
+];
+const ROWS = M30.map(m => ({ya:m[0]*1e6, px:m[1], name:m[2], q:m[3], ten:false}))
+  .concat(TEN.map(t => ({ya:t[0], px:INTRO + (T0-t[0])/YRPX, name:t[1], q:t[2], ten:true})));
+
+/* the last three cards of the run, so the handoff is judgeable */
+const CARDS = [
+  {px:114949,d:'66 million years ago', n:'Chicxulub',  s:'A 10 km rock, 66 million years ago. Everything larger than a badger dies.', r:120},
+  {px:115752,d:'33.9 million years ago',n:'Antarctica freezes', s:'The greenhouse world ends and the modern icehouse begins.', r:96},
+  {px:116425,d:'7 million years ago',  n:'The human line splits from the chimpanzees',
+   s:'Everything you would call human happens after this point — the next 175 pixels.', r:104}
+];
+/* dwell: gap-adaptive, clamped 150–660 (ticket 01) */
+const gapOf = i => i === 0 ? 900 : CARDS[i].px - CARDS[i-1].px;
+CARDS.forEach((c,i)=>{ c.dwell = Math.max(150, Math.min(660, gapOf(i))); });
+const CARD7 = CARDS[2];
+const OVERRUN = Math.max(0, CARD7.px + CARD7.dwell - RUN_END);   // 485 px into the finale
+
+/* ============================================================
+   VARIANTS
+   ============================================================ */
+const qs = new URLSearchParams(location.search);
+const V = {
+  handoff: qs.get('handoff') || 'B',
+  ten:     qs.get('ten')     || 'B',
+  line:    qs.get('line')    || 'A',
+  pos:     qs.get('pos')     || 'beside',
+  end:     qs.get('end')     || 'B'
+};
+
+/* ============================================================
+   BEATS — all in px from RUN_END, summing to FIN (7,000)
+   ============================================================ */
+let B = {};
+function beats(){
+  const drain = V.handoff === 'B' ? OVERRUN + 40 : 300;   // let the 7 Ma card finish, or don't
+  const casc  = 3600;                                     // 30 rows, 120 px apart
+  const ten   = 600;
+  const b = {};
+  b.drainEnd  = drain;
+  b.cascStart = drain;            b.cascEnd = drain + casc;
+  b.breathEnd = b.cascEnd + 600;
+  b.tenStart  = b.breathEnd;      b.tenEnd  = b.breathEnd + ten;
+  b.holdEnd   = b.tenEnd + 700;
+  b.lineStart = b.holdEnd;        b.lineEnd = b.holdEnd + 700;
+  b.endStart  = b.lineEnd;
+  b.total     = FIN;
+  B = b;
+}
+beats();
+const BEATNAME = f =>
+  f < B.drainEnd ? 'drain' : f < B.cascEnd ? 'cascade' : f < B.breathEnd ? 'breath' :
+  f < B.tenEnd ? 'the ten' : f < B.holdEnd ? 'hold' : f < B.lineEnd ? 'the line' : 'left holding';
+
+/* ============================================================
+   COPY
+   ============================================================ */
+const LINES = {
+  A: ()=> 'The last ten happened in the final <b>110</b> of 115,000 pixels. '+
+          'Everything humans have farmed, written, built or remembered is the last '+
+          '<b>three tenths</b> of one pixel.',
+  B: ()=> {
+      // this visitor's own px/s. Clamped, and falls back to the design speed if
+      // they skipped the run-in (which only happens in this prototype).
+      const secs = elapsedRun/1000;
+      const rate = secs > 1.5 ? clamp(LEAD_TIME_PX/secs, 80, 4000) : 500;
+      const ms   = (0.3 / rate) * 1000;
+      return 'You have been on this page <b>'+fmtClock(pageTime)+'</b>. '+
+             'At the speed you scrolled it, farming to now went past in <b>'+
+             (ms<1 ? ms.toFixed(2) : ms.toFixed(1))+' milliseconds</b>.';
+    },
+  C: ()=> 'The last ten lines all point at the same pixel, because at this scale they '+
+          '<b>are</b> the same pixel. One pixel is <b>40,000 years</b>.',
+  D: ()=> 'At 96 pixels to the inch you scrolled <b>32.7 metres</b> of Earth. '+
+          'Everything you have a word for is the last <b>eight hundredths of a millimetre</b>.'
+};
+const ENDS = {
+  A: ()=> '',
+  B: ()=> 'Two things could not fit on this page. <i>T. rex</i> is 50 pixels from the asteroid. '+
+          'The first primates are 250 — they arrive with the impact that made room for them.',
+  C: ()=> '<span style="border-bottom:1px solid currentColor;padding-bottom:2px">share the fan</span> '+
+          '— a still of these forty lines, and one number.'
+};
+
+/* ============================================================
+   CANVAS — the draining field. Cleared every frame (ticket 01 bug),
+   re-synced from its OWN box via ResizeObserver (ticket 01 bug).
+   ============================================================ */
+const sky = $('sky'), cx = sky.getContext('2d');
+let W=0,H=0,DPR=1,MOB=false;
+function sizeCanvas(){
+  const r = sky.getBoundingClientRect();
+  W = Math.round(r.width); H = Math.round(r.height);
+  MOB = W < 760;
+  DPR = Math.min(2, window.devicePixelRatio||1);
+  sky.width = Math.round(W*DPR); sky.height = Math.round(H*DPR);
+  cx.setTransform(DPR,0,0,DPR,0,0);
+}
+sizeCanvas();
+new ResizeObserver(()=>{ sizeCanvas(); layoutFan(); }).observe(sky);
+
+const lerp=(a,b,t)=>a+(b-a)*t, clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const smooth=(a,b,v)=>{const t=clamp((v-a)/(b-a||1),0,1);return t*t*(3-2*t);};
+const l3=(a,b,t)=>[lerp(a[0],b[0],t),lerp(a[1],b[1],t),lerp(a[2],b[2],t)];
+const rgb=c=>'rgb('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+')';
+
+const SKY_HI=[126,168,214], SKY_LO=[196,214,231], GND=[74,86,72], DARK=[5,7,10];
+
+/* ============================================================
+   CARDS
+   ============================================================ */
+const flow = $('flow');
+CARDS.forEach((c,i)=>{
+  const d=document.createElement('div');
+  d.className='ms';
+  d.style.left = i%2 ? '54%' : '6%';
+  d.innerHTML = '<div class="art"><i style="width:'+c.r*2+'px;height:'+c.r*2+'px"></i></div>'+
+                '<div class="rule"></div><div class="d">'+c.d+'</div>'+
+                '<div class="n">'+c.n+'</div><div class="s">'+c.s+'</div>';
+  flow.appendChild(d); c.el=d;
+});
+
+/* ============================================================
+   THE BAR — 30 ticks, one per milestone passed. The fan points at THESE.
+   ============================================================ */
+const tsb=$('tsb');
+M30.forEach(m=>{
+  const t=document.createElement('div'); t.className='tsbtick';
+  t.style.top = ((m[1]-INTRO)/RUN*100)+'%';
+  tsb.appendChild(t);
+});
+
+/* ============================================================
+   THE FAN
+   ============================================================ */
+const fanEl=$('fan'), svg=$('fansvg');
+const rowEls=[], lineEls=[];
+const wrapEls=[];
+ROWS.forEach((r,i)=>{
+  const d=document.createElement('div');
+  d.className='frow'+(r.q?' q':'')+(r.ten?' ten':'');
+  d.innerHTML='<span class="fw"><span class="fd">'+shortDate(r.ya)+'</span><span class="fn">'+r.name+'</span></span>';
+  const w=d.firstChild;
+  w.addEventListener('click',()=>{ if(fanEl.classList.contains('links')) flash(i); });
+  fanEl.appendChild(d); rowEls.push(d); wrapEls.push(w);
+  const ln=document.createElementNS('http://www.w3.org/2000/svg','line');
+  ln.setAttribute('stroke','currentColor'); ln.setAttribute('stroke-width','1'); ln.setAttribute('opacity','0');
+  svg.appendChild(ln); lineEls.push(ln);
+});
+function shortDate(y){
+  if(y>=1e9) return (y/1e9).toFixed(y/1e9>=1?2:2)+' Ga';
+  if(y>=1e6) return (y/1e6>=100?Math.round(y/1e6):(y/1e6).toFixed(1))+' Ma';
+  if(y>=1e3) return (y/1e3>=100?Math.round(y/1e3):(y/1e3).toFixed(1))+' ka';
+  return y+' yr';
+}
+function flash(i){ wrapEls[i].animate([{background:'rgba(255,255,255,.35)'},{background:'transparent'}],{duration:420}); }
+
+let FANG=null;
+function layoutFan(){
+  const barRight = MOB?10:Math.max(18,W*0.02);
+  const barW = MOB?3:4;
+  const barX = W - barRight - barW/2;               // centre of the bar
+  const barTop = H*0.13, barBot = H*(MOB?0.80:0.81);
+  const rowTop = H*(MOB?0.055:0.06), rowBot = H*(MOB?0.955:0.945);
+  const SEAM = MOB?13:16;                      // the gap the withheld ten sit below
+  const pitch = (rowBot-rowTop-SEAM)/(ROWS.length-1);
+  const fs = clamp(pitch*0.62, 8.5, 13);
+  const rowRight = barX - (MOB?42:290);
+  const rowY = i => rowTop + i*pitch + (i>=30?SEAM:0);
+  FANG = {barX, barTop, barBot, rowTop, pitch, fs, rowRight, SEAM};
+
+  let over = 0, widest = 0;
+  rowEls.forEach((el,i)=>{
+    const ry = rowY(i);
+    const ty = barTop + (ROWS[i].px-INTRO)/RUN*(barBot-barTop);
+    el.style.fontSize = fs.toFixed(2)+'px';
+    el.style.top = (ry - fs*0.72)+'px';
+    el.style.left = '0px';
+    el.style.width = rowRight+'px';
+    const w = wrapEls[i].offsetWidth;
+    widest = Math.max(widest, w);
+    if(w > rowRight-8) over++;
+    const ln = lineEls[i];
+    ln.setAttribute('x1', rowRight+7); ln.setAttribute('y1', ry);
+    ln.setAttribute('x2', barX-barW/2-2); ln.setAttribute('y2', ty);
+    const len = Math.hypot(rowRight+7-(barX-barW/2-2), ry-ty);
+    ln.setAttribute('stroke-dasharray', len); ln.dataset.len = len;
+  });
+  FANG.over = over; FANG.widest = widest;
+
+  // the seam between what you scrolled past and what was withheld
+  const seam = (rowY(29)+rowY(30))/2;
+  const tcfs = Math.min(9, SEAM*0.62);
+  const tc=$('tencap');
+  tc.style.left='0px'; tc.style.width=rowRight+'px';
+  tc.style.top=(seam-tcfs/2)+'px'; tc.style.fontSize=tcfs+'px';
+  $('tenrule').style.display='none';
+
+  // the closing block never enters the fan's text column. If the free column is
+  // too narrow to hold a sentence, "beside" is not available at this width.
+  const free = rowRight - widest - 34;
+  FANG.free = free;
+  FANG.effPos = free < 190 ? 'after' : V.pos;
+  $('close').style.maxWidth = (FANG.effPos==='after' ? Math.min(W*0.82,430) : Math.min(430,free)) + 'px';
+  $('close').style.left = FANG.effPos==='after' ? '' : '';
+}
+layoutFan();
+
+/* row schedule: 30 cascade at 120 px, then the ten */
+function rowSched(i){
+  if(i<30) return {a: B.cascStart + i*120, b: B.cascStart + i*120 + 90};
+  const j=i-30;
+  if(V.ten==='A') return {a: B.tenStart+120, b: B.tenStart+300};              // one hit
+  return {a: B.tenStart + 60 + j*42, b: B.tenStart + 60 + j*42 + 110};        // fast run
+}
+
+/* ============================================================
+   TIMING INSTRUMENTS (for the "your clock" line)
+   ============================================================ */
+let pageTime=0, elapsedRun=0, lastStamp=null, LEAD_TIME_PX=LEAD;
+function fmtClock(ms){ const s=Math.round(ms/1000); return Math.floor(s/60)+' min '+String(s%60).padStart(2,'0')+' s'; }
+
+/* ============================================================
+   FRAME
+   ============================================================ */
+let sy=0;
+function draw(){
+  const now = performance.now();
+  if(lastStamp!==null){ const dt=Math.min(80, now-lastStamp); pageTime+=dt; if(sy<LEAD) elapsedRun+=dt; }
+  lastStamp = now;
+
+  sy = window.scrollY||window.pageYOffset||0;
+  const ry = realY(sy);
+  const inFin = ry > RUN_END;
+  const f = inFin ? ry-RUN_END : 0;                 // px into the finale
+  const drainQ = clamp(f / Math.max(1,B.drainEnd), 0, 1);
+
+  /* ---- field: real sky, draining to black across the drain beat ---- */
+  const hzY=H*0.70;
+  const sky0=l3(SKY_HI,DARK,drainQ), sky1=l3(SKY_LO,DARK,drainQ), gnd=l3(GND,DARK,drainQ);
+  const g=cx.createLinearGradient(0,0,0,hzY);
+  g.addColorStop(0,rgb(sky0)); g.addColorStop(1,rgb(sky1));
+  cx.fillStyle=g; cx.fillRect(0,0,W,H);            // full clear every frame
+  const g2=cx.createLinearGradient(0,hzY,0,H);
+  g2.addColorStop(0,rgb(l3(gnd,sky1,.22))); g2.addColorStop(1,rgb(l3(gnd,DARK,.4)));
+  cx.fillStyle=g2; cx.fillRect(0,hzY,W,H-hzY);
+  const lum=0.299*sky1[0]+0.587*sky1[1]+0.114*sky1[2];
+  document.body.style.color = lum>150 ? '#12161a' : '#f4f1ea';
+
+  /* ---- the run's last cards ---- */
+  for(const c of CARDS){
+    const raw = c.px - ry;
+    const vd  = raw>0 ? raw : (raw < -c.dwell ? raw + c.dwell : 0);
+    let vis = Math.abs(vd) <= H*0.62;
+    // handoff A: the 7 Ma card is released hard at the run boundary
+    if(c===CARD7 && V.handoff==='A' && ry>RUN_END) vis=false;
+    if(!vis){ c.el.style.opacity='0'; c.el.style.transform='translate3d(0,-9999px,0)'; continue; }
+    c.el.style.transform='translate3d(0,'+(H*0.22+vd)+'px,0)';
+    c.el.style.opacity=String((1-smooth(H*0.14,H*0.58,Math.abs(vd))) * (c===CARD7?1:(1-drainQ)));
+  }
+
+  /* ---- HUD + bar ---- */
+  const yr=yearAt(ry);
+  $('big').textContent = yr>=1e6 ? (yr/1e6>=100?Math.round(yr/1e6):(yr/1e6).toFixed(1)) : (yr/1e3).toFixed(0);
+  $('bigu').textContent = yr>=1e6 ? 'million years ago' : (yr>0?'thousand years ago':'now');
+  const pct = (T0-yr)/T0*100;
+  $('meta').innerHTML = '1 pixel = 40,000 years · never rescaled<br>'+pct.toFixed(3)+'% of Earth’s history elapsed';
+  $('tsbfill').style.height = pct+'%';
+  $('tsbhead').style.top = pct+'%';
+  $('tsbnum').textContent = pct.toFixed(2)+'%';
+  const hudOut = 1-smooth(0,.55,drainQ);
+  $('hud').style.opacity = String(inFin?hudOut:1);
+  $('tsbhead').style.opacity = String(inFin?hudOut:1);
+  $('tsbnum').style.opacity = String(inFin?hudOut*.7:.7);
+  // the bar stays and brightens — it is the same instrument, not a replacement
+  $('tsbfill').style.opacity = String(0.6 + 0.3*(inFin?drainQ:0));
+  $('tsbend').style.opacity = String(inFin ? smooth(B.tenStart, B.tenEnd, f)*0.95 : 0);
+
+  /* ---- the fan ---- */
+  if(inFin){
+    fanEl.style.opacity='1';
+    // "after" must be sequential, not a crossfade — two texts at 30% stacked is
+    // exactly the overlap the layout contract bans. The fan is fully gone first.
+    const after = FANG.effPos==='after';
+    const lineIn  = smooth(B.lineStart + (after?40:0), B.lineStart+(after?300:260), f);
+    const fanDim  = after ? 1-smooth(B.lineStart-260, B.lineStart-30, f) : 1;
+    for(let i=0;i<ROWS.length;i++){
+      const s=rowSched(i), a=smooth(s.a,s.b,f)*fanDim;
+      rowEls[i].style.opacity=String(a);
+      const ln=lineEls[i], L=+ln.dataset.len;
+      ln.setAttribute('opacity', String(a*(ROWS[i].ten?0.6:0.34)));
+      ln.setAttribute('stroke-dashoffset', String(L*(1-smooth(s.a,s.b,f))));
+    }
+    $('tencap').style.opacity=String(smooth(B.tenStart-140,B.tenStart+60,f)*0.85*fanDim);
+    const cl=$('close');
+    cl.style.opacity=String(lineIn);
+    $('cep').style.opacity=String(smooth(B.endStart, B.endStart+170, f));
+    fanEl.classList.toggle('links', f>B.endStart+120);
+  } else {
+    fanEl.style.opacity='0'; fanEl.classList.remove('links');
+  }
+
+  /* ---- readout ---- */
+  $('rbeat').textContent = inFin ? BEATNAME(f) : 'the run';
+  $('rpx').textContent = inFin ? (Math.round(f)+' / 7000 px into the finale') : (Math.round(RUN_END-ry)+' px to the end of the run');
+  $('rsec').textContent = (inFin? (f/500).toFixed(1)+' s in · ' : '')+'page '+fmtClock(pageTime)+
+    (FANG.effPos!==V.pos ? ' · "beside" won’t fit — forced to "after"' : '');
+}
+function loop(){ draw(); auto(); requestAnimationFrame(loop); }
+
+/* ---- copy render ---- */
+function renderCopy(){
+  $('cline').innerHTML = LINES[V.line]();
+  $('cep').innerHTML   = ENDS[V.end]();
+  $('cep').style.display = V.end==='A' ? 'none' : 'block';
+}
+
+/* ============================================================
+   CHROME
+   ============================================================ */
+$('hide').addEventListener('click',()=>{
+  const b=$('bar'); b.classList.toggle('hid');
+  const off=b.classList.contains('hid');
+  $('hide').textContent = off?'show controls':'hide controls';
+  $('readout').style.display = off?'none':'block';
+});
+function setHeight(){ $('spacer').style.height = (LEAD + FIN + window.innerHeight) + 'px'; }
+setHeight(); window.addEventListener('resize',()=>{ setHeight(); layoutFan(); });
+
+function syncBtns(){
+  document.querySelectorAll('#bar button[data-k]').forEach(b=>{
+    b.classList.toggle('on', V[b.dataset.k]===b.dataset.v);
+  });
+}
+document.querySelectorAll('#bar button[data-k]').forEach(b=>{
+  b.addEventListener('click',()=>{ V[b.dataset.k]=b.dataset.v; beats(); renderCopy(); syncBtns(); });
+});
+syncBtns(); renderCopy();
+
+let playing=false, lastAuto=null;
+function auto(){
+  if(!playing){ lastAuto=null; return; }
+  const t=performance.now();
+  if(lastAuto!==null) window.scrollBy(0,(t-lastAuto)/1000*500);   // the design speed
+  lastAuto=t;
+  if(window.scrollY >= LEAD+FIN-2){ playing=false; $('bplay').textContent='▶ play'; }
+}
+$('bplay').addEventListener('click',()=>{ playing=!playing; $('bplay').textContent = playing?'❚❚ pause':'▶ play'; });
+$('btop').addEventListener('click',()=>{ window.scrollTo(0,0); });
+$('bfin').addEventListener('click',()=>{ window.scrollTo(0,LEAD); });
+
+/* ---- the no-collision sweep (a ship gate, per ticket 06) ---- */
+function rects(){
+  const out=[];
+  rowEls.forEach((el,i)=>{ if(+el.style.opacity>0.06){ const r=wrapEls[i].getBoundingClientRect();
+    out.push({n:'row '+i, r:{x:r.left,y:r.top,w:r.width,h:r.height}}); }});
+  const tc=$('tencap');
+  if(+tc.style.opacity>0.06){ const r=tc.firstChild.getBoundingClientRect();
+    out.push({n:'"never drawn" caption', r:{x:r.left,y:r.top,w:r.width,h:r.height}}); }
+  const cl=$('close');
+  if(+cl.style.opacity>0.06){ const r=cl.getBoundingClientRect(); out.push({n:'closing block', r:{x:r.left,y:r.top,w:r.width,h:r.height}}); }
+  // reserved zone: the bar plus the 16px strip its vertical captions live in
+  const b=$('tsb').getBoundingClientRect();
+  out.push({n:'scale bar (reserved)', r:{x:b.left-22,y:b.top,w:b.width+30,h:b.height}});
+  return out;
+}
+const hit=(a,b)=> a.x < b.x+b.w && b.x < a.x+a.w && a.y < b.y+b.h && b.y < a.y+a.h;
+$('bcheck').addEventListener('click',()=>{
+  const box=$('check'); box.style.display='block';
+  const was=window.scrollY, bad=[]; let n=0;
+  for(let f=0; f<=FIN; f+=25){
+    window.scrollTo(0, LEAD+f); draw(); n++;
+    const R=rects();
+    for(let i=0;i<R.length;i++) for(let j=i+1;j<R.length;j++)
+      if(hit(R[i].r,R[j].r)) bad.push(Math.round(f)+'px  '+R[i].n+' × '+R[j].n);
+  }
+  window.scrollTo(0,was); draw();
+  const uniq=[...new Set(bad)];
+  $('cout').innerHTML =
+    n+' samples · '+ROWS.length+' rows\n'+
+    'pitch '+FANG.pitch.toFixed(1)+' px · type '+FANG.fs.toFixed(1)+' px\n'+
+    'viewport '+W+'×'+H+(MOB?' (mobile)':'')+'\n'+
+    (FANG.over? '<span class="bad">'+FANG.over+' rows overflow their column — needs short fan labels</span>\n'
+              : '<span class="ok">0 rows overflow</span>\n')+
+    (uniq.length? '<span class="bad">'+uniq.length+' collisions</span>\n'+uniq.slice(0,8).join('\n')
+                : '<span class="ok">0 collisions</span>');
+});
+
+window.addEventListener('scroll',()=>{ if(RM) draw(); },{passive:true});
+if(RM) draw(); else loop();
+</script>
+</body>
+</html>

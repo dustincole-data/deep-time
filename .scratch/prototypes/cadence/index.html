@@ -30,32 +30,44 @@
   #vig{position:fixed;inset:0;z-index:1;pointer-events:none;
     background:radial-gradient(130% 100% at 50% 40%,transparent 45%,rgba(0,0,0,.42) 100%)}
 
-  /* ---------------- arrivals ---------------- */
+  /* ---------------- arrivals ----------------
+     THE NO-COLLISION CONTRACT
+     Every arrival is ONE box (art + date + name + line) living inside ONE slot
+     rect. Slots are computed from the viewport, never overlap each other, and
+     never overlap the two reserved zones (clock, scale bar). Text is anchored
+     to the bottom of the box; the art is drawn into whatever height is left
+     above it. Nothing floats free, so nothing can collide.
+  ------------------------------------------------------------------------- */
   #flow{position:fixed;inset:0;z-index:2;pointer-events:none}
-  .ar{position:absolute;width:34%;will-change:transform,opacity;opacity:0;transform:translate3d(0,-9999px,0)}
-  .ar.L{left:5%;text-align:left}
-  .ar.R{left:57%;text-align:right}
+  .ar{position:absolute;display:flex;align-items:flex-end;opacity:0;
+    will-change:transform,opacity}
+  .ar .tx{width:100%}
+  .ar.R .tx{text-align:right}
   .ar .rule{height:1px;background:currentColor;opacity:.42;width:38px;margin-bottom:11px}
   .ar.R .rule{margin-left:auto}
   .ar .d{font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.7;
-    font-variant-numeric:tabular-nums;margin-bottom:.55em}
-  .ar .n{font-size:clamp(19px,2.4vw,32px);line-height:1.1;letter-spacing:-.02em;font-weight:650;
+    font-variant-numeric:tabular-nums;margin-bottom:.5em}
+  .ar .n{font-size:clamp(19px,2.2vw,30px);line-height:1.12;letter-spacing:-.02em;font-weight:650;
     text-shadow:0 2px 22px rgba(0,0,0,.4)}
-  .ar .s{font-size:clamp(12.5px,1.05vw,14.5px);line-height:1.5;opacity:.76;margin-top:.6em;max-width:26em}
-  .ar.R .s{margin-left:auto}
-  /* inhabitant / condition: smaller, no rule, quieter — an arrival, not a milestone */
-  .ar.I{width:26%}
+  .ar .s{font-size:clamp(12.5px,1.02vw,14.5px);line-height:1.5;opacity:.76;margin-top:.55em}
+  /* inhabitant / condition: quieter — an arrival, not a milestone */
   .ar.I .rule{display:none}
-  .ar.I .n{font-size:clamp(14px,1.35vw,18px);font-weight:600;letter-spacing:-.008em}
-  .ar.I .d{font-size:9.5px;opacity:.5;margin-bottom:.35em}
+  .ar.I .n{font-size:clamp(14px,1.3vw,18px);font-weight:600;letter-spacing:-.008em}
+  .ar.I .d{font-size:9.5px;opacity:.5;margin-bottom:.3em}
   .ar.I .s{font-size:12px;opacity:.62}
-  /* field event: a whisper, centred, no card */
-  .ar.F{width:auto;left:0 !important;right:0;text-align:center !important;padding:0 8vw}
-  .ar.F .rule{display:none}
-  .ar.F .d{display:none}
-  .ar.F .n{font-size:clamp(11px,1.15vw,13px);font-weight:500;letter-spacing:.26em;
-    text-transform:uppercase;opacity:.62}
-  .ar.F .s{display:none}
+  /* field event: a whisper in its own reserved band, no art, no card */
+  .ar.F{align-items:center;justify-content:center}
+  .ar.F .tx{text-align:center}
+  .ar.F .rule,.ar.F .d,.ar.F .s{display:none}
+  .ar.F .n{font-size:clamp(11px,1.1vw,13px);font-weight:500;letter-spacing:.26em;
+    text-transform:uppercase;opacity:.62;text-shadow:none}
+  /* debug: draw the reserved zones and slot rects */
+  .zone{position:fixed;z-index:9;pointer-events:none;border:1px dashed rgba(255,80,80,.55);display:none}
+  body.debug .zone{display:block}
+  .zone.slot{border-color:rgba(90,200,255,.5)}
+  .zone b{position:absolute;left:3px;top:2px;font-size:8.5px;letter-spacing:.14em;
+    text-transform:uppercase;opacity:.7;color:#ff9a9a;font-weight:500}
+  .zone.slot b{color:#8fd8ff}
 
   /* ---------------- HUD ---------------- */
   #hud{position:fixed;z-index:3;left:max(20px,3.2vw);bottom:max(96px,9vh);pointer-events:none;
@@ -67,8 +79,8 @@
   #slow{font-size:11px;font-variant-numeric:tabular-nums;opacity:.55;margin-top:.45em;line-height:1.7}
 
   /* ---------------- the Boring Billion plate (variant C) ---------------- */
-  #bb{position:fixed;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;
-    pointer-events:none;opacity:0;text-align:center;padding:0 8vw}
+  #bb{position:fixed;left:0;top:0;z-index:2;display:flex;align-items:center;justify-content:center;
+    pointer-events:none;opacity:0;text-align:center}
   #bb .in{max-width:620px}
   #bb .k{font-size:10px;letter-spacing:.32em;text-transform:uppercase;opacity:.5;margin-bottom:1.4em}
   #bb .t{font-size:clamp(26px,4.6vw,54px);font-weight:700;letter-spacing:-.04em;line-height:1.02}
@@ -82,7 +94,8 @@
   #tsbtrack{position:absolute;inset:0;background:currentColor;opacity:.16;border-radius:2px}
   #tsbfill{position:absolute;left:0;top:0;width:4px;background:currentColor;opacity:.6;border-radius:2px}
   #tsbhead{position:absolute;left:-7px;width:18px;height:2px;background:currentColor}
-  #tsbcap{position:absolute;right:0;top:-3.2em;font-size:9px;text-align:right;
+  /* the caption runs vertically so it stays inside the reserved scale zone */
+  #tsbcap{position:absolute;right:14px;top:0;writing-mode:vertical-rl;font-size:9px;
     letter-spacing:.18em;text-transform:uppercase;opacity:.5;white-space:nowrap}
 
   /* ---------------- gap map (prototype instrument) ---------------- */
@@ -119,9 +132,11 @@
     opacity:.5;cursor:pointer;font-size:15px;line-height:1}
 
   @media (max-width:760px){
-    .ar{width:80%;left:6% !important;text-align:left !important}
-    .ar.I{width:66%}
-    .ar.R .rule{margin-left:0} .ar.R .s{margin-left:0}
+    /* a phone band cannot hold art + name + a description line. The description
+       is what goes: on mobile the card is the date and the name, and the art. */
+    .ar .s{display:none}
+    .ar .n{font-size:20px}
+    .ar.I .n{font-size:15px}
     #hud{bottom:max(100px,11vh);left:6%}
     #tsb{right:10px;top:12vh;bottom:24vh;width:3px}
     #note{display:none}
@@ -181,6 +196,7 @@
   <select id="sp"><option value="300">300 px/s</option><option value="500" selected>500 px/s</option><option value="900">900 px/s</option><option value="1600">1600 px/s</option></select>
   <span class="sep"></span>
   <button id="halo">halo: on</button>
+  <button id="zones">zones</button>
   <button id="top">restart</button>
   <span class="sep"></span>
   <span class="rd" id="rd1">0.0<small>s since arrival</small></span>
@@ -223,7 +239,7 @@ const A = [
  [4.03e9 ,'M','The oldest rock we still have','Acasta gneiss, north-west Canada.','a0'],
  [3.90e9 ,'I','Heavy bombardment','Contested — the late spike may never have happened.',''],
  [3.80e9 ,'F','The haze thickens','',''],
- [3.77e9 ,'M','The first trace of life','Carbon in Greenland sediment, isotopically light. Contested.','a0'],
+ [3.70e9 ,'M','The first trace of life','Isotopically light carbon in Isua sediment, Greenland. Contested; older claims exist.','a0'],
  [3.60e9 ,'I','Microbial mats','',''],
  [3.48e9 ,'M','Stromatolites','Mats build the first structures life leaves behind.','a0'],
  [3.40e9 ,'I','Microbes that eat sulfur','',''],
@@ -249,7 +265,7 @@ const A = [
  [1.20e9 ,'I','Below the surface the ocean stays anoxic','','bb'],
  [1.05e9 ,'M','Sex','Bangiomorpha, a red alga — the oldest known sexual reproduction.','a0'],
  [1.00e9 ,'M','Rodinia','Every continent gathered into one mass.',''],
- [0.89e9 ,'I','The first sponges?','Contested — a biomarker, not a body.',''],
+ [0.89e9 ,'I','The first sponges?','Contested — reef structures, not a settled body fossil.',''],
  [0.80e9 ,'F','The Boring Billion ends','','bbend'],
  [0.72e9 ,'M','Snowball Earth','Ice reaches the tropics. The planet is a white marble.','a0'],
  [0.66e9 ,'I','A brief thaw','',''],
@@ -317,9 +333,9 @@ function fieldAt(y){
 }
 
 /* --- the Moon really does recede: a slow clock that is also a fact --- */
-/* anchors: yearsAgo → Earth-radii. 0.62 Ga from Elatina tidal rhythmites;
-   deep anchors are modelled, not measured — flagged in the HUD. */
-const MOONR = [[4.50e9,24],[4.00e9,32],[3.00e9,42],[2.45e9,48],[2.00e9,51],[1.00e9,55],[0.62e9,57.5],[0,60.3]];
+/* anchors: yearsAgo → Earth-radii. 0.62 Ga ≈ 58 R_E from the Elatina tidal
+   rhythmites; the deep anchors are modelled, not measured — flagged in the HUD. */
+const MOONR = [[4.50e9,24],[4.00e9,32],[3.00e9,42],[2.45e9,48],[2.00e9,51],[1.00e9,55],[0.62e9,58],[0,60.3]];
 function moonScale(y){
   let i=0; for(;i<MOONR.length-1;i++){ if(y>MOONR[i+1][0]) break; }
   const a=MOONR[i], b=MOONR[Math.min(i+1,MOONR.length-1)];
@@ -350,7 +366,7 @@ function sizeCanvas(){
   cx.setTransform(DPR,0,0,DPR,0,0);
 }
 // iOS URL-bar collapse squashes a fixed canvas — re-sync from its own box.
-new ResizeObserver(()=>{ sizeCanvas(); }).observe(cv);
+new ResizeObserver(()=>{ sizeCanvas(); if(items.length){ layoutZones(); assignSlots(); } }).observe(cv);
 sizeCanvas();
 
 let _s=1; const rnd=()=>{ _s=(_s*16807)%2147483647; return _s/2147483647; };
@@ -404,42 +420,144 @@ const CUT=[]; let CUTREADY=false;
 })();
 
 /* ============================================================
+   ZONES & SLOTS — the no-collision contract
+
+   Two zones are reserved and inviolable: the CLOCK (bottom-left) and the
+   SCALE bar (right edge). What is left is the STAGE. The stage is a fixed
+   grid of slot rects that never overlap each other or the reserved zones.
+   An arrival is ONE box — art and text together — that lives inside exactly
+   one slot. Nothing is positioned freely, so nothing can collide.
+   ============================================================ */
+const Z={};
+function layoutZones(){
+  const w=W,h=H;
+  Z.scaleW = MOB?46:78;                                   // reserved: bar + its labels
+  Z.clock  = {x:0, y:h-(MOB?240:264), w:MOB?w*0.66:w*0.38, h:MOB?240:264};
+  const padX   = MOB? w*0.06 : w*0.05;
+  const topOff = MOB? h*0.105 : h*0.085;                  // prototype's map bar sits above this
+  const stageR = w - Z.scaleW;
+  Z.whisper = {x:padX, y:topOff, w:stageR-padX, h:(MOB?h*0.055:h*0.05)};
+  const rowTop = topOff + Z.whisper.h + (MOB? h*0.028 : h*0.032);
+  const rowBot = Math.min(h*0.72, Z.clock.y - (MOB?16:18));
+  const gutY   = MOB?14:20;
+  const rows   = 2;
+  const bandH  = (rowBot-rowTop-gutY*(rows-1))/rows;
+  const cols   = MOB?1:2;
+  const gutX   = w*0.04;
+  const colW   = (stageR-padX-gutX*(cols-1))/cols;
+  Z.slots=[];
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++)
+    Z.slots.push({x:padX+c*(colW+gutX), y:rowTop+r*(bandH+gutY), w:colW, h:bandH, col:c, row:r});
+  Z.colFull=[];
+  for(let c=0;c<cols;c++) Z.colFull.push({x:padX+c*(colW+gutX), y:rowTop, w:colW, h:rowBot-rowTop, col:c});
+  Z.bb={x:padX, y:rowTop, w:stageR-padX, h:rowBot-rowTop};
+  Z.nCols=cols;
+  const bb=document.getElementById('bb');
+  bb.style.left=Z.bb.x+'px'; bb.style.top=Z.bb.y+'px';
+  bb.style.width=Z.bb.w+'px'; bb.style.height=Z.bb.h+'px';
+  drawZones();
+}
+
+function drawZones(){
+  document.querySelectorAll('.zone').forEach(n=>n.remove());
+  const add=(r,label,cls)=>{const d=document.createElement('div');d.className='zone '+(cls||'');
+    d.style.left=r.x+'px';d.style.top=r.y+'px';d.style.width=r.w+'px';d.style.height=r.h+'px';
+    d.innerHTML='<b>'+label+'</b>';document.body.appendChild(d);};
+  add(Z.clock,'clock zone');
+  add({x:W-Z.scaleW,y:0,w:Z.scaleW,h:H},'scale zone');
+  add(Z.whisper,'whisper band','slot');
+  Z.slots.forEach((s,i)=>add(s,'slot '+i,'slot'));
+}
+
+/* ============================================================
    BUILD THE ACTIVE SET
    ============================================================ */
-let items=[], maxGap=0, maxGapAt=0;
+let items=[], maxGap=0, slotsNeeded=0, shortened=0, tooBrief=0;
 const flow=document.getElementById('flow');
 
 function build(){
   flow.innerHTML='';
   items=[];
-  const set=activeSet();
-  let li=0, hue=0;
-  set.forEach(a=>{
+  let cut=0;
+  activeSet().forEach(a=>{
     const el=document.createElement('div');
-    el.className='ar '+a[1]+' '+(a[1]==='F' ? '' : (li%2?'R':'L'));
-    el.innerHTML='<div class="rule"></div><div class="d"></div><div class="n"></div><div class="s"></div>';
+    el.className='ar '+a[1];
+    el.innerHTML='<div class="tx"><div class="rule"></div><div class="d"></div><div class="n"></div><div class="s"></div></div>';
     el.querySelector('.d').textContent=dateLabel(a[0]);
     el.querySelector('.n').textContent=a[2];
     el.querySelector('.s').textContent=a[3]||'';
     flow.appendChild(el);
-    const it={el, ya:a[0], y:msY(a[0]), kind:a[1], flag:a[4],
-              lvl: a[1]==='F' ? 2 : (Math.floor(li/2)%2),
-              side: (li%2)?1:0, cut:(hue%4), flip:(hue%3===1), dwell:520};
-    items.push(it);
-    if(a[1]!=='F'){ li++; hue++; }
+    items.push({el, tx:el.querySelector('.tx'), ya:a[0], y:msY(a[0]), kind:a[1], flag:a[4],
+                cut:(cut%4), flip:(cut%3===1), dwell:520, vis:0, box:null});
+    if(a[1]!=='F') cut++;
   });
   items.sort((p,q)=>p.y-q.y);
   maxGap=0;
   for(let i=0;i<items.length;i++){
     const gap = i<items.length-1 ? items[i+1].y-items[i].y : 900;
     items[i].gap=gap;
-    items[i].dwell=clamp(gap*0.9,150,660);
-    if(gap>maxGap && i<items.length-1){ maxGap=gap; maxGapAt=items[i].y; }
+    items[i].dwell=clamp(gap*0.9,150,660);                 // ticket 01: gap-adaptive dwell
+    if(gap>maxGap && i<items.length-1) maxGap=gap;
   }
+  assignSlots();
   buildMap();
   document.getElementById('rd2').innerHTML=Math.round(maxGap).toLocaleString('en-US')+
     '<small>longest gap · '+(maxGap/500).toFixed(1)+'s @500</small>';
   ['A','B','C'].forEach(v=>document.getElementById('v'+v).classList.toggle('on',v===VAR));
+}
+
+/* Slot assignment: round-robin so cards alternate lanes in the sparse stretches,
+   with a correctness fallback — where density would put two arrivals in one slot
+   at once, the later one's fade window is SHORTENED until it fits. Density can
+   cost an arrival screen-time; it can never cost it a collision. */
+function assignSlots(){
+  const N=Z.slots.length, FADE=H*0.55;
+  const freeAt=new Array(N).fill(-1e9);
+  let last=-1; shortened=0; tooBrief=0;
+  const cards=items.filter(i=>i.kind!=='F');
+  for(const it of cards){
+    it.fade=FADE;
+    let chosen=-1;
+    for(let k=1;k<=N;k++){ const s=(last+k)%N; if(freeAt[s] <= it.y-it.fade){ chosen=s; break; } }
+    if(chosen<0){
+      let best=0; for(let s=1;s<N;s++) if(freeAt[s]<freeAt[best]) best=s;
+      // no floor: a collision is never acceptable, a short appearance is
+      it.fade=Math.max(0, it.y-freeAt[best]);
+      chosen=best; shortened++;
+    }
+    it.slot=chosen; last=chosen;
+    // how long is it actually on screen? below ~1.2 s at the design speed it
+    // cannot be read, whatever the layout does
+    it.onScreenPx=it.dwell+it.fade*2;
+    if(it.onScreenPx < 600) tooBrief++;
+    freeAt[chosen]=it.y+it.dwell+it.fade;
+  }
+  let wFree=-1e9;
+  for(const it of items.filter(i=>i.kind==='F')){
+    it.fade=Math.min(FADE, Math.max(0, it.y-wFree));
+    it.slot=-1; wFree=it.y+it.dwell+it.fade;
+  }
+  // a card takes its column's full height whenever nothing else shares that column
+  // (on mobile there is one column, so a lone arrival gets the whole stage — which
+  //  is what keeps the art at a usable size on a phone)
+  const ov=(a,b)=> a.y-a.fade < b.y+b.dwell+b.fade && b.y-b.fade < a.y+a.dwell+a.fade;
+  for(const it of cards)
+    it.tall = !cards.some(o=>o!==it && Z.slots[o.slot].col===Z.slots[it.slot].col && ov(o,it));
+  slotsNeeded=new Set(cards.map(c=>c.slot)).size;
+  placeBoxes();
+}
+
+function placeBoxes(){
+  for(const it of items){
+    const r = it.kind==='F' ? Z.whisper : (it.tall ? Z.colFull[Z.slots[it.slot].col] : Z.slots[it.slot]);
+    it.rect=r;
+    it.right = it.kind!=='F' && Z.nCols>1 && Z.slots[it.slot].col===1;
+    it.el.classList.toggle('R', it.right);
+    it.el.style.cssText += ';left:'+r.x+'px;top:'+r.y+'px;width:'+r.w+'px;height:'+r.h+'px';
+    it.glide = it.kind==='F' ? 0 : Math.min(28, r.h*0.07);
+    it.tx.style.marginBottom = it.glide+'px';
+  }
+  for(const it of items) it.txH = it.tx.offsetHeight;
 }
 
 function buildMap(){
@@ -545,38 +663,43 @@ function draw(){
   }
   cx.restore();
 
-  /* ---- arrivals ---- */
+  /* ---- arrivals: each one lives inside its slot box and never leaves it ---- */
   let sinceIdx=-1;
-  for(const n of items){
+  for(let i=0;i<items.length;i++){
+    const n=items[i];
     const raw=n.y-sy;
     const vd = raw>0 ? raw : (raw < -n.dwell ? raw+n.dwell : 0);
-    if(sy>=n.y) sinceIdx=Math.max(sinceIdx, items.indexOf(n));
-    if(Math.abs(vd)>H*0.62){
-      if(n.el.style.opacity!=='0'){ n.el.style.opacity='0'; n.el.style.transform='translate3d(0,-9999px,0)'; }
-      continue;
+    if(sy>=n.y) sinceIdx=i;
+    if(Math.abs(vd)>n.fade){
+      if(n.vis!==0){ n.el.style.opacity='0'; n.vis=0; }
+      n.box=null; continue;
     }
-    const anchor = n.lvl===2 ? H*0.80 : H*(n.lvl?.46:.22);
-    const op = 1-smooth(H*0.14,H*0.58,Math.abs(vd));
-    n.el.style.transform='translate3d(0,'+(anchor+vd)+'px,0)';
-    n.el.style.opacity=String(op);
-    // the art, drawn on the canvas so it sits in the field, not on top of it
+    const f=n.fade;
+    const op = 1-smooth(f*0.30, f*0.98, Math.abs(vd));
+    const gl = clamp(vd/f,-1,1)*n.glide;           // drift stays inside the box
+    n.tx.style.transform='translate3d(0,'+gl+'px,0)';
+    n.el.style.opacity=String(op); n.vis=op;
+    // the art, drawn on the canvas so it sits in the field — but bounded by the
+    // same box as the text, in the height the text leaves above it
+    n.box=null;
     if(n.kind!=='F' && CUTREADY && op>0.02){
-      const c=CUT[n.cut];
-      const base = n.kind==='M' ? H*0.28 : H*0.17;
-      let h = base*(MOB?.62:1), w = h*(c.width/c.height);
-      const maxW = W*(MOB?.40:.24);
-      if(w>maxW){ w=maxW; h=w*(c.height/c.width); }
-      const ax = MOB ? W*0.70 : (n.side ? W*0.22 : W*0.76);
-      const ay = anchor+vd+ (n.kind==='M'? H*0.055 : H*0.015);
-      cx.save(); cx.globalAlpha=op;
-      if(HALO){
-        cx.save(); cx.filter='blur(16px)'; cx.globalAlpha=op*0.38;
-        cx.drawImage(c, ax-w/2-5, ay-5, w+10, h+10);
-        cx.restore();
+      const r=n.rect, availH=r.h-n.txH-n.glide*3-14;
+      if(availH>46){
+        const c=CUT[n.cut];
+        let h=Math.min(availH, n.kind==='M'?availH:availH*0.66), w=h*(c.width/c.height);
+        if(w>r.w){ w=r.w; h=w*(c.height/c.width); }
+        const ax = n.right ? (r.x+r.w-w) : r.x;
+        const ay = r.y+n.glide+(availH-h)+gl;   // the glide can never push it out of the box
+        cx.save(); cx.globalAlpha=op;
+        if(HALO){
+          cx.save(); cx.filter='blur(16px)'; cx.globalAlpha=op*0.38;
+          cx.drawImage(c, ax-5, ay-5, w+10, h+10); cx.restore();
+        }
+        if(n.flip){ cx.translate(ax*2+w,0); cx.scale(-1,1); }
+        cx.drawImage(c, ax, ay, w, h);
+        cx.restore(); cx.filter='none';
+        n.box={x:ax,y:ay,w:w,h:h};
       }
-      if(n.flip){ cx.translate(ax*2,0); cx.scale(-1,1); }
-      cx.drawImage(c, ax-w/2, ay, w, h);
-      cx.restore(); cx.filter='none';
     }
   }
   if(sinceIdx!==lastPassed && sinceIdx>=0){ lastPassed=sinceIdx; lastArrivalT=now; }
@@ -615,9 +738,11 @@ function draw(){
 $('pl').onclick=()=>{ PLAY=!PLAY; $('pl').textContent=PLAY?'❚❚ auto':'▶ auto'; $('pl').classList.toggle('on',PLAY); };
 $('sp').onchange=e=>{ SPD=+e.target.value; };
 $('halo').onclick=()=>{ HALO=!HALO; $('halo').textContent='halo: '+(HALO?'on':'off'); };
+$('zones').onclick=()=>{ document.body.classList.toggle('debug'); $('zones').classList.toggle('on'); };
 $('top').onclick=()=>{ window.scrollTo(0,0); lastArrivalT=performance.now(); lastPassed=-1; };
 addEventListener('keydown',e=>{ if(e.code==='Space'){ e.preventDefault(); $('pl').click(); } });
 
+layoutZones();
 build();
 window.scrollTo(0,0);
 requestAnimationFrame(draw);

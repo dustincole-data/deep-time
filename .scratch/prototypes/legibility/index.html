@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Deep Time 08 — subject-on-field legibility instrument</title>
+<!--
+  Ticket 08's unresolved case: a pale, outline-less painted cut-out on a field
+  that swings from molten red to Snowball white. 03 flagged it, 06 observed the
+  blurred-copy halo behaves as a *glow* and left "pale subject on white" open.
+
+  This measures it instead of arguing it. Gate: WCAG 2.2 SC 1.4.11 non-text
+  contrast, 3:1, taken across the subject's own boundary against whatever the
+  page actually puts behind it (halo included — the halo is part of "behind").
+
+  Serve over http:// — keying the proof sheet needs getImageData.
+-->
+<style>
+  :root{color-scheme:dark}
+  body{margin:0;background:#0a0c10;color:#eceae4;
+    font-family:Archivo,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    padding:22px 24px 40px}
+  h1{font-size:15px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;margin:0 0 4px}
+  .sub{font-size:12.5px;opacity:.62;margin:0 0 20px;line-height:1.6;max-width:1000px}
+  .grid{display:grid;grid-template-columns:78px repeat(6,1fr);gap:8px;align-items:center}
+  .ch{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;text-align:center;line-height:1.5}
+  .rh{font-size:10px;letter-spacing:.1em;text-transform:uppercase;opacity:.72;line-height:1.4}
+  .cell{position:relative}
+  canvas.c{display:block;width:100%;height:auto;border-radius:3px}
+  .m{position:absolute;left:5px;bottom:5px;font-size:10.5px;font-weight:700;
+    font-variant-numeric:tabular-nums;padding:2px 6px;border-radius:3px;letter-spacing:.02em}
+  .pass{background:rgba(10,14,18,.72);color:#7ee0a8}
+  .fail{background:rgba(10,14,18,.72);color:#ff8b8b}
+  table{border-collapse:collapse;margin-top:26px;font-size:12px;font-variant-numeric:tabular-nums}
+  th,td{padding:5px 12px;text-align:right;border-bottom:1px solid rgba(255,255,255,.09)}
+  th:first-child,td:first-child{text-align:left}
+  th{font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;opacity:.6;font-weight:600}
+  td.ok{color:#7ee0a8}  td.no{color:#ff8b8b}
+  .verdict{margin-top:22px;font-size:13px;line-height:1.7;max-width:1000px}
+  .verdict b{color:#ffd77a}
+</style>
+</head>
+<body>
+<h1>08 — subject-on-field legibility</h1>
+<p class="sub">Three subjects &times; two field extremes &times; three treatments. The number on each cell is the
+measured contrast ratio across the subject's own boundary — mean luminance of the outer rim of the subject
+against the mean luminance of what the page draws immediately outside it. Gate is <b>3:1</b> (WCAG 2.2 SC 1.4.11,
+non-text contrast). Full 4&times;3&times;4 measurement below.</p>
+
+<div class="grid" id="grid"></div>
+<div id="tablewrap"></div>
+<div class="verdict" id="verdict"></div>
+
+<script>
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const smooth=(e0,e1,x)=>{const t=clamp((x-e0)/(e1-e0),0,1);return t*t*(3-2*t);};
+const hex=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+const lerp=(a,b,t)=>a+(b-a)*t;
+const lerp3=(a,b,t)=>[lerp(a[0],b[0],t),lerp(a[1],b[1],t),lerp(a[2],b[2],t)];
+const rgb=c=>'rgb('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+')';
+
+/* WCAG relative luminance + contrast ratio */
+function relLum(r,g,b){
+  const f=v=>{v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);};
+  return 0.2126*f(r)+0.7152*f(g)+0.0722*f(b);
+}
+const ratio=(L1,L2)=>{const a=Math.max(L1,L2),b=Math.min(L1,L2);return (a+0.05)/(b+0.05);};
+/* fast perceptual lightness proxy for the adaptive decision (0..1) */
+const lum01=(r,g,b)=>(0.299*r+0.587*g+0.114*b)/255;
+
+/* ------------------------------------------------------------------
+   THE FIELD — 08's corrected keyframes (see the ticket's haze finding).
+   yearsAgo -> [skyTop, skyBottom, horizon, ground]
+   ------------------------------------------------------------------ */
+const K = [
+ [4.60e9,'#180402','#7d1a06','#100201','#1c0503'],   // molten
+ [4.30e9,'#1d0806','#8a2f0d','#120403','#1d0705'],
+ [4.00e9,'#22171a','#6b5a5e','#1a1113','#20302c'],   // steam, thick cloud, dim
+ [3.80e9,'#22303c','#8fa6ad','#1b2529','#123322'],   // CLEAR anoxic sky, green iron ocean
+ [3.30e9,'#243440','#93a9ae','#1c272b','#0f3a28'],
+ [3.20e9,'#2a1406','#a05c14','#160e06','#123322'],   // haze begins (modelled, 3.2 Ga)
+ [2.70e9,'#2e1907','#ab6a1a','#170f06','#0f3a28'],   // bistable era begins
+ [2.50e9,'#2b1808','#a4661c','#160f07','#103a2a'],
+ [2.43e9,'#2b1808','#a4661c','#160f07','#103a2a'],   // GOE onset — last hazy state
+ [2.22e9,'#1d3a52','#6f9fc4','#132a38','#12403c'],   // haze gone for good
+ [1.80e9,'#173a56','#5d95bf','#102532','#123f36'],   // banded iron stops
+ [1.60e9,'#123350','#4f8dbe','#0d2130','#10423f'],   // ocean green -> blue
+ [0.80e9,'#0d2a45','#468ab8','#0b1f2f','#114442'],
+ [0.720e9,'#152a3a','#84a9bf','#5d7d92','#9dc0d0'],  // freeze onset
+ [0.717e9,'#1a2f3e','#cbe0ec','#c4dbe7','#dfeef5'],  // Sturtian white (as 06 drew it)
+ [0.635e9,'#143048','#7fb0cf','#3f6379','#4d7a6c'],
+ [0.5388e9,'#0d2c3c','#2f8290','#08222a','#0d3c3a'],
+ [0,'#0d2c3c','#2f8290','#08222a','#0d3c3a']
+];
+K.forEach(k=>{k[5]=[hex(k[1]),hex(k[2]),hex(k[3]),hex(k[4])];});
+
+function fieldAt(y){
+  let i=0; for(;i<K.length-1;i++){ if(y>K[i+1][0]) break; }
+  const a=K[i], b=K[Math.min(i+1,K.length-1)];
+  const t=a[0]===b[0]?0:clamp((a[0]-y)/(a[0]-b[0]),0,1);
+  return {sky0:lerp3(a[5][0],b[5][0],t), sky1:lerp3(a[5][1],b[5][1],t),
+          hz:lerp3(a[5][2],b[5][2],t),  gnd:lerp3(a[5][3],b[5][3],t)};
+}
+
+/* The lightness corridor: the data channel is hue and chroma; the SKY band's
+   lightness is capped so the field can never approach the value of a painted
+   subject. The ground band is exempt — that is where ice is allowed to be white. */
+function ceil(c,cap){
+  const L=lum01(c[0],c[1],c[2]);
+  if(L<=cap) return c;
+  const k=cap/L;
+  return [c[0]*k,c[1]*k,c[2]*k];
+}
+
+function drawField(cx,w,h,yearsAgo,override,cap){
+  let f=override||fieldAt(yearsAgo);
+  let s0=f.sky0,s1=f.sky1,hz=f.hz,gnd=f.gnd;
+  if(cap){ s0=ceil(s0,cap); s1=ceil(s1,cap); hz=ceil(hz,cap); }
+  const hy=h*0.72;
+  const g=cx.createLinearGradient(0,0,0,hy);
+  g.addColorStop(0,rgb(s0)); g.addColorStop(1,rgb(s1));
+  cx.fillStyle=g; cx.fillRect(0,0,w,hy);
+  cx.fillStyle=rgb(gnd); cx.fillRect(0,hy,w,h-hy);
+  // one parallax ridgeline, as the real field has
+  cx.fillStyle=rgb(hz); cx.beginPath(); cx.moveTo(0,hy);
+  for(let x=0;x<=w;x+=8) cx.lineTo(x,hy-10-8*Math.sin(x*0.021)-5*Math.sin(x*0.053));
+  cx.lineTo(w,hy); cx.closePath(); cx.fill();
+}
+
+/* ------------------------------------------------------------------
+   SUBJECTS — two keyed from the accepted proof sheet, one synthesised
+   planet disc (no planet art exists yet; this stands in for it).
+   ------------------------------------------------------------------ */
+const CROPS={stromatolite:[52,30,410,395], mammoth:[430,510,585,435]};
+const SUB={};
+let READY=false;
+
+function makeDisc(size,terminator){
+  const c=document.createElement('canvas'); c.width=c.height=size;
+  const x=c.getContext('2d'), r=size*0.47, cxp=size/2, cyp=size/2;
+  x.save(); x.beginPath(); x.arc(cxp,cyp,r,0,7); x.clip();
+  x.fillStyle='#f2f7fa'; x.fillRect(0,0,size,size);
+  // ice fractures + a little exposed dark rock, so it is not a blank circle
+  x.strokeStyle='rgba(120,155,175,.55)'; x.lineWidth=size*0.006;
+  for(let i=0;i<16;i++){
+    x.beginPath();
+    const a=i*1.37, sx=cxp+Math.cos(a)*r, sy=cyp+Math.sin(a)*r;
+    x.moveTo(sx,sy);
+    x.quadraticCurveTo(cxp+Math.cos(a+1.1)*r*0.35, cyp+Math.sin(a+1.1)*r*0.35,
+                       cxp+Math.cos(a+2.3)*r*0.9, cyp+Math.sin(a+2.3)*r*0.9);
+    x.stroke();
+  }
+  if(terminator){
+    const tg=x.createLinearGradient(cxp-r,0,cxp+r,0);
+    tg.addColorStop(0,'rgba(255,255,255,0)');
+    tg.addColorStop(0.52,'rgba(12,18,26,0)');
+    tg.addColorStop(0.78,'rgba(12,18,26,.72)');
+    tg.addColorStop(1,'rgba(8,12,18,.93)');
+    x.fillStyle=tg; x.fillRect(0,0,size,size);
+  }
+  x.restore();
+  return c;
+}
+
+function keySheet(cb){
+  const img=new Image();
+  img.onload=()=>{
+    const o=document.createElement('canvas'); o.width=img.width; o.height=img.height;
+    const oc=o.getContext('2d'); oc.drawImage(img,0,0);
+    let d; try{ d=oc.getImageData(0,0,o.width,o.height); }
+    catch(e){ document.getElementById('verdict').innerHTML=
+      '<b>Serve this folder over http://</b> — keying the proof sheet needs getImageData.'; return; }
+    const px=d.data;
+    for(let i=0;i<px.length;i+=4){
+      const L=(px[i]*0.299+px[i+1]*0.587+px[i+2]*0.114)/255;
+      const a=smooth(0.045,0.14,L);
+      if(a>0.01){ px[i]=Math.min(255,px[i]/a); px[i+1]=Math.min(255,px[i+1]/a); px[i+2]=Math.min(255,px[i+2]/a); }
+      px[i+3]=Math.round(a*255);
+    }
+    oc.putImageData(d,0,0);
+    for(const k in CROPS){
+      const c=CROPS[k], q=document.createElement('canvas'); q.width=c[2]; q.height=c[3];
+      q.getContext('2d').drawImage(o,c[0],c[1],c[2],c[3],0,0,c[2],c[3]);
+      SUB[k]=q;
+    }
+    SUB.disc=makeDisc(420,false);
+    SUB.discTerm=makeDisc(420,true);
+    READY=true; cb();
+  };
+  img.src='../../art-proof/proof-sheet-03.png';
+}
+
+/* ------------------------------------------------------------------
+   TREATMENTS
+   ------------------------------------------------------------------ */
+function silhouette(src,colour){
+  const c=document.createElement('canvas'); c.width=src.width; c.height=src.height;
+  const x=c.getContext('2d');
+  x.drawImage(src,0,0);
+  x.globalCompositeOperation='source-in';
+  x.fillStyle=colour; x.fillRect(0,0,c.width,c.height);
+  return c;
+}
+
+/* mean luminance (0..1) of the subject's own outer rim — the servo's input.
+   Cached per subject; it is a property of the art, not of the page. */
+const RIM={};
+function rimLum(src,key){
+  if(RIM[key]!=null) return RIM[key];
+  const c=document.createElement('canvas'); c.width=src.width; c.height=src.height;
+  const x=c.getContext('2d',{willReadFrequently:true}); x.drawImage(src,0,0);
+  const d=x.getImageData(0,0,c.width,c.height).data, W=c.width,H=c.height;
+  const A=(px,py)=>(px<0||py<0||px>=W||py>=H)?0:d[(py*W+px)*4+3];
+  const R=Math.max(2,Math.round(Math.max(W,H)*0.012));
+  let s=0,n=0;
+  for(let y=0;y<H;y++) for(let px=0;px<W;px++){
+    if(A(px,y)<=235) continue;
+    let edge=false;
+    for(let k=1;k<=R&&!edge;k++)
+      if(A(px+k,y)<20||A(px-k,y)<20||A(px,y+k)<20||A(px,y-k)<20) edge=true;
+    if(edge){ const i=(y*W+px)*4; s+=lum01(d[i],d[i+1],d[i+2]); n++; }
+  }
+  return RIM[key] = n? s/n : 0.5;
+}
+
+/* THE SERVO HALO. The halo is pushed away from the SUBJECT's own rim luminance
+   (a light subject gets a dark halo, a dark subject a light one), at the
+   smallest strength that clears the gate — zero when the field already works. */
+function drawSubject(cx,src,ax,ay,w,h,treatment,strength,dark){
+  if(treatment==='glow'){                       // 06's blurred copy of the art itself
+    cx.save(); cx.filter='blur(16px)'; cx.globalAlpha=0.38;
+    cx.drawImage(src,ax-5,ay-5,w+10,h+10); cx.restore(); cx.filter='none';
+  } else if(treatment!=='none' && strength>0){
+    // spread then falloff, as an outer glow: a near-solid ring just outside the
+    // silhouette, then a soft skirt. The ring is what the boundary measurement sees.
+    const sil = silhouette(src, dark ? 'rgb(6,10,15)' : 'rgb(255,248,235)');
+    const S=Math.max(w,h);
+    cx.save(); cx.globalAlpha=strength;
+    [[0.045,0.020],[0.085,0.055]].forEach(([p,b])=>{
+      const pad=S*p;
+      cx.filter='blur('+Math.max(2,Math.round(S*b))+'px)';
+      cx.drawImage(sil,ax-pad,ay-pad,w+pad*2,h+pad*2);
+    });
+    cx.restore(); cx.filter='none';
+  }
+  cx.drawImage(src,ax,ay,w,h);
+}
+
+/* ------------------------------------------------------------------
+   THE MEASUREMENT — contrast across the subject's own boundary
+   ------------------------------------------------------------------ */
+function measure(cvs,src,ax,ay,w,h){
+  const cx=cvs.getContext('2d');
+  const img=cx.getImageData(0,0,cvs.width,cvs.height).data;
+  // alpha mask of the subject at its drawn size
+  const m=document.createElement('canvas'); m.width=cvs.width; m.height=cvs.height;
+  const mc=m.getContext('2d'); mc.drawImage(src,ax,ay,w,h);
+  const md=mc.getImageData(0,0,m.width,m.height).data;
+  const W=cvs.width,H=cvs.height, R=4;
+  let inSum=0,inN=0,outSum=0,outN=0;
+  const A=(x,y)=>(x<0||y<0||x>=W||y>=H)?0:md[(y*W+x)*4+3];
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    const a=A(x,y);
+    if(a>235){                                   // solid subject — is it near an edge?
+      let edge=false;
+      for(let d=1;d<=R&&!edge;d++)
+        if(A(x+d,y)<20||A(x-d,y)<20||A(x,y+d)<20||A(x,y-d)<20) edge=true;
+      if(edge){ const i=(y*W+x)*4; inSum+=relLum(img[i],img[i+1],img[i+2]); inN++; }
+    } else if(a<20){                              // outside — is it near an edge?
+      let edge=false;
+      for(let d=1;d<=R&&!edge;d++)
+        if(A(x+d,y)>235||A(x-d,y)>235||A(x,y+d)>235||A(x,y-d)>235) edge=true;
+      if(edge){ const i=(y*W+x)*4; outSum+=relLum(img[i],img[i+1],img[i+2]); outN++; }
+    }
+  }
+  if(!inN||!outN) return null;
+  return ratio(inSum/inN, outSum/outN);
+}
+
+/* ------------------------------------------------------------------
+   RENDER
+   ------------------------------------------------------------------ */
+/* the corrected Snowball field: a snowball planet's SKY is not white — cold, dry,
+   clear air is deep Rayleigh blue. The white belongs to the ice, i.e. the ground
+   band. Tested here as its own field, against 06's white-sky rendering. */
+const SNOW_CORRECTED={
+  sky0:hex('#12324e'), sky1:hex('#5f93b4'), hz:hex('#cfe3ee'), gnd:hex('#e8f3f8')
+};
+
+const FIELDS=[
+  {k:'molten',   y:4.54e9,  label:'4,540 Ma molten'},
+  {k:'hazy',     y:2.60e9,  label:'2,600 Ma hazy'},
+  {k:'snow06',   y:0.717e9, label:'717 Ma Snowball (06: white sky)'},
+  {k:'snowFix',  y:0.717e9, label:'717 Ma Snowball (blue sky, white ice)', ov:SNOW_CORRECTED},
+  {k:'cambrian', y:0.5388e9,label:'538.8 Ma sea'}
+];
+const SUBJECTS=[
+  {k:'stromatolite', label:'stromatolite (pale)'},
+  {k:'mammoth',      label:'mammoth (saturated)'},
+  {k:'disc',         label:'planet disc, flat'},
+  {k:'discTerm',     label:'planet disc + terminator'}
+];
+const TREATMENTS=[
+  {k:'none',  label:'none'},
+  {k:'glow',  label:'glow (06)'},
+  {k:'servo', label:'servo halo'},
+  {k:'servo55', label:'servo + sky &le;.55', cap:0.55},
+  {k:'servo45', label:'servo + sky &le;.45', cap:0.45}
+];
+const GATE=3, LADDER=[0.25,0.45,0.62,0.78,0.92];
+
+const CW=300, CH=200;
+function renderOnce(field, subKey, treat, strength, dark, cap){
+  const cvs=document.createElement('canvas');
+  cvs.width=CW; cvs.height=CH;
+  const cx=cvs.getContext('2d',{willReadFrequently:true});
+  drawField(cx,CW,CH,field.y,field.ov,cap);
+  const src=SUB[subKey];
+  const isDisc=subKey.startsWith('disc');
+  const h=isDisc?CH*0.80:CH*0.62, w=h*(src.width/src.height);
+  const ax=(CW-w)/2, ay=(CH-h)/2 - (isDisc?0:6);
+  drawSubject(cx,src,ax,ay,w,h,treat,strength,dark);
+  return {cvs, r:measure(cvs,src,ax,ay,w,h)};
+}
+/* The servo. Polarity is decided by MEASUREMENT, not by a rule about the art:
+   try both, take the smallest strength that clears the gate, and never accept a
+   result worse than no halo at all. */
+function renderCell(field, subKey, treat){
+  const cap = (TREATMENTS.find(t=>t.k===treat)||{}).cap;
+  const base = renderOnce(field,subKey,'none',0,false,cap); base.a=0; base.dark=null;
+  if(treat==='none') return base;
+  if(treat==='glow'){ const o=renderOnce(field,subKey,'glow',0,false,cap); o.a=0; o.dark=null; return o; }
+  let best=base;
+  for(const a of LADDER){
+    for(const dark of [true,false]){
+      const o=renderOnce(field,subKey,'servo',a,dark,cap); o.a=a; o.dark=dark;
+      if(o.r>best.r) best=o;
+      if(o.r>=GATE) return o;
+    }
+  }
+  return best;
+}
+
+function build(){
+  // --- the full measurement first, so the grid can show the treatment that wins ---
+  const rows=[]; const worst={}; const maxA={};
+  TREATMENTS.forEach(t=>{worst[t.k]=99; maxA[t.k]=0;});
+  SUBJECTS.forEach(s=>FIELDS.forEach(f=>{
+    const cells=TREATMENTS.map(t=>{
+      const o=renderCell(f,s.k,t.k);
+      if(o.r<worst[t.k]) worst[t.k]=o.r;
+      if(o.a>maxA[t.k]) maxA[t.k]=o.a;
+      return {r:o.r, a:o.a, dark:o.dark};
+    });
+    rows.push({s:s.label,f:f.label,cells});
+  }));
+  let html='<table><tr><th>subject</th><th>field</th>'+
+    TREATMENTS.map(t=>'<th>'+t.label+'</th>').join('')+'</tr>';
+  rows.forEach(r=>{
+    html+='<tr><td>'+r.s+'</td><td>'+r.f+'</td>'+
+      r.cells.map(c=>'<td class="'+(c.r>=GATE?'ok':'no')+'">'+c.r.toFixed(2)+
+        (c.a?' <span style="opacity:.5">a'+c.a.toFixed(2)+(c.dark?'d':'l')+'</span>':'')+'</td>').join('')+'</tr>';
+  });
+  html+='<tr><th>worst case</th><th></th>'+TREATMENTS.map(t=>
+    '<th class="'+(worst[t.k]>=GATE?'ok':'no')+'">'+worst[t.k].toFixed(2)+'</th>').join('')+'</tr></table>';
+  document.getElementById('tablewrap').innerHTML=html;
+
+  // --- the visual grid: worst fields, none vs the tightest passing treatment ---
+  const winner = TREATMENTS.filter(t=>worst[t.k]>=GATE)[0] || TREATMENTS[TREATMENTS.length-1];
+  const showFields=[FIELDS[1],FIELDS[2],FIELDS[3]];
+  const showTreat=[TREATMENTS[0],winner];
+  const g=document.getElementById('grid');
+  g.innerHTML='<div></div>'+showFields.map(f=>showTreat.map(t=>
+    '<div class="ch">'+f.label+'<br>'+t.label+'</div>').join('')).join('');
+  SUBJECTS.forEach(s=>{
+    const rh=document.createElement('div'); rh.className='rh'; rh.textContent=s.label; g.appendChild(rh);
+    showFields.forEach(f=>showTreat.forEach(t=>{
+      const cell=document.createElement('div'); cell.className='cell';
+      const o=renderCell(f,s.k,t.k);
+      o.cvs.className='c'; cell.appendChild(o.cvs);
+      const m=document.createElement('div');
+      m.className='m '+(o.r>=GATE?'pass':'fail');
+      m.textContent=o.r.toFixed(2)+':1'+(o.a?' · a'+o.a.toFixed(2)+(o.dark?' dark':' light'):'');
+      cell.appendChild(m); g.appendChild(cell);
+    }));
+  });
+
+  const pass=TREATMENTS.filter(t=>worst[t.k]>=GATE).map(t=>t.label);
+  document.getElementById('verdict').innerHTML =
+    'Worst case over every subject &times; every field: ' +
+    TREATMENTS.map(t=>t.label+' <b>'+worst[t.k].toFixed(2)+':1</b>').join(' &middot; ') +
+    '.<br>Clearing the '+GATE+':1 gate everywhere: <b>'+(pass.length?pass.join(', '):'none')+'</b>. ' +
+    'Largest halo strength needed &mdash; ' +
+    TREATMENTS.filter(t=>t.k.indexOf('servo')===0).map(t=>t.label+' <b>a'+maxA[t.k].toFixed(2)+'</b>').join(' &middot; ')+'.';
+}
+
+keySheet(build);
+</script>
+</body>
+</html>

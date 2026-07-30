@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deep Time — Precambrian cadence (ticket 06)</title>
+<!--
+  THROWAWAY PROTOTYPE — Deep Time ticket 06 (environment cadence).
+  Question: what carries 101,530 px of Precambrian without it reading as dead?
+
+  Same scale as the accepted v3 mechanic: 1 px = 40,000 years, never rescaled.
+  This file covers ONLY the Precambrian — px 0 (4.60 Ga) to px 103,130 (538.8 Ma)
+  — plus a short tail into the Cambrian so the exit is felt.
+
+  ART IS PLACEHOLDER. The four keyed cut-outs are the real accepted style
+  (art-proof/proof-sheet-03.png) recycled to stand in for ~20 different subjects.
+  Ticket 03 owns the real subjects. Dates are defensible but ticket 02 owns the
+  verified set; contested ones are flagged in the card.
+
+  Variants:  ?v=A  milestones only (the null — 12 arrivals)
+             ?v=B  gap-capped fill (every gap under the cap, filler allowed)
+             ?v=C  honest density + the Boring Billion named and left empty
+-->
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    background:#05070a;color:#f4f1ea;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+  #spacer{width:1px}
+  #sky{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block}
+  #vig{position:fixed;inset:0;z-index:1;pointer-events:none;
+    background:radial-gradient(130% 100% at 50% 40%,transparent 45%,rgba(0,0,0,.42) 100%)}
+
+  /* ---------------- arrivals ---------------- */
+  #flow{position:fixed;inset:0;z-index:2;pointer-events:none}
+  .ar{position:absolute;width:34%;will-change:transform,opacity;opacity:0;transform:translate3d(0,-9999px,0)}
+  .ar.L{left:5%;text-align:left}
+  .ar.R{left:57%;text-align:right}
+  .ar .rule{height:1px;background:currentColor;opacity:.42;width:38px;margin-bottom:11px}
+  .ar.R .rule{margin-left:auto}
+  .ar .d{font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.7;
+    font-variant-numeric:tabular-nums;margin-bottom:.55em}
+  .ar .n{font-size:clamp(19px,2.4vw,32px);line-height:1.1;letter-spacing:-.02em;font-weight:650;
+    text-shadow:0 2px 22px rgba(0,0,0,.4)}
+  .ar .s{font-size:clamp(12.5px,1.05vw,14.5px);line-height:1.5;opacity:.76;margin-top:.6em;max-width:26em}
+  .ar.R .s{margin-left:auto}
+  /* inhabitant / condition: smaller, no rule, quieter — an arrival, not a milestone */
+  .ar.I{width:26%}
+  .ar.I .rule{display:none}
+  .ar.I .n{font-size:clamp(14px,1.35vw,18px);font-weight:600;letter-spacing:-.008em}
+  .ar.I .d{font-size:9.5px;opacity:.5;margin-bottom:.35em}
+  .ar.I .s{font-size:12px;opacity:.62}
+  /* field event: a whisper, centred, no card */
+  .ar.F{width:auto;left:0 !important;right:0;text-align:center !important;padding:0 8vw}
+  .ar.F .rule{display:none}
+  .ar.F .d{display:none}
+  .ar.F .n{font-size:clamp(11px,1.15vw,13px);font-weight:500;letter-spacing:.26em;
+    text-transform:uppercase;opacity:.62}
+  .ar.F .s{display:none}
+
+  /* ---------------- HUD ---------------- */
+  #hud{position:fixed;z-index:3;left:max(20px,3.2vw);bottom:max(96px,9vh);pointer-events:none;
+    text-shadow:0 2px 22px rgba(0,0,0,.45)}
+  #big{font-size:clamp(30px,5vw,60px);font-weight:680;letter-spacing:-.035em;
+    font-variant-numeric:tabular-nums;line-height:.94}
+  #bigu{font-size:clamp(10px,1.15vw,13px);letter-spacing:.22em;text-transform:uppercase;opacity:.7;margin-top:.65em}
+  #eon{font-size:clamp(12px,1.3vw,15px);font-weight:600;opacity:.85;margin-top:1.1em}
+  #slow{font-size:11px;font-variant-numeric:tabular-nums;opacity:.55;margin-top:.45em;line-height:1.7}
+
+  /* ---------------- the Boring Billion plate (variant C) ---------------- */
+  #bb{position:fixed;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;
+    pointer-events:none;opacity:0;text-align:center;padding:0 8vw}
+  #bb .in{max-width:620px}
+  #bb .k{font-size:10px;letter-spacing:.32em;text-transform:uppercase;opacity:.5;margin-bottom:1.4em}
+  #bb .t{font-size:clamp(26px,4.6vw,54px);font-weight:700;letter-spacing:-.04em;line-height:1.02}
+  #bb .sub{font-size:clamp(13px,1.4vw,16px);opacity:.7;margin-top:1.1em;line-height:1.6}
+  #bb .cnt{font-size:clamp(15px,1.9vw,22px);font-variant-numeric:tabular-nums;font-weight:650;
+    margin-top:2.2em;opacity:.9}
+  #bb .cntu{font-size:10px;letter-spacing:.28em;text-transform:uppercase;opacity:.45;margin-top:.7em}
+
+  /* ---------------- true-scale bar ---------------- */
+  #tsb{position:fixed;z-index:3;right:max(18px,2vw);top:13vh;bottom:20vh;width:4px;pointer-events:none}
+  #tsbtrack{position:absolute;inset:0;background:currentColor;opacity:.16;border-radius:2px}
+  #tsbfill{position:absolute;left:0;top:0;width:4px;background:currentColor;opacity:.6;border-radius:2px}
+  #tsbhead{position:absolute;left:-7px;width:18px;height:2px;background:currentColor}
+  #tsbcap{position:absolute;right:0;top:-3.2em;font-size:9px;text-align:right;
+    letter-spacing:.18em;text-transform:uppercase;opacity:.5;white-space:nowrap}
+
+  /* ---------------- gap map (prototype instrument) ---------------- */
+  #map{position:fixed;left:0;right:0;top:0;height:52px;z-index:15;background:rgba(6,8,12,.86);
+    border-bottom:1px solid rgba(255,255,255,.12);backdrop-filter:blur(8px);color:#eae7e0}
+  #mapc{position:absolute;left:12px;right:12px;top:20px;height:18px}
+  #maptrack{position:absolute;left:0;right:0;top:8px;height:2px;background:rgba(255,255,255,.16)}
+  .mk{position:absolute;top:2px;width:1.5px;height:14px;border-radius:1px}
+  .mk.M{background:#ffd77a;top:0;height:18px;width:2px}
+  .mk.I{background:#7fd7c4;opacity:.75}
+  .mk.F{background:#9aa8ff;opacity:.6}
+  #play{position:absolute;top:-4px;width:1px;height:26px;background:#fff;box-shadow:0 0 8px rgba(255,255,255,.8)}
+  #mapl{position:absolute;left:12px;top:4px;font-size:9px;letter-spacing:.2em;text-transform:uppercase;opacity:.55}
+  #mapr{position:absolute;right:12px;top:4px;font-size:9.5px;font-variant-numeric:tabular-nums;opacity:.75}
+  .mgap{position:absolute;top:7px;height:4px;background:rgba(255,90,90,.5);border-radius:2px}
+
+  /* ---------------- prototype chrome ---------------- */
+  #bar{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:20;display:flex;align-items:center;
+    background:#fff;color:#14171a;border-radius:999px;box-shadow:0 8px 30px rgba(0,0,0,.5);
+    font-size:12px;padding:3px;max-width:96vw;flex-wrap:nowrap;overflow-x:auto}
+  #bar button,#bar select{border:0;background:transparent;color:inherit;font:inherit;padding:7px 11px;
+    cursor:pointer;border-radius:999px;line-height:1;white-space:nowrap}
+  #bar button:hover{background:#edeae5}
+  #bar button.on{background:#14171a;color:#fff}
+  #bar .sep{width:1px;align-self:stretch;background:#e3e0da;margin:0 2px}
+  #bar .rd{padding:7px 11px;font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+  #bar .rd small{font-weight:400;opacity:.55}
+  #note{position:fixed;right:12px;top:64px;z-index:20;max-width:268px;background:rgba(5,7,10,.84);
+    border:1px solid rgba(255,255,255,.15);border-radius:9px;padding:11px 13px;font-size:11px;
+    line-height:1.6;color:#eae7e0;backdrop-filter:blur(8px)}
+  #note b{letter-spacing:.13em;font-size:9.5px;text-transform:uppercase;opacity:.62;display:block;margin-bottom:.6em}
+  #note em{opacity:.65;font-style:normal}
+  #note button{position:absolute;right:5px;top:3px;border:0;background:transparent;color:#eae7e0;
+    opacity:.5;cursor:pointer;font-size:15px;line-height:1}
+
+  @media (max-width:760px){
+    .ar{width:80%;left:6% !important;text-align:left !important}
+    .ar.I{width:66%}
+    .ar.R .rule{margin-left:0} .ar.R .s{margin-left:0}
+    #hud{bottom:max(100px,11vh);left:6%}
+    #tsb{right:10px;top:12vh;bottom:24vh;width:3px}
+    #note{display:none}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="sky"></canvas>
+<div id="vig"></div>
+<div id="flow"></div>
+
+<div id="bb"><div class="in">
+  <div class="k">1.8 – 0.8 billion years ago</div>
+  <div class="t">The Boring Billion</div>
+  <div class="sub">The chemistry settles. The oxygen stops rising. Nothing much happens for a thousand million years — and geologists really do call it that.</div>
+  <div class="cnt" id="bbcnt">25,000</div>
+  <div class="cntu">pixels still to go</div>
+</div></div>
+
+<div id="hud">
+  <div id="big">4.60</div>
+  <div id="bigu">billion years ago</div>
+  <div id="eon">Hadean</div>
+  <div id="slow"></div>
+</div>
+
+<div id="tsb">
+  <div id="tsbcap">Earth’s history · true scale</div>
+  <div id="tsbtrack"></div>
+  <div id="tsbfill"></div>
+  <div id="tsbhead"></div>
+</div>
+
+<div id="map">
+  <div id="mapl">Precambrian · 101,530 px · arrival map</div>
+  <div id="mapr"></div>
+  <div id="mapc"><div id="maptrack"></div><div id="play"></div></div>
+</div>
+
+<div id="spacer"></div>
+
+<div id="note">
+  <button onclick="this.parentNode.remove()">&times;</button>
+  <b>Prototype — ticket 06</b>
+  Precambrian only. 1 px = 40,000 yr, unchanged.<br><br>
+  <em>Gold ticks = milestones · teal = inhabitants &amp; conditions · blue = field events. Red bars on the map are gaps over the cap.</em><br><br>
+  <em>Art is the real accepted style, four cut-outs recycled as placeholders.</em>
+</div>
+
+<div id="bar">
+  <button id="vA">A · milestones only</button>
+  <button id="vB">B · gap-capped</button>
+  <button id="vC">C · owned emptiness</button>
+  <span class="sep"></span>
+  <button id="pl">▶ auto</button>
+  <select id="sp"><option value="300">300 px/s</option><option value="500" selected>500 px/s</option><option value="900">900 px/s</option><option value="1600">1600 px/s</option></select>
+  <span class="sep"></span>
+  <button id="halo">halo: on</button>
+  <button id="top">restart</button>
+  <span class="sep"></span>
+  <span class="rd" id="rd1">0.0<small>s since arrival</small></span>
+  <span class="rd" id="rd2">—<small>longest gap</small></span>
+</div>
+
+<script>
+'use strict';
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+/* ============================================================
+   THE SCALE — identical to the accepted v3 mechanic
+   ============================================================ */
+const T0    = 4.6e9;
+const YRPX  = 40000;
+const INTRO = 1600;
+const PC_END_YA = 538.8e6;                    // base of the Cambrian (ICS 2023)
+const msY   = ya => INTRO + (T0-ya)/YRPX;
+const PC_END_Y = msY(PC_END_YA);              // 103,130
+const TAIL  = 2500;                           // a little Cambrian so the exit is felt
+const TOTAL = PC_END_Y + TAIL;
+const yearAt = sy => sy<=INTRO ? T0 : T0 - (sy-INTRO)*YRPX;
+
+/* ============================================================
+   ARRIVALS — [yearsAgo, kind, name, line, flags]
+   kind  M = milestone (card + bar tick + art)
+         I = inhabitant / condition (small label + art, no tick)
+         F = field event (whisper, no art)
+   flags 'bb' = Boring-Billion filler, dropped in variant C
+         'a0' = one of the twelve original milestones (variant A)
+   ============================================================ */
+const A = [
+ [4.567e9,'M','The Solar System forms','Dust and ice collapse. Earth begins to gather.','a0'],
+ [4.51e9 ,'M','The Moon is torn out','A Mars-sized body strikes. The debris becomes a Moon that hangs enormous and close.','a0'],
+ [4.50e9 ,'I','A magma ocean','The entire surface is molten rock.',''],
+ [4.45e9 ,'F','The Moon is two and a half times wider than it is today','',''],
+ [4.404e9,'M','Liquid water','A single zircon crystal records water at the surface.','a0'],
+ [4.30e9 ,'I','Steam, acid rain, no continents','',''],
+ [4.10e9 ,'I','The first crust','',''],
+ [4.03e9 ,'M','The oldest rock we still have','Acasta gneiss, north-west Canada.','a0'],
+ [3.90e9 ,'I','Heavy bombardment','Contested — the late spike may never have happened.',''],
+ [3.80e9 ,'F','The haze thickens','',''],
+ [3.77e9 ,'M','The first trace of life','Carbon in Greenland sediment, isotopically light. Contested.','a0'],
+ [3.60e9 ,'I','Microbial mats','',''],
+ [3.48e9 ,'M','Stromatolites','Mats build the first structures life leaves behind.','a0'],
+ [3.40e9 ,'I','Microbes that eat sulfur','',''],
+ [3.26e9 ,'I','An asteroid fifty kilometres across','The S2 impact boils the top of the ocean.',''],
+ [3.20e9 ,'M','The first continents','',''],
+ [3.00e9 ,'M','Photosynthesis','Cyanobacteria split water and let the oxygen go. Contested — 3.0 to 2.4 Ga.','a0'],
+ [2.90e9 ,'M','The first ice age','The Pongola glaciation.',''],
+ [2.80e9 ,'I','Cyanobacteria, everywhere','',''],
+ [2.70e9 ,'I','Whiffs of oxygen','',''],
+ [2.60e9 ,'I','Banded iron','Oxygen meets dissolved iron and it rusts out of the sea.',''],
+ [2.50e9 ,'I','Banded iron, still','',''],
+ [2.45e9 ,'M','The Great Oxidation begins','Free oxygen floods the air and poisons most of the life that made it.','a0'],
+ [2.40e9 ,'M','The Huronian glaciation','Oxygen eats the methane greenhouse and the planet freezes.','a0'],
+ [2.32e9 ,'F','The sky is blue','',''],
+ [2.22e9 ,'I','The Lomagundi excursion','',''],
+ [2.10e9 ,'I','Francevillian fossils','Contested — possibly the oldest multicellular life.',''],
+ [1.87e9 ,'I','Grypania','Contested — possibly the oldest eukaryote.',''],
+ [1.80e9 ,'F','Banded iron stops','','bbstart'],
+ [1.65e9 ,'M','The first complex cell','One cell swallows another and, instead of digesting it, keeps it.','a0'],
+ [1.60e9 ,'I','Acritarchs','','bb'],
+ [1.45e9 ,'I','Stromatolite reefs, still','','bb'],
+ [1.30e9 ,'I','Acritarchs, still','','bb'],
+ [1.20e9 ,'I','Below the surface the ocean stays anoxic','','bb'],
+ [1.05e9 ,'M','Sex','Bangiomorpha, a red alga — the oldest known sexual reproduction.','a0'],
+ [1.00e9 ,'M','Rodinia','Every continent gathered into one mass.',''],
+ [0.89e9 ,'I','The first sponges?','Contested — a biomarker, not a body.',''],
+ [0.80e9 ,'F','The Boring Billion ends','','bbend'],
+ [0.72e9 ,'M','Snowball Earth','Ice reaches the tropics. The planet is a white marble.','a0'],
+ [0.66e9 ,'I','A brief thaw','',''],
+ [0.65e9 ,'I','Frozen again','The Marinoan.',''],
+ [0.635e9,'M','The ice breaks','',''],
+ [0.574e9,'M','Charnia','The first big bodies — soft, strange, rooted to the seabed.',''],
+ [0.558e9,'M','Dickinsonia','',''],
+ [0.550e9,'I','The first burrows','Something is moving through the mud on purpose.',''],
+ [0.5388e9,'M','The Cambrian begins','',''],
+];
+
+const BB_HI = 1.80e9, BB_LO = 0.80e9;
+const GAP_CAP = 2200;                          // px — variant B's ceiling (~4.4 s at 500 px/s)
+
+const params = new URLSearchParams(location.search);
+let VAR = (params.get('v')||'C').toUpperCase();
+if(!'ABC'.includes(VAR)) VAR='C';
+
+function activeSet(){
+  if(VAR==='A') return A.filter(a=>a[4]==='a0');
+  if(VAR==='B') return A.slice();
+  return A.filter(a=>a[4]!=='bb');              // C drops the Boring-Billion filler
+}
+
+/* ============================================================
+   THE FIELD — era sky/ocean colour, per ticket 03's data channel
+   Keyframes are yearsAgo → [skyTop, skyBottom, horizon, ground]
+   ============================================================ */
+const K = [
+ [4.60e9,'#180402','#7d1a06','#100201','#1c0503'],   // molten
+ [4.30e9,'#1d0806','#8a2f0d','#120403','#1d0705'],
+ [3.90e9,'#241004','#96500f','#150c05','#152012'],   // haze building
+ [3.80e9,'#2a1406','#a05c14','#160e06','#123322'],   // orange sky, green iron ocean
+ [3.00e9,'#2e1907','#ab6a1a','#170f06','#0f3a28'],
+ [2.45e9,'#2b1808','#a4661c','#160f07','#103a2a'],   // pre-GOE
+ [2.32e9,'#1d2320','#7c8a63','#131a17','#153a33'],   // mid-GOE, the turn
+ [2.06e9,'#0f2a44','#4c8dbe','#0c1e2e','#12403c'],   // blue
+ [0.80e9,'#0d2a45','#468ab8','#0b1f2f','#114442'],
+ [0.720e9,'#152a3a','#84a9bf','#5d7d92','#9dc0d0'],  // freeze onset
+ [0.717e9,'#1a2f3e','#cbe0ec','#c4dbe7','#dfeef5'],  // Sturtian white
+ [0.660e9,'#173147','#9dc0d8','#8fb0c4','#c2d8e4'],  // brief thaw
+ [0.650e9,'#1a2f3e','#c8dfec','#c2dae6','#dceef5'],  // Marinoan white
+ [0.635e9,'#143048','#7fb0cf','#3f6379','#4d7a6c'],  // the ice breaks
+ [0.5388e9,'#0d2c3c','#2f8290','#08222a','#0d3c3a'], // Ediacaran / Cambrian sea
+ [0,'#0d2c3c','#2f8290','#08222a','#0d3c3a']
+];
+const hex=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+K.forEach(k=>{ k[5]=[hex(k[1]),hex(k[2]),hex(k[3]),hex(k[4])]; });
+
+const lerp=(a,b,t)=>a+(b-a)*t;
+const lerp3=(a,b,t)=>[lerp(a[0],b[0],t),lerp(a[1],b[1],t),lerp(a[2],b[2],t)];
+const rgb=c=>'rgb('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+')';
+const rgba=(c,a)=>'rgba('+(c[0]|0)+','+(c[1]|0)+','+(c[2]|0)+','+a+')';
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const smooth=(e0,e1,x)=>{const t=clamp((x-e0)/(e1-e0),0,1);return t*t*(3-2*t);};
+
+const F={};
+function fieldAt(y){
+  let i=0; for(;i<K.length-1;i++){ if(y>K[i+1][0]) break; }
+  const a=K[i], b=K[Math.min(i+1,K.length-1)];
+  const t = a[0]===b[0] ? 0 : clamp((a[0]-y)/(a[0]-b[0]),0,1);
+  F.sky0=lerp3(a[5][0],b[5][0],t); F.sky1=lerp3(a[5][1],b[5][1],t);
+  F.hz=lerp3(a[5][2],b[5][2],t);   F.gnd=lerp3(a[5][3],b[5][3],t);
+  return F;
+}
+
+/* --- the Moon really does recede: a slow clock that is also a fact --- */
+/* anchors: yearsAgo → Earth-radii. 0.62 Ga from Elatina tidal rhythmites;
+   deep anchors are modelled, not measured — flagged in the HUD. */
+const MOONR = [[4.50e9,24],[4.00e9,32],[3.00e9,42],[2.45e9,48],[2.00e9,51],[1.00e9,55],[0.62e9,57.5],[0,60.3]];
+function moonScale(y){
+  let i=0; for(;i<MOONR.length-1;i++){ if(y>MOONR[i+1][0]) break; }
+  const a=MOONR[i], b=MOONR[Math.min(i+1,MOONR.length-1)];
+  const t = a[0]===b[0]?0:clamp((a[0]-y)/(a[0]-b[0]),0,1);
+  return 60.3/lerp(a[1],b[1],t);
+}
+/* modelled day length, hours */
+const DAYH = [[4.50e9,6],[4.00e9,8],[3.00e9,12],[2.45e9,17],[1.00e9,19],[0.62e9,21.9],[0,24]];
+function dayLen(y){
+  let i=0; for(;i<DAYH.length-1;i++){ if(y>DAYH[i+1][0]) break; }
+  const a=DAYH[i], b=DAYH[Math.min(i+1,DAYH.length-1)];
+  const t = a[0]===b[0]?0:clamp((a[0]-y)/(a[0]-b[0]),0,1);
+  return lerp(a[1],b[1],t);
+}
+const EONS=[[4.031e9,'Hadean'],[2.5e9,'Archean'],[0.5388e9,'Proterozoic'],[0,'Phanerozoic']];
+const eonAt=y=>{ for(const e of EONS) if(y>e[0]) return e[1]; return 'Phanerozoic'; };
+
+/* ============================================================
+   CANVAS + FIELD RENDER (v3's proven layers, creatures removed)
+   ============================================================ */
+const cv=document.getElementById('sky'), cx=cv.getContext('2d');
+let W=0,H=0,DPR=1,MOB=false;
+function sizeCanvas(){
+  MOB = window.innerWidth < 760;
+  DPR = Math.min(window.devicePixelRatio||1, MOB?1.5:2);
+  W = cv.clientWidth||window.innerWidth; H = cv.clientHeight||window.innerHeight;
+  cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
+  cx.setTransform(DPR,0,0,DPR,0,0);
+}
+// iOS URL-bar collapse squashes a fixed canvas — re-sync from its own box.
+new ResizeObserver(()=>{ sizeCanvas(); }).observe(cv);
+sizeCanvas();
+
+let _s=1; const rnd=()=>{ _s=(_s*16807)%2147483647; return _s/2147483647; };
+function ridge(seed,amp,freq){
+  _s=seed; const pts=[]; const a=[rnd()*6.3,rnd()*6.3,rnd()*6.3,rnd()*6.3];
+  for(let i=0;i<=64;i++){ const u=i/64;
+    pts.push(Math.sin(u*freq+a[0])*.55+Math.sin(u*freq*2.3+a[1])*.28+Math.sin(u*freq*4.7+a[2])*.13+Math.sin(u*freq*9.1+a[3])*.06); }
+  return {pts,amp};
+}
+const R_FAR=ridge(7,1,4.4), R_MID=ridge(23,.62,7.6), R_NEAR=ridge(91,.34,12.5);
+function drawRidge(r,baseY,colour,off,scale){
+  const n=r.pts.length-1, span=W*1.6, x0=-((off)%span);
+  cx.beginPath(); let firstX=null,lastX=0;
+  for(let k=0;k<2;k++) for(let i=0;i<=n;i++){
+    const x=x0+k*span+(i/n)*span, yy=baseY-r.pts[i]*r.amp*scale;
+    if(firstX===null){firstX=x;cx.moveTo(x,yy);} else cx.lineTo(x,yy); lastX=x;
+  }
+  cx.lineTo(lastX,H+20); cx.lineTo(firstX,H+20); cx.closePath(); cx.fillStyle=colour; cx.fill();
+}
+const MAXP=200, P=[];
+for(let i=0;i<MAXP;i++) P.push({x:Math.random(),y:Math.random(),ph:Math.random()*6.3,r:Math.random()});
+
+/* ============================================================
+   CUT-OUTS — key the real proof sheet to true alpha
+   ============================================================ */
+const CROPS=[[52,30,410,395],[505,80,515,340],[150,455,240,545],[430,510,585,435]];
+const CUT=[]; let CUTREADY=false;
+(function(){
+  const img=new Image();
+  img.onload=()=>{
+    const o=document.createElement('canvas'); o.width=img.width; o.height=img.height;
+    const oc=o.getContext('2d'); oc.drawImage(img,0,0);
+    let d; try{ d=oc.getImageData(0,0,o.width,o.height); }
+    catch(e){ console.warn('cut-outs need http:// — serve the folder, do not open the file directly'); return; }
+    const px=d.data;
+    for(let i=0;i<px.length;i+=4){
+      const lum=(px[i]*0.299+px[i+1]*0.587+px[i+2]*0.114)/255;
+      const a=smooth(0.045,0.14,lum);
+      if(a>0.01){ px[i]=Math.min(255,px[i]/a); px[i+1]=Math.min(255,px[i+1]/a); px[i+2]=Math.min(255,px[i+2]/a); }
+      px[i+3]=Math.round(a*255);
+    }
+    oc.putImageData(d,0,0);
+    CROPS.forEach(c=>{
+      const q=document.createElement('canvas'); q.width=c[2]; q.height=c[3];
+      q.getContext('2d').drawImage(o,c[0],c[1],c[2],c[3],0,0,c[2],c[3]);
+      CUT.push(q);
+    });
+    CUTREADY=true;
+  };
+  img.src='../../art-proof/proof-sheet-03.png';
+})();
+
+/* ============================================================
+   BUILD THE ACTIVE SET
+   ============================================================ */
+let items=[], maxGap=0, maxGapAt=0;
+const flow=document.getElementById('flow');
+
+function build(){
+  flow.innerHTML='';
+  items=[];
+  const set=activeSet();
+  let li=0, hue=0;
+  set.forEach(a=>{
+    const el=document.createElement('div');
+    el.className='ar '+a[1]+' '+(a[1]==='F' ? '' : (li%2?'R':'L'));
+    el.innerHTML='<div class="rule"></div><div class="d"></div><div class="n"></div><div class="s"></div>';
+    el.querySelector('.d').textContent=dateLabel(a[0]);
+    el.querySelector('.n').textContent=a[2];
+    el.querySelector('.s').textContent=a[3]||'';
+    flow.appendChild(el);
+    const it={el, ya:a[0], y:msY(a[0]), kind:a[1], flag:a[4],
+              lvl: a[1]==='F' ? 2 : (Math.floor(li/2)%2),
+              side: (li%2)?1:0, cut:(hue%4), flip:(hue%3===1), dwell:520};
+    items.push(it);
+    if(a[1]!=='F'){ li++; hue++; }
+  });
+  items.sort((p,q)=>p.y-q.y);
+  maxGap=0;
+  for(let i=0;i<items.length;i++){
+    const gap = i<items.length-1 ? items[i+1].y-items[i].y : 900;
+    items[i].gap=gap;
+    items[i].dwell=clamp(gap*0.9,150,660);
+    if(gap>maxGap && i<items.length-1){ maxGap=gap; maxGapAt=items[i].y; }
+  }
+  buildMap();
+  document.getElementById('rd2').innerHTML=Math.round(maxGap).toLocaleString('en-US')+
+    '<small>longest gap · '+(maxGap/500).toFixed(1)+'s @500</small>';
+  ['A','B','C'].forEach(v=>document.getElementById('v'+v).classList.toggle('on',v===VAR));
+}
+
+function buildMap(){
+  const mc=document.getElementById('mapc');
+  mc.querySelectorAll('.mk,.mgap').forEach(n=>n.remove());
+  const fr=document.createDocumentFragment();
+  for(let i=0;i<items.length;i++){
+    const it=items[i];
+    const d=document.createElement('div');
+    d.className='mk '+it.kind;
+    d.style.left=(it.y/PC_END_Y*100)+'%';
+    d.title=it.ya/1e9+' Ga · '+it.el.querySelector('.n').textContent;
+    fr.appendChild(d);
+    if(i<items.length-1 && it.gap>GAP_CAP){
+      const g=document.createElement('div'); g.className='mgap';
+      g.style.left=(it.y/PC_END_Y*100)+'%';
+      g.style.width=(it.gap/PC_END_Y*100)+'%';
+      fr.appendChild(g);
+    }
+  }
+  mc.appendChild(fr);
+}
+
+function dateLabel(y){
+  if(y>=1e9) return (y/1e9).toFixed(y>=4e9?3:2)+' billion years ago';
+  return Math.round(y/1e6)+' million years ago';
+}
+
+/* ============================================================
+   FRAME
+   ============================================================ */
+const $=s=>document.getElementById(s);
+$('spacer').style.height=(TOTAL+window.innerHeight)+'px';
+addEventListener('resize',()=>{ $('spacer').style.height=(TOTAL+window.innerHeight)+'px'; });
+
+let sy=0, lastT=0, lastArrivalT=performance.now(), lastPassed=-1;
+let HALO=true, PLAY=false, SPD=500, lastPx=0, pxRate=0;
+
+function draw(){
+  const nsy=window.scrollY||window.pageYOffset||0;
+  const now=performance.now();
+  const dt=Math.min(48, now-(lastT||now)); lastT=now;
+  if(dt>0){ const inst=Math.abs(nsy-sy)/(dt/1000); pxRate=pxRate*0.88+inst*0.12; }
+  sy=nsy;
+
+  const y=yearAt(sy);
+  fieldAt(y);
+
+  /* ---- field ---- */
+  const hzY=H*0.70;
+  const g=cx.createLinearGradient(0,0,0,hzY);
+  g.addColorStop(0,rgb(F.sky0)); g.addColorStop(1,rgb(F.sky1));
+  cx.fillStyle=g; cx.fillRect(0,0,W,H);
+
+  // sun: a smear early, a disc late
+  const sunT=clamp((4.6e9-y)/4.06e9,0,1);
+  const sx=W*0.79, syy=H*(0.30-sunT*0.12), sr=(46-sunT*20)*(MOB?.7:1);
+  const gg=cx.createRadialGradient(sx,syy,0,sx,syy,sr*7);
+  gg.addColorStop(0,rgba(lerp3([255,90,30],[255,255,255],sunT),0.30-sunT*0.14));
+  gg.addColorStop(1,rgba([255,255,255],0));
+  cx.fillStyle=gg; cx.fillRect(sx-sr*7,syy-sr*7,sr*14,sr*14);
+
+  // the Moon, receding — real, and the slowest thing on the page
+  const ms=moonScale(y), mr=26*ms*(MOB?.66:1), mx=W*0.25, my=H*0.15;
+  cx.save(); cx.globalAlpha=.40;
+  cx.fillStyle=rgb(lerp3(F.sky1,[255,255,255],.5));
+  cx.beginPath(); cx.arc(mx,my,mr,0,6.3); cx.fill();
+  cx.globalAlpha=.15; cx.fillStyle=rgb(F.sky0);
+  cx.beginPath(); cx.arc(mx-mr*.28,my-mr*.18,mr*.9,0,6.3); cx.fill();
+  cx.restore();
+
+  const hz1=cx.createLinearGradient(0,hzY-H*0.20,0,hzY+8);
+  hz1.addColorStop(0,rgba(F.sky1,0)); hz1.addColorStop(1,rgba(lerp3(F.sky1,[255,255,255],.22),.5));
+  cx.fillStyle=hz1; cx.fillRect(0,hzY-H*0.20,W,H*0.20+8);
+
+  // in the Boring Billion the field deliberately slows (variant C)
+  const inBB = y<BB_HI && y>BB_LO;
+  const still = (VAR==='C' && inBB) ? 0.25 : 1;
+
+  drawRidge(R_FAR, hzY+6,  rgba(lerp3(F.hz,F.sky1,.46),1), sy*0.055, H*0.11);
+  drawRidge(R_MID, hzY+18, rgba(lerp3(F.hz,F.sky1,.20),1), sy*0.115, H*0.08);
+  const gg2=cx.createLinearGradient(0,hzY+16,0,H);
+  gg2.addColorStop(0,rgb(lerp3(F.gnd,F.sky1,.22))); gg2.addColorStop(1,rgb(lerp3(F.gnd,[0,0,0],.35)));
+  cx.fillStyle=gg2; cx.fillRect(0,hzY+16,W,H-hzY);
+  drawRidge(R_NEAR,H+4, rgba(lerp3(F.gnd,[0,0,0],.4),1), sy*0.24, H*0.05);
+
+  // particles: ash → haze → snow, tied to the era
+  const snow = y<0.72e9 && y>0.63e9;
+  const pc = y>3.8e9 ? [255,160,70] : (snow?[255,255,255]:[200,230,235]);
+  const pn = Math.round((y>3.8e9?140:(snow?170:80))*(MOB?.55:1)*still);
+  const pvy = (y>3.8e9?-26:(snow?16:-4))*still, pvx=6*still;
+  cx.save();
+  for(let i=0;i<pn;i++){
+    const q=P[i];
+    q.y += (pvy*5*dt/1000)/(H||800);
+    q.x += (pvx*5*dt/1000)/(W||1200);
+    if(q.y<-.05)q.y=1.05; if(q.y>1.05)q.y=-.05;
+    if(q.x>1.05)q.x=-.05; if(q.x<-.05)q.x=1.05;
+    q.ph+=dt*.0016;
+    const px_=q.x*W+Math.sin(q.ph)*7, py=q.y*H, s=(y>3.8e9?2.3:1.7)*(.5+q.r), al=(snow?.6:.4)*(.4+q.r*.6);
+    cx.fillStyle=rgba(pc,al);
+    cx.beginPath(); cx.arc(px_,py,s,0,6.3); cx.fill();
+  }
+  cx.restore();
+
+  /* ---- arrivals ---- */
+  let sinceIdx=-1;
+  for(const n of items){
+    const raw=n.y-sy;
+    const vd = raw>0 ? raw : (raw < -n.dwell ? raw+n.dwell : 0);
+    if(sy>=n.y) sinceIdx=Math.max(sinceIdx, items.indexOf(n));
+    if(Math.abs(vd)>H*0.62){
+      if(n.el.style.opacity!=='0'){ n.el.style.opacity='0'; n.el.style.transform='translate3d(0,-9999px,0)'; }
+      continue;
+    }
+    const anchor = n.lvl===2 ? H*0.80 : H*(n.lvl?.46:.22);
+    const op = 1-smooth(H*0.14,H*0.58,Math.abs(vd));
+    n.el.style.transform='translate3d(0,'+(anchor+vd)+'px,0)';
+    n.el.style.opacity=String(op);
+    // the art, drawn on the canvas so it sits in the field, not on top of it
+    if(n.kind!=='F' && CUTREADY && op>0.02){
+      const c=CUT[n.cut];
+      const base = n.kind==='M' ? H*0.28 : H*0.17;
+      let h = base*(MOB?.62:1), w = h*(c.width/c.height);
+      const maxW = W*(MOB?.40:.24);
+      if(w>maxW){ w=maxW; h=w*(c.height/c.width); }
+      const ax = MOB ? W*0.70 : (n.side ? W*0.22 : W*0.76);
+      const ay = anchor+vd+ (n.kind==='M'? H*0.055 : H*0.015);
+      cx.save(); cx.globalAlpha=op;
+      if(HALO){
+        cx.save(); cx.filter='blur(16px)'; cx.globalAlpha=op*0.38;
+        cx.drawImage(c, ax-w/2-5, ay-5, w+10, h+10);
+        cx.restore();
+      }
+      if(n.flip){ cx.translate(ax*2,0); cx.scale(-1,1); }
+      cx.drawImage(c, ax-w/2, ay, w, h);
+      cx.restore(); cx.filter='none';
+    }
+  }
+  if(sinceIdx!==lastPassed && sinceIdx>=0){ lastPassed=sinceIdx; lastArrivalT=now; }
+
+  /* ---- Boring Billion plate (variant C only) ---- */
+  const bb=$('bb');
+  if(VAR==='C' && inBB){
+    const inT=smooth(BB_HI,BB_HI-4e6,y), outT=1-smooth(BB_LO+16e6,BB_LO,y);
+    bb.style.opacity=String(Math.min(inT,outT)*0.92);
+    $('bbcnt').textContent=Math.max(0,Math.round(msY(BB_LO)-sy)).toLocaleString('en-US');
+  } else if(bb.style.opacity!=='0') bb.style.opacity='0';
+
+  /* ---- HUD ---- */
+  const bp = y>=1e9 ? [(y/1e9).toFixed(2),'billion years ago'] : [Math.round(y/1e6).toString(),'million years ago'];
+  $('big').textContent=bp[0]; $('bigu').textContent=bp[1];
+  $('eon').textContent=eonAt(y);
+  $('slow').innerHTML='Moon '+moonScale(y).toFixed(2)+'× today’s width · day '+dayLen(y).toFixed(1)+' h <span style="opacity:.55">(modelled)</span>';
+  const el=(T0-y)/T0*100;
+  $('tsbfill').style.height=el+'%'; $('tsbhead').style.top=el+'%';
+
+  const lum=0.299*F.sky1[0]+0.587*F.sky1[1]+0.114*F.sky1[2];
+  document.body.style.color = lum>150 ? '#12161a' : '#f4f1ea';
+
+  /* ---- instruments ---- */
+  $('play').style.left=clamp(sy/PC_END_Y,0,1)*100+'%';
+  $('mapr').textContent=Math.round(sy).toLocaleString('en-US')+' px · '+Math.round(pxRate)+' px/s';
+  $('rd1').innerHTML=((now-lastArrivalT)/1000).toFixed(1)+'<small>s since arrival</small>';
+
+  if(PLAY && sy<TOTAL){ window.scrollTo(0, sy + SPD*dt/1000); }
+  requestAnimationFrame(draw);
+}
+
+/* ---- chrome ---- */
+['A','B','C'].forEach(v=>{ $('v'+v).onclick=()=>{ VAR=v; build();
+  history.replaceState(null,'','?v='+v); }; });
+$('pl').onclick=()=>{ PLAY=!PLAY; $('pl').textContent=PLAY?'❚❚ auto':'▶ auto'; $('pl').classList.toggle('on',PLAY); };
+$('sp').onchange=e=>{ SPD=+e.target.value; };
+$('halo').onclick=()=>{ HALO=!HALO; $('halo').textContent='halo: '+(HALO?'on':'off'); };
+$('top').onclick=()=>{ window.scrollTo(0,0); lastArrivalT=performance.now(); lastPassed=-1; };
+addEventListener('keydown',e=>{ if(e.code==='Space'){ e.preventDefault(); $('pl').click(); } });
+
+build();
+window.scrollTo(0,0);
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>

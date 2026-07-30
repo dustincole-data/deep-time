@@ -161,32 +161,47 @@ function makeDisc(size,terminator){
   return c;
 }
 
-function keySheet(cb){
-  const img=new Image();
-  img.onload=()=>{
-    const o=document.createElement('canvas'); o.width=img.width; o.height=img.height;
-    const oc=o.getContext('2d'); oc.drawImage(img,0,0);
-    let d; try{ d=oc.getImageData(0,0,o.width,o.height); }
-    catch(e){ document.getElementById('verdict').innerHTML=
-      '<b>Serve this folder over http://</b> — keying the proof sheet needs getImageData.'; return; }
-    const px=d.data;
-    for(let i=0;i<px.length;i+=4){
-      const L=(px[i]*0.299+px[i+1]*0.587+px[i+2]*0.114)/255;
-      const a=smooth(0.045,0.14,L);
-      if(a>0.01){ px[i]=Math.min(255,px[i]/a); px[i+1]=Math.min(255,px[i+1]/a); px[i+2]=Math.min(255,px[i+2]/a); }
-      px[i+3]=Math.round(a*255);
-    }
-    oc.putImageData(d,0,0);
-    for(const k in CROPS){
-      const c=CROPS[k], q=document.createElement('canvas'); q.width=c[2]; q.height=c[3];
-      q.getContext('2d').drawImage(o,c[0],c[1],c[2],c[3],0,0,c[2],c[3]);
-      SUB[k]=q;
-    }
-    SUB.disc=makeDisc(420,false);
-    SUB.discTerm=makeDisc(420,true);
+/* the same luminance key the cut-out pipeline uses — planets go through it too,
+   which is why a portrait may not carry a night side: near-black is punched out. */
+function keyToAlpha(img){
+  const o=document.createElement('canvas'); o.width=img.width; o.height=img.height;
+  const oc=o.getContext('2d',{willReadFrequently:true}); oc.drawImage(img,0,0);
+  const d=oc.getImageData(0,0,o.width,o.height), px=d.data;
+  for(let i=0;i<px.length;i+=4){
+    const L=(px[i]*0.299+px[i+1]*0.587+px[i+2]*0.114)/255;
+    const a=smooth(0.045,0.14,L);
+    if(a>0.01){ px[i]=Math.min(255,px[i]/a); px[i+1]=Math.min(255,px[i+1]/a); px[i+2]=Math.min(255,px[i+2]/a); }
+    px[i+3]=Math.round(a*255);
+  }
+  oc.putImageData(d,0,0);
+  return o;
+}
+function crop(o,c){
+  const q=document.createElement('canvas'); q.width=c[2]; q.height=c[3];
+  q.getContext('2d').drawImage(o,c[0],c[1],c[2],c[3],0,0,c[2],c[3]);
+  return q;
+}
+function load(src){
+  return new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=src; });
+}
+async function keySheet(cb){
+  try{
+    const [subj,planets]=await Promise.all([
+      load('../../art-proof/proof-sheet-03.png'),
+      load('../../art-proof/planet-sheet-01.png')
+    ]);
+    const a=keyToAlpha(subj);
+    for(const k in CROPS) SUB[k]=crop(a,CROPS[k]);
+    const p=keyToAlpha(planets);
+    SUB.molten =crop(p,[0,0,512,512]);
+    SUB.haze   =crop(p,[512,0,512,512]);
+    SUB.snow   =crop(p,[0,512,512,512]);
+    SUB.impact =crop(p,[512,512,512,512]);
     READY=true; cb();
-  };
-  img.src='../../art-proof/proof-sheet-03.png';
+  }catch(e){
+    document.getElementById('verdict').innerHTML=
+      '<b>Serve this folder over http://</b> — keying the sheets needs getImageData.';
+  }
 }
 
 /* ------------------------------------------------------------------
@@ -294,17 +309,20 @@ const FIELDS=[
   {k:'cambrian', y:0.5388e9,label:'538.8 Ma sea'}
 ];
 const SUBJECTS=[
-  {k:'stromatolite', label:'stromatolite (pale)'},
-  {k:'mammoth',      label:'mammoth (saturated)'},
-  {k:'disc',         label:'planet disc, flat'},
-  {k:'discTerm',     label:'planet disc + terminator'}
+  {k:'stromatolite', label:'stromatolite (pale cut-out)'},
+  {k:'mammoth',      label:'mammoth (saturated cut-out)'},
+  {k:'molten',       label:'planet — molten 4,540 Ma'},
+  {k:'haze',         label:'planet — hazy 2,430 Ma'},
+  {k:'snow',         label:'planet — Snowball 717 Ma'},
+  {k:'impact',       label:'planet — Chicxulub 66 Ma'}
 ];
+const PLANET=['molten','haze','snow','impact'];
+/* the two sky-ceiling treatments were measured in legibility-01.png and bought
+   nothing over the servo alone, so the field keeps its full daylight range. */
 const TREATMENTS=[
   {k:'none',  label:'none'},
   {k:'glow',  label:'glow (06)'},
-  {k:'servo', label:'servo halo'},
-  {k:'servo55', label:'servo + sky &le;.55', cap:0.55},
-  {k:'servo45', label:'servo + sky &le;.45', cap:0.45}
+  {k:'servo', label:'servo halo'}
 ];
 const GATE=3, LADDER=[0.25,0.45,0.62,0.78,0.92];
 
@@ -315,9 +333,9 @@ function renderOnce(field, subKey, treat, strength, dark, cap){
   const cx=cvs.getContext('2d',{willReadFrequently:true});
   drawField(cx,CW,CH,field.y,field.ov,cap);
   const src=SUB[subKey];
-  const isDisc=subKey.startsWith('disc');
-  const h=isDisc?CH*0.80:CH*0.62, w=h*(src.width/src.height);
-  const ax=(CW-w)/2, ay=(CH-h)/2 - (isDisc?0:6);
+  const isPlanet=PLANET.indexOf(subKey)>=0;
+  const h=isPlanet?CH*0.94:CH*0.62, w=h*(src.width/src.height);
+  const ax=(CW-w)/2, ay=(CH-h)/2 - (isPlanet?0:6);
   drawSubject(cx,src,ax,ay,w,h,treat,strength,dark);
   return {cvs, r:measure(cvs,src,ax,ay,w,h)};
 }
@@ -366,7 +384,7 @@ function build(){
 
   // --- the visual grid: worst fields, none vs the tightest passing treatment ---
   const winner = TREATMENTS.filter(t=>worst[t.k]>=GATE)[0] || TREATMENTS[TREATMENTS.length-1];
-  const showFields=[FIELDS[1],FIELDS[2],FIELDS[3]];
+  const showFields=[FIELDS[0],FIELDS[1],FIELDS[3]];
   const showTreat=[TREATMENTS[0],winner];
   const g=document.getElementById('grid');
   g.innerHTML='<div></div>'+showFields.map(f=>showTreat.map(t=>

@@ -568,6 +568,16 @@
       "source": "Sun et al. 2002, *Science*"
     },
     {
+      "id": "tyrannosaurus-rex",
+      "ma": 68,
+      "tier": "I",
+      "date": "68–66 Ma",
+      "name": "*Tyrannosaurus rex*",
+      "line": "The last and largest of the tyrannosaurs, gone within two million years of the asteroid.",
+      "art": "subject",
+      "source": "Fowler 2017, *PLOS ONE* — Hell Creek Fm. and equivalents, 68–66 Ma"
+    },
+    {
       "id": "chicxulub",
       "ma": 66.04,
       "tier": "M",
@@ -576,6 +586,16 @@
       "line": "Everything larger than a badger dies.",
       "art": "planet",
       "source": "Renne et al. 2013, *Science* — 66.043 ± 0.011 Ma"
+    },
+    {
+      "id": "first-primates",
+      "ma": 56,
+      "tier": "I",
+      "date": "56 Ma",
+      "name": "The first true primates",
+      "line": "*Teilhardina* — not the primate-like mammals that came before it, but the first crown primate. It appears on three continents within 25,000 years, during a sudden burst of global heat.",
+      "art": "subject",
+      "source": "Smith, Rose & Gingerich 2006, *PNAS* — Teilhardina, PETM onset ~56 Ma"
     },
     {
       "id": "antarctica-freezes",
@@ -746,7 +766,10 @@
     "dwell, so it releases 485px into the finale and the drain runs 485 + 40 = 525px (\u00a79 staging 1).",
     "Two beats are deliberately empty. \u00a715: cutting either one will be proposed and must be refused.",
     "The copy is verbatim from \u00a78 and every number in it is recomputed from `constants` by the",
-    "tests \u2014 two of them were wrong in an earlier prototype."
+    "tests \u2014 two of them were wrong in an earlier prototype.",
+    "copy.epilogue CUT 2026-07-31: its claim (T. rex and the first primates could not fit) is",
+    "false now that both are real arrivals (Dustin's call). \u00a79 beat 7 'left holding' (275px, the",
+    "last thing the visitor sees) is open \u2014 STOP AND ASK, do not invent replacement copy."
   ],
 
   "finale": {
@@ -763,7 +786,7 @@
     "copy": {
       "seamCaption": "never drawn on the page you just scrolled.",
       "closing": "The last ten happened in the final 110 of 115,000 pixels. Everything humans have farmed, written, built or remembered is the last three tenths of one pixel.",
-      "epilogue": "Two things could not fit on this page. *T. rex* is 50 pixels from the asteroid. The first primates are 250 \u2014 they arrive with the impact that made room for them.",
+      "epilogue": "",
       "again": "\u2191 again"
     }
   }

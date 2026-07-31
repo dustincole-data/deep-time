@@ -177,7 +177,8 @@ const nf = (n: number) => n.toLocaleString('en-US');
 
       <div id="closing-block">
         <p class="closing">{FINALE_CFG.copy.closing}</p>
-        <p class="epilogue" set:html={emphasise(FINALE_CFG.copy.epilogue)} />
+        {/* Cut 2026-07-31 — see finaleNote in timeline.json. Open question, not yet re-authored. */}
+        {FINALE_CFG.copy.epilogue && <p class="epilogue" set:html={emphasise(FINALE_CFG.copy.epilogue)} />}
         <a class="again" href="#top">{FINALE_CFG.copy.again}</a>
       </div>
     </section>
@@ -358,8 +359,13 @@ const nf = (n: number) => n.toLocaleString('en-US');
   }
 
   /* ---------- the Boring Billion plate ---------- */
+  /* §6: "centred in the stage box" — never the viewport. Positioned from
+     Z.plate in main.ts, not inset:0, so it cannot reach the clock or scale
+     zones (§5 rule 1) and is swept by gate-collision.ts. z-index 1, BELOW
+     main's arrivals (z-index 2): §6 says the four real arrivals still render
+     on top of it. */
   .js #plate {
-    position: fixed; inset: 0; z-index: 2; display: grid; place-items: center;
+    position: fixed; z-index: 1; display: grid; place-items: center;
     pointer-events: none; opacity: 0; text-align: center; padding: 8vw;
   }
   #plate .in { max-width: 34rem; }

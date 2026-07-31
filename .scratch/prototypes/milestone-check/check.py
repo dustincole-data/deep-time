@@ -1,9 +1,17 @@
-# Deep Time 02 — gap check against the 600 px readability floor.
+# Deep Time 02 — gap report against the 600 px readability floor.
 # 1 px = 40,000 yr. INTRO = 1600 px. RUN = 115,000 px. TOTAL = 123,600 px.
 #
 # Repointed at src/data/timeline.json (spec §13): the gate reads the same file the
 # site renders from, so a date cannot be verified in one place and shipped from
-# another. Ship gate — a non-zero exit means the milestone set is not shippable.
+# another.
+#
+# RETIRED as a ship gate, 2026-07-31 (Dustin's call): the floor is what cut *T.
+# rex* (50 px from the asteroid) and the first primates (250 px) from the page
+# "on arithmetic alone" (§7). Both are back, on purpose — 49 px and 251 px gaps
+# now exist and are meant to. This script is diagnostic only from here: it still
+# reports every gap, but a sub-600px pair no longer fails the build. The layout
+# contract (scripts/gate-collision.ts) is what still has to stay green — density
+# can cost an arrival screen-time, never a collision (§5 rule 6).
 import json
 import sys
 from pathlib import Path
@@ -48,4 +56,5 @@ w = T['withheld']
 print(f'\nwithheld={len(w)}  first at {w[0]["yearsAgo"]/YPP:g} px from now  '
       f'farming at {next(x["yearsAgo"] for x in w if x["id"]=="farming")/YPP:g} px')
 
-sys.exit(1 if bad else 0)
+# Retired as a gate (see header): reported above, never fails the build.
+sys.exit(0)

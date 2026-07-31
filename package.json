@@ -8,7 +8,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "test": "vitest run",
-    "gate:collision": "node scripts/gate-collision.ts"
+    "gate:collision": "node scripts/gate-collision.ts",
+    "gate:browser": "astro build && node scripts/gate-browser.ts"
   },
   "dependencies": {
     "astro": "^5.18.2"
@@ -16,6 +17,7 @@
   "devDependencies": {
     "@fontsource-variable/archivo": "^5.2.0",
     "@types/node": "^26.1.1",
+    "playwright": "^1.62.1",
     "vitest": "^3.2.7"
   }
 }

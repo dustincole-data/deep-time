@@ -100,6 +100,8 @@ export interface Zones {
   stage: Rect;
   /** One band across the top of the stage, for field whispers only (ruling B). */
   whisper: Rect;
+  /** The Boring Billion plate (§6) — centred in the stage box, never the viewport. Arrivals render on top of it; it is not a slot and is exempt from the tiling check. */
+  plate: Rect;
   slots: Slot[];
   /** Per column: the full-height rect a lone card takes (contract rule 5). */
   colFull: Rect[];
@@ -183,6 +185,8 @@ const T = {
     whisperHFrac: 0.05,
     rowGapTopFrac: 0.032,
     clockClearance: 18,
+    /** #hud's own `bottom` inset from the clock zone's bottom edge (main.ts's `relayout()`). */
+    hudBottomInset: 34,
     gutY: 20,
     gutXFrac: 0.04,
     cols: 2,
@@ -196,6 +200,7 @@ const T = {
     whisperHFrac: 0.055,
     rowGapTopFrac: 0.028,
     clockClearance: 16,
+    hudBottomInset: 26,
     gutY: 14,
     gutXFrac: 0.04,
     cols: 1,
@@ -438,6 +443,57 @@ export function textHeight(a: Arrival, z: Zones, availW: number, withLine = show
 }
 
 /* ============================================================================
+   THE HUD — modelled so its reserved zone can never spill (ruling D, 2026-07-31)
+
+   The clock zone was a hardcoded constant (264 desktop / 240 mobile) with
+   nothing checking it against the HUD's actual content — unlike the whisper
+   band, which ruling B already sizes from its own copy. Modelled here from the
+   CSS in index.astro, same discipline as TEXT above: every size resolves
+   against the viewport exactly as the CSS `clamp()`s do, and `normal`
+   line-height is taken as 1.25, matching the convention TEXT already sets.
+   Mobile drops `.modelled` and `.rule` (§8's media query) — nothing else changes.
+   ========================================================================= */
+
+const NORMAL_LH = 1.25;
+/** `#hud` sets no font-size of its own, so `.modelled` and `.rule`'s `em` margins resolve against the browser default. */
+const HUD_BASE_FONT = 16;
+
+/** The HUD's own `bottom` inset from its reserved zone's bottom edge — the single source main.ts's `relayout()` positions it from. */
+export const hudBottomInset = (mobile: boolean): number => (mobile ? T.mobile : T.desktop).hudBottomInset;
+
+/** Modelled height of the HUD's own content stack — see index.astro's `#hud` rules. */
+export function hudHeight(vp: Required<Viewport>, mobile: boolean): number {
+  const { w, textScale: k } = vp;
+  const cl = (lo: number, vw: number, hi: number) => clamp(w * vw, lo, hi);
+
+  // #hud-clock { line-height: .94 }
+  const clockSize = (mobile ? cl(30, 0.11, 44) : cl(34, 0.05, 74)) * k;
+  let h = clockSize * 0.94;
+
+  // #hud-era { margin-top: .8em }; line-height 'normal' taken as 1.25
+  const eraSize = cl(11, 0.012, 14) * k;
+  h += eraSize * 0.8 + eraSize * NORMAL_LH;
+
+  if (!mobile) {
+    const base = HUD_BASE_FONT * k;
+    // .modelled { margin-top: 1.1em }, against its own (inherited) font-size
+    h += base * 1.1;
+    // .kicker { margin-bottom: .6em }; line-height 'normal' taken as 1.25
+    const kickerSize = 9.5 * k;
+    h += kickerSize * NORMAL_LH + kickerSize * 0.6;
+    // .modelled p — two rows (moon, day), line-height 1.9
+    h += 11.5 * k * 1.9 * 2;
+    // .rule { margin: .9em 0 } + its own 1px height
+    h += base * 0.9 * 2 + 1;
+  }
+
+  // .rate, #hud-count — line-height 1.8 each
+  h += 11 * k * 1.8 * 2;
+
+  return h;
+}
+
+/* ============================================================================
    ZONES — viewport in, reserved zones + slot grid out
    ========================================================================= */
 
@@ -453,7 +509,14 @@ export function zones(vp: Viewport): Zones {
   const mobile = w < MOBILE_BELOW;
   const t = mobile ? T.mobile : T.desktop;
 
-  const clock: Rect = { x: 0, y: h - t.clockH, w: w * t.clockWFrac, h: t.clockH };
+  // Ruling D — the clock zone is at least t.clockH, but grows to whatever the
+  // modelled HUD content actually needs, the same defensive move ruling B
+  // already makes for the whisper band. The HUD is bottom-anchored `hudBottomInset`
+  // px off the zone's own bottom edge (main.ts's `relayout()`), so that inset is
+  // part of the footprint too — a real-browser sweep caught this once already,
+  // spilling 12px past a clockH that only budgeted the content itself.
+  const clockH = Math.max(t.clockH, hudHeight(viewport, mobile) + t.hudBottomInset);
+  const clock: Rect = { x: 0, y: h - clockH, w: w * t.clockWFrac, h: clockH };
   const scale: Rect = { x: w - t.scaleW, y: 0, w: t.scaleW, h };
 
   const padX = w * t.padXFrac;
@@ -511,13 +574,19 @@ export function zones(vp: Viewport): Zones {
     colFull.push({ x: padX + c * (colW + gutX), y: rowTop, w: colW, h: rowBot - rowTop });
   }
 
+  const stage: Rect = { x: padX, y: rowTop, w: stageW, h: rowBot - rowTop };
+
   return {
     viewport,
     mobile,
     clock,
     scale,
-    stage: { x: padX, y: rowTop, w: stageW, h: rowBot - rowTop },
+    stage,
     whisper,
+    // §6: "centred in the stage box" — the stage box, never the viewport. It is
+    // not a slot and carries no tiling check: arrivals render on top of it by
+    // design (§6), same way the field itself is a backdrop, not content.
+    plate: stage,
     slots,
     colFull,
     nCols: cols,
@@ -531,11 +600,22 @@ export function zones(vp: Viewport): Zones {
    PLACEMENT — the whole set at once, because slot contention is global
    ========================================================================= */
 
-/** Steps 2 and 3 of rule 6's ladder: make `p` release its box by `at`. */
+/**
+ * Steps 2 and 3 of rule 6's ladder: make `p` release its box by `at`.
+ *
+ * `at` is the incoming arrival's OWN y — and `frame()`'s dwell is a CLOSED
+ * interval at both ends (a card is fully opaque through and including its
+ * last held pixel), so releasing exactly AT `at` leaves both arrivals holding
+ * that one shared pixel at once: a real, if one-pixel-wide, collision.
+ * `windowsOverlap`'s analytic model already treats touching edges as not
+ * overlapping (strict `<`); this is what makes `frame()` agree with it.
+ * Never triggered before 2026-07-31 — every prior gap had slack to spare.
+ */
 function yieldTo(p: Placed, at: number): void {
+  const releaseBy = at - 1;
   p.shortened = true;
-  p.fadeOut = Math.max(0, at - (p.y + p.dwell));
-  if (p.y + p.dwell > at) p.dwell = Math.max(0, at - p.y);
+  p.fadeOut = Math.max(0, releaseBy - (p.y + p.dwell));
+  if (p.y + p.dwell > releaseBy) p.dwell = Math.max(0, releaseBy - p.y);
   p.onScreenPx = p.dwell + p.fadeIn + p.fadeOut;
 }
 

@@ -40,7 +40,7 @@ import {
   spokenName,
   yearsAgo,
 } from '../lib/timeline.ts';
-import { fan, frame, place, zones, type Fan, type Placed, type Zones } from '../lib/layout.ts';
+import { fan, frame, hudBottomInset, place, zones, type Fan, type Placed, type Zones } from '../lib/layout.ts';
 import { fieldAt, toHex, type RGB } from '../lib/field.ts';
 
 const { INTRO, RUN, RUN_END, TOTAL, YEARS_PER_PX, EARTH_AGE } = CONSTANTS;
@@ -154,13 +154,21 @@ function relayout() {
   // The reserved zones drive the fixed chrome, so the contract holds visually.
   const hud = hudEl;
   hud.style.left = `${Z.clock.x + (mobile ? 18 : 24)}px`;
-  hud.style.bottom = `${H - (Z.clock.y + Z.clock.h) + (mobile ? 26 : 34)}px`;
+  hud.style.bottom = `${H - (Z.clock.y + Z.clock.h) + hudBottomInset(mobile)}px`;
   hud.style.maxWidth = `${Z.clock.w - 24}px`;
 
   barEl.style.left = `${F.bar.x}px`;
   barEl.style.top = `${F.bar.y}px`;
   barEl.style.width = `${F.bar.w}px`;
   barEl.style.height = `${F.bar.h}px`;
+
+  // §6: "centred in the stage box" — never the viewport. Swept by
+  // gate-collision.ts as `z.plate`, which can never reach the clock or scale
+  // zones the way a bare `inset: 0` could.
+  plateEl.style.left = `${Z.plate.x}px`;
+  plateEl.style.top = `${Z.plate.y}px`;
+  plateEl.style.width = `${Z.plate.w}px`;
+  plateEl.style.height = `${Z.plate.h}px`;
 
   layoutFan();
   buildTicks();

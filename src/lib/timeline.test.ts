@@ -48,10 +48,16 @@ describe('the scale mechanic (§2)', () => {
 });
 
 describe('the verified set (§7)', () => {
-  it('is 55 arrivals: 30 M · 19 I · 6 F', () => {
-    expect(arrivals).toHaveLength(55);
+  it('is 57 arrivals: 30 M · 21 I · 6 F', () => {
+    // 55 + *T. rex* and the first true primates — added 2026-07-31, Dustin's
+    // call, sourced in timeline.json. Both are tier I: neither makes a "first"
+    // claim the finale's tuned 40-row fan commits to with a tick (§9) — adding
+    // a 31st milestone would change the fan's pitch and every number §9
+    // measured against exactly 40 rows, which is a redesign nobody asked for.
+    // The §7 table itself is not republished here; this file is the pin.
+    expect(arrivals).toHaveLength(57);
     expect(milestones).toHaveLength(30);
-    expect(arrivals.filter((a) => a.tier === 'I')).toHaveLength(19);
+    expect(arrivals.filter((a) => a.tier === 'I')).toHaveLength(21);
     expect(whispers).toHaveLength(6);
   });
 
@@ -62,13 +68,24 @@ describe('the verified set (§7)', () => {
     expect(new Set(arrivals.map((a) => a.id)).size).toBe(arrivals.length);
   });
 
-  it('clears the 600 px readability floor with min gap 622 px', () => {
-    const gaps = arrivals.slice(0, -1).map((a, i) => arrivalY(arrivals[i + 1]!) - arrivalY(a));
-    expect(gaps.filter((g) => g < READABILITY_FLOOR_PX)).toHaveLength(0);
-    // The Great Dying → the first dinosaurs, 24.9 Myr apart. §7 prints 622 because
-    // check.py formats with `:.0f`, and Python rounds 622.5 half-to-even.
-    expect(Math.min(...gaps)).toBeCloseTo(622.5, 6);
-    expect(Math.max(...gaps)).toBeCloseTo(14_700, 6);
+  it('the 600 px readability floor is retired, on purpose, around the two new arrivals', () => {
+    // §7 min gap was 622 px, zero violations of the 600 px floor — true of the
+    // ORIGINAL 55. The floor itself is what edited the page: it cut *T. rex*
+    // (50 px from the asteroid) and the first primates (250 px) "on arithmetic
+    // alone". Dustin's call 2026-07-31: put them back. The floor is retired,
+    // not raised — every tight gap below traces to one of the two new arrivals.
+    const gaps = arrivals.slice(0, -1).map((a, i) => ({
+      pair: `${arrivals[i]!.id} → ${arrivals[i + 1]!.id}`,
+      gap: arrivalY(arrivals[i + 1]!) - arrivalY(a),
+    }));
+    const tight = gaps.filter((g) => g.gap < READABILITY_FLOOR_PX);
+    expect(tight.map((g) => g.pair)).toEqual([
+      'tyrannosaurus-rex → chicxulub',
+      'chicxulub → first-primates',
+      'first-primates → antarctica-freezes',
+    ]);
+    expect(tight.map((g) => g.gap)).toEqual([49, 251, 552.5]);
+    expect(Math.max(...gaps.map((g) => g.gap))).toBeCloseTo(14_700, 6);
   });
 
   it('runs 2,425 px → 116,425 px', () => {
@@ -140,11 +157,14 @@ describe('the verified set (§7)', () => {
       'triassic-jurassic-extinction': 111_565,
       archaeopteryx: 112_850,
       'first-flowers': 113_475,
+      // Added 2026-07-31 — see the "600 px readability floor is retired" test.
+      'tyrannosaurus-rex': 114_900,
       chicxulub: 114_949,
+      'first-primates': 115_200,
       'antarctica-freezes': 115_752.5,
       'human-chimp-split': 116_425,
     };
-    expect(Object.keys(SPEC)).toHaveLength(55);
+    expect(Object.keys(SPEC)).toHaveLength(57);
     for (const a of arrivals) expect([a.id, arrivalY(a)]).toEqual([a.id, SPEC[a.id]]);
   });
 

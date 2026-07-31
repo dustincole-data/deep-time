@@ -46,7 +46,7 @@ const ART_JSON = join(ROOT, 'src', 'data', 'art.json');
  * from art.json. The reason lives on the arrival's own `negative` field in
  * timeline.json (redo instructions), not duplicated here.
  */
-const NOT_VERIFIED = new Set(['chicxulub', 'tiktaalik']);
+const NOT_VERIFIED = new Set(['chicxulub', 'tiktaalik', 'burgess-shale']);
 
 interface ManifestEntry {
   /** Relative to project root. */
@@ -73,6 +73,14 @@ const MANIFEST: ManifestEntry[] = [
     // negative and needs a redo (see its `negative` field in timeline.json).
     file: 'art/source/sheet-02-tiktaalik-archaeopteryx-stromatolite-dimetrodon.png',
     quadrants: ['tiktaalik', 'archaeopteryx', 'stromatolites', 'dimetrodon'],
+    isPlanet: false,
+  },
+  {
+    // Sheet 3, 2026-07-31, approved batch. 3 of 4 verified; Anomalocaris drew
+    // lobster pincers and a jawed mouth despite the negative — needs a redo
+    // (see burgess-shale's `negative` field in timeline.json).
+    file: 'art/source/sheet-03-anomalocaris-charnia-cooksonia-dragonfly.png',
+    quadrants: ['burgess-shale', 'charnia', 'cooksonia', 'coal-forests'],
     isPlanet: false,
   },
 ];
@@ -385,6 +393,10 @@ async function main() {
       for (const [id, r] of Object.entries(results) as [string, any][]) {
         const a = arrivals.find((x) => x.id === id);
         const notVerified = NOT_VERIFIED.has(id);
+        // §11: "If no strength on the ladder reaches 3:1, the build fails and
+        // the art is revised" — a failed gate excludes it exactly like a
+        // failed reference check, not a softer outcome.
+        const failedGate = r.contrast < GATE;
         const base64 = String(r.webp).split(',')[1]!;
         const file = `${id}.webp`;
         await writeFile(join(OUT_DIR, file), Buffer.from(base64, 'base64'));
@@ -392,11 +404,12 @@ async function main() {
         console.log(
           `${id}  ${r.w}×${r.h}  contrast ${r.contrast}:1 ${r.contrast >= GATE ? '✅' : '❌ BELOW GATE'}` +
             `  halo a${r.halo.strength.toFixed(2)}${r.halo.polarity ? ' ' + r.halo.polarity : ''}` +
-            (notVerified ? '  ⚠ NOT VERIFIED — excluded from art.json' : ''),
+            (notVerified ? '  ⚠ NOT VERIFIED — excluded from art.json' : '') +
+            (failedGate ? '  ⚠ FAILED 3:1 GATE — excluded from art.json' : ''),
         );
         if (VERBOSE && notVerified && a) console.log(`    ${a.negative}`);
 
-        if (notVerified) continue; // baked for pipeline validation only, per §11's "non-negotiable"
+        if (notVerified || failedGate) continue; // §11: never ship un-reviewed or below-gate art
 
         art[id] = {
           file: `/art/${file}`,

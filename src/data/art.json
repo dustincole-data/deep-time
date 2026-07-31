@@ -70,5 +70,29 @@
     },
     "contrast": 3.18,
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
+  },
+  "charnia": {
+    "file": "/art/charnia.webp",
+    "w": 346,
+    "h": 599,
+    "alt": "a frond like a fern or chestnut leaf, branching ridges repeating as smaller copies of themselves down its length, rooted to the seabed by a small disc",
+    "halo": {
+      "strength": 0.45,
+      "polarity": "dark"
+    },
+    "contrast": 3.82,
+    "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
+  },
+  "coal-forests": {
+    "file": "/art/coal-forests.webp",
+    "w": 901,
+    "h": 628,
+    "alt": "a giant dragonfly, long segmented body, two pairs of long net-veined wings held flat to the sides",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "dark"
+    },
+    "contrast": 3.13,
+    "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   }
 }

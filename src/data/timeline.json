@@ -449,6 +449,8 @@
       "name": "*Charnia*",
       "line": "The first big bodies — soft, strange, rooted to the seabed.",
       "art": "subject",
+      "analogy": "a frond like a fern or chestnut leaf, branching ridges repeating as smaller copies of themselves down its length, rooted to the seabed by a small disc",
+      "negative": "not a plant or seaweed — no leaves branching off a stem, one long frond of self-similar ridges",
       "source": "Matthews et al. 2021 — 574.17 ± 0.66 Ma"
     },
     {
@@ -469,6 +471,8 @@
       "name": "The Burgess Shale",
       "line": "*Anomalocaris* — a metre of segmented predator, with the first real eyes.",
       "art": "subject",
+      "analogy": "a flattened, segmented swimmer with rows of side fins like a shrimp, two large stalked eyes, two long spiny grasping arms held out in front like a pair of curved combs, and underneath the head a small circular ring of overlapping plates, like a camera aperture, as its mouth",
+      "negative": "no pincers, no crab or lobster claws, no snapping jaws of any kind — the front arms are segmented and spiny like a centipede's legs held forward, not a claw that closes shut; the mouth is a round plated ring facing DOWN, not a mouth on the front of the face. First round (2026-07-31) drew a lobster with pincer claws and a jawed mouth — exactly what this negative forbids. Redo needed with this stronger wording.",
       "source": "Burgess Shale 508 Ma"
     },
     {
@@ -499,6 +503,8 @@
       "name": "*Cooksonia*",
       "line": "The first plants with stems. A few centimetres tall, and the tallest thing alive.",
       "art": "subject",
+      "analogy": "a few centimetres of forking, leafless green stems, splitting into two even branches again and again, with small rounded capsules at the branch tips",
+      "negative": "not a plant with leaves or roots — bare forking stems only, nothing frond-like or leafy",
       "source": "*Cooksonia* 425–415 Ma"
     },
     {
@@ -521,6 +527,8 @@
       "name": "The coal forests",
       "line": "Trees 40 metres tall, in swamps that become every coal seam on Earth. The air is 30% oxygen and the dragonflies are 70 cm across.",
       "art": "subject",
+      "analogy": "a giant dragonfly, long segmented body, two pairs of long net-veined wings held flat to the sides",
+      "negative": "not modern dragonfly proportions — enormous, wingspan wider than a hawk's, same basic wing shape",
       "source": "Pennsylvanian 323–299 Ma"
     },
     {

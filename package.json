@@ -7,7 +7,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "gate:collision": "node scripts/gate-collision.ts"
   },
   "dependencies": {
     "astro": "^5.18.2"

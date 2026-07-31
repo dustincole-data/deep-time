@@ -1,0 +1,608 @@
+/**
+ * Deep Time — the no-collision layout contract (spec §5), as a pure function.
+ *
+ * Called three times with the same code (§13): by the runtime, by
+ * `scripts/gate-collision.ts` in Node, and by the OG renderer. Nothing here
+ * reads the DOM, touches `window`, or decides anything — the geometry is
+ * transcribed from the cadence prototype, which is the build the 688-sample
+ * zero-collision sweep in §5 was measured on. Changing a number here
+ * invalidates that measurement.
+ *
+ * The contract, restated so the code can be read against it:
+ *
+ *   1. Two zones are reserved and inviolable — the CLOCK (bottom-left) and the
+ *      SCALE bar (right edge). Nothing else ever enters either.
+ *   2. What is left is the STAGE: a fixed grid of slot rects (2×2 desktop,
+ *      1×2 mobile) plus a whisper band across the top. Slots never overlap
+ *      each other or the reserved zones.
+ *   3. An arrival is ONE box — art and text together — inside exactly one slot,
+ *      text bottom-anchored, art drawn into whatever height is left above it.
+ *   4. Travel happens inside the box: ≤28 px of glide, never across a slot edge.
+ *   5. A card takes its column's full height whenever nothing else shares that
+ *      column.
+ *   6. Slot assignment is round-robin with a correctness fallback: contention
+ *      shortens the later arrival's fade window, with no floor. Density can
+ *      cost an arrival screen-time; it can never cost it a collision.
+ *
+ * Because every box IS a slot rect, collisions are impossible by construction.
+ * The only way to collide is to overflow the box, so the fit of the text block
+ * inside its slot is the one thing that has to be modelled rather than derived
+ * — see TEXT below.
+ */
+import { arrivalY, type Arrival, type Tier } from './timeline.ts';
+
+/* ============================================================================
+   TYPES
+   ========================================================================= */
+
+export interface Rect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+export interface Viewport {
+  /** CSS px — the canvas's OWN clientWidth. Never window.innerWidth, never 100vw. */
+  w: number;
+  /** CSS px — the canvas's OWN clientHeight. `100vh` is banned outright (§12). */
+  h: number;
+  /** 1 = default. 2 is the WCAG 1.4.4 pass the collision gate also runs (§10). */
+  textScale?: number;
+}
+
+export interface Slot extends Rect {
+  col: number;
+  row: number;
+}
+
+export interface Zones {
+  viewport: Required<Viewport>;
+  mobile: boolean;
+  /** Reserved. Nothing else ever enters it. */
+  clock: Rect;
+  /** Reserved. The bar and its vertical caption. Nothing else ever enters it. */
+  scale: Rect;
+  /** Everything the two reserved zones leave. */
+  stage: Rect;
+  /** One band across the top of the stage, for field whispers only. */
+  whisper: Rect;
+  slots: Slot[];
+  /** Per column: the full-height rect a lone card takes (contract rule 5). */
+  colFull: Rect[];
+  nCols: number;
+  nRows: number;
+  /** The fade half-window every arrival gets before contention shortens it. */
+  fade: number;
+}
+
+export interface Placed {
+  id: string;
+  tier: Tier;
+  /** Page px. Derived from the date by milestoneY() — never stored. */
+  y: number;
+  /** Distance to the next arrival. `Infinity` for the last: the finale follows. */
+  gap: number;
+  dwell: number;
+  fade: number;
+  /** -1 for a field whisper, which lives in the whisper band and owns no slot. */
+  slot: number;
+  /** True when nothing shares this card's column inside its window (rule 5). */
+  tall: boolean;
+  /** THE box. An arrival is this rect and nothing outside it. */
+  rect: Rect;
+  glide: number;
+  /** True when the card sits in the right-hand column: art anchors right. */
+  right: boolean;
+  /** Modelled height of the text block. See TEXT. */
+  textH: number;
+  /** Height left for the art once the text and the glide have taken theirs. */
+  availH: number;
+  hasArt: boolean;
+  /** Whether the description line is rendered at this viewport (§5, §8). */
+  hasLine: boolean;
+  /** dwell + 2×fade — how long the arrival is on screen at all. */
+  onScreenPx: number;
+  /** True when contention shortened the fade window (rule 6). */
+  shortened: boolean;
+}
+
+export interface Visible {
+  id: string;
+  tier: Tier;
+  opacity: number;
+  /** The box it owns — a slot, a full column, or the whisper band. */
+  box: Rect;
+  /** The text block, at this frame's glide offset. */
+  text: Rect;
+  /** The art, at this frame's glide offset. `null` when the box cannot hold it. */
+  art: Rect | null;
+}
+
+/* ============================================================================
+   TUNING — transcribed from .scratch/prototypes/cadence/index.html
+
+   Every number below was measured, not chosen here. The prototype's own
+   instrument chrome (a 52 px debug map bar across the top) sat above `topOff`;
+   the offsets are kept exactly as swept so the zero-collision result still
+   holds for this geometry.
+   ========================================================================= */
+
+/** The prototype's `MOB = innerWidth < 760`. The CSS media query must be `max-width: 759.98px` to agree. */
+export const MOBILE_BELOW = 760;
+
+const T = {
+  desktop: {
+    scaleW: 78,
+    clockH: 264,
+    clockWFrac: 0.38,
+    padXFrac: 0.05,
+    topOffFrac: 0.085,
+    whisperHFrac: 0.05,
+    rowGapTopFrac: 0.032,
+    clockClearance: 18,
+    gutY: 20,
+    gutXFrac: 0.04,
+    cols: 2,
+  },
+  mobile: {
+    scaleW: 46,
+    clockH: 240,
+    clockWFrac: 0.66,
+    padXFrac: 0.06,
+    topOffFrac: 0.105,
+    whisperHFrac: 0.055,
+    rowGapTopFrac: 0.028,
+    clockClearance: 16,
+    gutY: 14,
+    gutXFrac: 0.04,
+    cols: 1,
+  },
+} as const;
+
+const ROWS = 2;
+/** The stage never runs past 72% of the viewport height, clock or no clock. */
+const STAGE_BOTTOM_FRAC = 0.72;
+/** Half the fade window, as a fraction of viewport height. */
+const FADE_FRAC = 0.55;
+/** §5: the card glides ≤28 px inside its slot. */
+const GLIDE_MAX = 28;
+const GLIDE_FRAC = 0.07;
+/** §5: dwell is gap-adaptive, clamped 150–660 px. */
+const DWELL_OF_GAP = 0.9;
+const DWELL_MIN = 150;
+const DWELL_MAX = 660;
+/** §10: the art drops out below 46 px of available height. Enlarged text eats the picture. */
+export const ART_MIN_H = 46;
+/** Breathing room between the art's bottom edge and the top of the text block. */
+const ART_TEXT_CLEARANCE = 14;
+/** An inhabitant's art is quieter: two thirds of the height a milestone would take. */
+const ART_H_FRAC_I = 0.66;
+
+const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v);
+const smooth = (e0: number, e1: number, x: number) => {
+  const t = clamp((x - e0) / (e1 - e0), 0, 1);
+  return t * t * (3 - 2 * t);
+};
+
+/** The prototype's `ov()`: do two arrivals share any pixel of scroll? */
+export const windowsOverlap = (a: Placed, b: Placed): boolean =>
+  a.y - a.fade < b.y + b.dwell + b.fade && b.y - b.fade < a.y + a.dwell + a.fade;
+
+/* ============================================================================
+   ZONES — viewport in, reserved zones + slot grid out
+   ========================================================================= */
+
+export function zones(vp: Viewport): Zones {
+  const w = vp.w;
+  const h = vp.h;
+  const textScale = vp.textScale ?? 1;
+  const mobile = w < MOBILE_BELOW;
+  const t = mobile ? T.mobile : T.desktop;
+
+  const clock: Rect = { x: 0, y: h - t.clockH, w: w * t.clockWFrac, h: t.clockH };
+  const scale: Rect = { x: w - t.scaleW, y: 0, w: t.scaleW, h };
+
+  const padX = w * t.padXFrac;
+  const topOff = h * t.topOffFrac;
+  const stageR = w - t.scaleW;
+
+  const whisper: Rect = { x: padX, y: topOff, w: stageR - padX, h: h * t.whisperHFrac };
+
+  const rowTop = topOff + whisper.h + h * t.rowGapTopFrac;
+  const rowBot = Math.min(h * STAGE_BOTTOM_FRAC, clock.y - t.clockClearance);
+  const bandH = (rowBot - rowTop - t.gutY * (ROWS - 1)) / ROWS;
+
+  const cols = t.cols;
+  const gutX = w * t.gutXFrac;
+  const colW = (stageR - padX - gutX * (cols - 1)) / cols;
+
+  const slots: Slot[] = [];
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < cols; c++) {
+      slots.push({
+        x: padX + c * (colW + gutX),
+        y: rowTop + r * (bandH + t.gutY),
+        w: colW,
+        h: bandH,
+        col: c,
+        row: r,
+      });
+    }
+  }
+
+  const colFull: Rect[] = [];
+  for (let c = 0; c < cols; c++) {
+    colFull.push({ x: padX + c * (colW + gutX), y: rowTop, w: colW, h: rowBot - rowTop });
+  }
+
+  return {
+    viewport: { w, h, textScale },
+    mobile,
+    clock,
+    scale,
+    stage: { x: padX, y: rowTop, w: stageR - padX, h: rowBot - rowTop },
+    whisper,
+    slots,
+    colFull,
+    nCols: cols,
+    nRows: ROWS,
+    fade: h * FADE_FRAC,
+  };
+}
+
+/* ============================================================================
+   TEXT — the one modelled quantity
+
+   The prototype read `tx.offsetHeight` off the DOM. Node has no DOM, so the
+   height of the text block is modelled here from the type scale in §11 and a
+   character-advance table for Archivo.
+   ...
+   §13 already rules on this: "A Playwright pass over the live page stays a ship
+   gate, because line wrapping is ultimately the browser's opinion." The model
+   is therefore deliberately biased to OVER-estimate — advances rounded up,
+   line-height `normal` taken as 1.25, tracking counted on every character
+   including the last. Over-estimating shrinks the modelled art and can fail the
+   gate early; under-estimating would let real text overflow a box the gate
+   called clean, which is the failure that must not be possible.
+   ========================================================================= */
+
+/** Advance widths as a fraction of the em, for Archivo. Estimates, rounded up. */
+const ADVANCE: Record<string, number> = {
+  ' ': 0.26,
+  i: 0.26,
+  j: 0.26,
+  l: 0.26,
+  I: 0.3,
+  t: 0.34,
+  f: 0.34,
+  r: 0.38,
+  J: 0.5,
+  m: 0.86,
+  w: 0.76,
+  M: 0.84,
+  W: 0.9,
+  '.': 0.28,
+  ',': 0.28,
+  ';': 0.3,
+  ':': 0.3,
+  "'": 0.22,
+  '’': 0.22,
+  '"': 0.36,
+  '!': 0.3,
+  '?': 0.44,
+  '(': 0.34,
+  ')': 0.34,
+  '-': 0.36,
+  '–': 0.5,
+  '—': 1.0,
+  '≥': 0.62,
+  '~': 0.6,
+  '·': 0.28,
+};
+const ADV_LOWER = 0.56;
+const ADV_UPPER = 0.68;
+/** Tabular figures: one fixed advance, which is why the counter does not jitter (§11). */
+const ADV_DIGIT = 0.6;
+
+function advance(ch: string): number {
+  const known = ADVANCE[ch];
+  if (known !== undefined) return known;
+  if (ch >= '0' && ch <= '9') return ADV_DIGIT;
+  if (ch >= 'A' && ch <= 'Z') return ADV_UPPER;
+  return ADV_LOWER;
+}
+
+interface TypeSpec {
+  /** px, already resolved against the viewport and multiplied by textScale. */
+  size: number;
+  lineHeight: number;
+  /** letter-spacing, in em. */
+  tracking: number;
+  upper: boolean;
+  /** Heavier weights are wider. 1.0 at 400–500. */
+  weight: number;
+}
+
+function textWidth(s: string, f: TypeSpec): number {
+  const str = f.upper ? s.toUpperCase() : s;
+  let em = 0;
+  for (const ch of str) em += advance(ch) * f.weight + f.tracking;
+  return em * f.size;
+}
+
+/** Greedy word wrap. A word wider than the column counts as the lines it would need. */
+function lineCount(s: string, f: TypeSpec, availW: number): number {
+  if (availW <= 0) return Number.POSITIVE_INFINITY;
+  const words = s.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return 0;
+  const spaceW = textWidth(' ', f);
+  let lines = 1;
+  let cur = 0;
+  for (const word of words) {
+    const ww = textWidth(word, f);
+    if (ww > availW) {
+      // Longer than the column on its own — the browser breaks it too.
+      if (cur > 0) lines++;
+      lines += Math.ceil(ww / availW) - 1;
+      cur = 0;
+      continue;
+    }
+    const add = cur === 0 ? ww : spaceW + ww;
+    if (cur + add > availW) {
+      lines++;
+      cur = ww;
+    } else {
+      cur += add;
+    }
+  }
+  return lines;
+}
+
+const blockH = (s: string, f: TypeSpec, availW: number) => lineCount(s, f, availW) * f.size * f.lineHeight;
+
+/** `*Bangiomorpha*, a red alga.` → the string the browser actually lays out. */
+const plainText = (s: string) => s.replace(/\*/g, '');
+
+/**
+ * The type scale of §11 / the cadence prototype's CSS, resolved for one viewport.
+ * `clamp(min, Nvw, max)` is resolved against the viewport width, then multiplied
+ * by textScale — which is how a text-only zoom behaves, and the conservative
+ * reading either way.
+ */
+function typeScale(z: Zones, tier: Tier) {
+  const { w, textScale: k } = z.viewport;
+  const cl = (lo: number, vw: number, hi: number) => clamp(w * vw, lo, hi);
+  const isM = tier === 'M';
+  return {
+    date: {
+      size: (isM ? 11 : 9.5) * k,
+      lineHeight: 1.25, // `normal`, taken high
+      tracking: 0.2,
+      upper: true,
+      weight: 1,
+    } satisfies TypeSpec,
+    /** `.d { margin-bottom: .5em }`, `.I .d { margin-bottom: .3em }` */
+    dateGap: (isM ? 0.5 : 0.3) * (isM ? 11 : 9.5) * k,
+    name: {
+      size: (z.mobile ? (isM ? 20 : 15) : isM ? cl(19, 0.022, 30) : cl(14, 0.013, 18)) * k,
+      lineHeight: 1.12,
+      tracking: isM ? -0.02 : -0.008,
+      upper: false,
+      weight: isM ? 1.04 : 1.03,
+    } satisfies TypeSpec,
+    line: {
+      size: (isM ? cl(12.5, 0.0102, 14.5) : 12) * k,
+      lineHeight: 1.5,
+      tracking: 0,
+      upper: false,
+      weight: 1,
+    } satisfies TypeSpec,
+    /** `.s { margin-top: .55em }` */
+    lineGap: 0.55 * (isM ? cl(12.5, 0.0102, 14.5) : 12) * k,
+    /** `.rule { height: 1px; margin-bottom: 11px }` — px, and decorative: it does not take text zoom. */
+    ruleH: isM ? 12 : 0,
+    whisper: {
+      size: cl(11, 0.011, 13) * k,
+      lineHeight: 1.12,
+      tracking: 0.26,
+      upper: true,
+      weight: 1,
+    } satisfies TypeSpec,
+  };
+}
+
+/**
+ * Does this arrival render its description line at this viewport?
+ *
+ * §5: on mobile the description is dropped — a phone band cannot hold art +
+ * name + a line. §8: EXCEPT the six abstract milestones, where the line
+ * replaces the art instead, because a stand-in for *whiffs of oxygen* carries
+ * no fact by construction.
+ */
+export const showsLine = (a: Pick<Arrival, 'art'>, z: Zones): boolean => !z.mobile || a.art === 'abstract';
+
+/** The mirror of `showsLine`: the six abstract milestones give their art up on a phone. */
+export const showsArt = (a: Pick<Arrival, 'art'>, z: Zones): boolean =>
+  a.art !== null && !(z.mobile && a.art === 'abstract');
+
+/** Modelled height of one arrival's text block inside a column `availW` wide. */
+export function textHeight(a: Arrival, z: Zones, availW: number): number {
+  const f = typeScale(z, a.tier);
+  if (a.tier === 'F') return blockH(plainText(a.line), f.whisper, availW);
+  let h = f.ruleH;
+  h += blockH(a.date!, f.date, availW) + f.dateGap;
+  h += blockH(plainText(a.name!), f.name, availW);
+  if (showsLine(a, z)) h += f.lineGap + blockH(plainText(a.line), f.line, availW);
+  return h;
+}
+
+/* ============================================================================
+   PLACEMENT — the whole set at once, because slot contention is global
+   ========================================================================= */
+
+export function place(arrivals: Arrival[], z: Zones): Placed[] {
+  const items = arrivals
+    .map((a) => ({ a, y: arrivalY(a) }))
+    .sort((p, q) => p.y - q.y);
+
+  const out: Placed[] = items.map(({ a, y }, i) => {
+    // The last arrival has no next: the finale follows, so its dwell is
+    // unconstrained and clamps to the 660 px maximum §9 gives it.
+    const gap = i < items.length - 1 ? items[i + 1]!.y - y : Number.POSITIVE_INFINITY;
+    return {
+      id: a.id,
+      tier: a.tier,
+      y,
+      gap,
+      dwell: clamp(gap * DWELL_OF_GAP, DWELL_MIN, DWELL_MAX),
+      fade: z.fade,
+      slot: -1,
+      tall: false,
+      rect: z.whisper,
+      glide: 0,
+      right: false,
+      textH: 0,
+      availH: 0,
+      hasArt: false,
+      hasLine: false,
+      onScreenPx: 0,
+      shortened: false,
+    } satisfies Placed;
+  });
+
+  /* Round-robin with a correctness fallback (rule 6). Where density would put
+     two arrivals in one slot at once, the later one's fade window is SHORTENED
+     until it fits. There is no floor on that shortening. */
+  const N = z.slots.length;
+  const freeAt = new Array<number>(N).fill(-1e9);
+  const cards = out.filter((p) => p.tier !== 'F');
+  let last = -1;
+  for (const it of cards) {
+    let chosen = -1;
+    for (let k = 1; k <= N; k++) {
+      const s = (last + k) % N;
+      if (freeAt[s]! <= it.y - it.fade) {
+        chosen = s;
+        break;
+      }
+    }
+    if (chosen < 0) {
+      let best = 0;
+      for (let s = 1; s < N; s++) if (freeAt[s]! < freeAt[best]!) best = s;
+      it.fade = Math.max(0, it.y - freeAt[best]!);
+      it.shortened = true;
+      chosen = best;
+    }
+    it.slot = chosen;
+    last = chosen;
+    it.onScreenPx = it.dwell + it.fade * 2;
+    freeAt[chosen] = it.y + it.dwell + it.fade;
+  }
+
+  // Whispers share one band, so they queue against each other and nothing else.
+  let wFree = -1e9;
+  for (const it of out.filter((p) => p.tier === 'F')) {
+    it.fade = Math.min(z.fade, Math.max(0, it.y - wFree));
+    it.onScreenPx = it.dwell + it.fade * 2;
+    wFree = it.y + it.dwell + it.fade;
+  }
+
+  /* Rule 5 — a card takes its column's full height whenever nothing else shares
+     that column inside its window. On mobile there is one column, so a lone
+     arrival gets the whole stage, which is what keeps the art usable on a phone. */
+  for (const it of cards) {
+    it.tall = !cards.some(
+      (o) => o !== it && z.slots[o.slot]!.col === z.slots[it.slot]!.col && windowsOverlap(o, it),
+    );
+  }
+
+  for (const it of out) {
+    const isF = it.tier === 'F';
+    it.rect = isF ? z.whisper : it.tall ? z.colFull[z.slots[it.slot]!.col]! : z.slots[it.slot]!;
+    it.right = !isF && z.nCols > 1 && z.slots[it.slot]!.col === 1;
+    it.glide = isF ? 0 : Math.min(GLIDE_MAX, it.rect.h * GLIDE_FRAC);
+  }
+
+  const byId = new Map(arrivals.map((a) => [a.id, a]));
+  for (const it of out) {
+    const a = byId.get(it.id)!;
+    it.textH = textHeight(a, z, it.rect.w);
+    it.hasLine = it.tier !== 'F' && showsLine(a, z);
+    it.availH = it.rect.h - it.textH - it.glide * 3 - ART_TEXT_CLEARANCE;
+    it.hasArt = it.tier !== 'F' && showsArt(a, z) && it.availH > ART_MIN_H;
+  }
+
+  return out;
+}
+
+/* ============================================================================
+   FRAME — a pure function of scrollY (§3). Two frames at the same scroll
+   position are byte-identical.
+   ========================================================================= */
+
+export function frame(
+  placed: Placed[],
+  scrollY: number,
+  artAspect: Record<string, number> = {},
+): Visible[] {
+  const out: Visible[] = [];
+  for (const p of placed) {
+    const raw = p.y - scrollY;
+    // Held through the dwell, then fading on the far side.
+    const vd = raw > 0 ? raw : raw < -p.dwell ? raw + p.dwell : 0;
+    if (Math.abs(vd) > p.fade) continue;
+    // A fade shortened all the way to zero (rule 6) means the arrival is on
+    // screen for its dwell only, at full opacity — never a NaN ramp.
+    const opacity = p.fade === 0 ? 1 : 1 - smooth(p.fade * 0.3, p.fade * 0.98, Math.abs(vd));
+    if (opacity <= 0) continue;
+
+    const r = p.rect;
+    const gl = p.fade === 0 ? 0 : clamp(vd / p.fade, -1, 1) * p.glide;
+
+    const text: Rect =
+      p.tier === 'F'
+        ? // The whisper is centred in its band, not bottom-anchored.
+          { x: r.x, y: r.y + (r.h - p.textH) / 2, w: r.w, h: p.textH }
+        : { x: r.x, y: r.y + r.h - p.glide - p.textH + gl, w: r.w, h: p.textH };
+
+    let art: Rect | null = null;
+    if (p.hasArt) {
+      const aspect = artAspect[p.id] ?? 1;
+      let h = p.tier === 'M' ? p.availH : p.availH * ART_H_FRAC_I;
+      let w = h * aspect;
+      if (w > r.w) {
+        w = r.w;
+        h = w / aspect;
+      }
+      art = {
+        x: p.right ? r.x + r.w - w : r.x,
+        // The glide can never push the art out of the box: art and text carry
+        // the same `gl`, so their separation is fixed at glide + 14 px.
+        y: r.y + p.glide + (p.availH - h) + gl,
+        w,
+        h,
+      };
+    }
+
+    out.push({ id: p.id, tier: p.tier, opacity, box: r, text, art });
+  }
+  return out;
+}
+
+/* ============================================================================
+   RECT HELPERS — shared with the gate and the OG renderer
+   ========================================================================= */
+
+/** Touching edges is not an intersection: the slot grid is built edge-to-edge. */
+export const intersects = (a: Rect, b: Rect, eps = 1e-6): boolean =>
+  a.x + eps < b.x + b.w && b.x + eps < a.x + a.w && a.y + eps < b.y + b.h && b.y + eps < a.y + a.h;
+
+export const contains = (outer: Rect, inner: Rect, eps = 1e-6): boolean =>
+  inner.x >= outer.x - eps &&
+  inner.y >= outer.y - eps &&
+  inner.x + inner.w <= outer.x + outer.w + eps &&
+  inner.y + inner.h <= outer.y + outer.h + eps;
+
+export const sameRect = (a: Rect, b: Rect, eps = 1e-6): boolean =>
+  Math.abs(a.x - b.x) < eps && Math.abs(a.y - b.y) < eps && Math.abs(a.w - b.w) < eps && Math.abs(a.h - b.h) < eps;

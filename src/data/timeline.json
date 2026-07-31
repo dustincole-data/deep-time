@@ -1,0 +1,678 @@
+{
+  "$schema": "./timeline.schema.md",
+  "note": [
+    "THE SINGLE SOURCE OF TRUTH (spec §13). Every gate and the site itself read this file.",
+    "Pixel positions are NOT stored — they are derived from `constants` by milestoneY() in src/lib/timeline.ts,",
+    "so a date cannot be verified in one place and shipped from another.",
+    "Genus names are marked with *asterisks* and rendered as <em>; the plain-text form is what a screen reader gets.",
+    "Sections still to be filled by their own build steps: field keyframes (§6), solved scrims (solve-scrim.ts),",
+    "finale beats (§9), copy deck (§8)."
+  ],
+
+  "constants": {
+    "INTRO": 1600,
+    "RUN": 115000,
+    "FINALE": 7000,
+    "TOTAL": 123600,
+    "RUN_END": 116600,
+    "YEARS_PER_PX": 40000,
+    "EARTH_AGE": 4600000000,
+    "READABILITY_FLOOR_PX": 600
+  },
+
+  "eras": [
+    { "label": "HADEAN", "fromMa": 4600, "toMa": 4031 },
+    { "label": "ARCHEAN", "fromMa": 4031, "toMa": 2500 },
+    { "label": "PROTEROZOIC", "fromMa": 2500, "toMa": 538.8 },
+    { "label": "PALEOZOIC", "fromMa": 538.8, "toMa": 251.902 },
+    { "label": "MESOZOIC", "fromMa": 251.902, "toMa": 66.043 },
+    { "label": "CENOZOIC", "fromMa": 66.043, "toMa": 0 }
+  ],
+
+  "arrivals": [
+    {
+      "id": "solar-system",
+      "ma": 4567,
+      "tier": "M",
+      "date": "4,567 Ma",
+      "name": "The Solar System forms",
+      "line": "Dust and ice collapse around a new star. Nothing older has ever been dated.",
+      "art": "subject",
+      "source": "Connelly et al. 2012, *Science* — CAIs 4567.30 ± 0.16 Ma"
+    },
+    {
+      "id": "earth-full-size",
+      "ma": 4540,
+      "tier": "M",
+      "date": "4,540 Ma",
+      "name": "Earth reaches full size",
+      "line": "Accretion finishes. The whole surface is molten rock.",
+      "art": "planet",
+      "source": "Dalrymple 2001 — 4.54 ± 0.05 Ga"
+    },
+    {
+      "id": "moon-torn-out",
+      "ma": 4510,
+      "tier": "M",
+      "contested": true,
+      "date": "≥ 4,510 Ma",
+      "name": "The Moon is torn out",
+      "line": "A Mars-sized body strikes, at least 4.51 billion years ago. The debris becomes a Moon that hangs enormous and close.",
+      "art": "subject",
+      "source": "Barboni et al. 2017, *Sci. Adv.* — ≥4.51 Ga"
+    },
+    {
+      "id": "moon-two-and-a-half",
+      "ma": 4450,
+      "tier": "F",
+      "date": null,
+      "name": null,
+      "line": "The Moon is two and a half times wider than it is today",
+      "art": null,
+      "source": "recession model, §6"
+    },
+    {
+      "id": "liquid-water",
+      "ma": 4404,
+      "tier": "M",
+      "date": "4,404 Ma",
+      "name": "Liquid water",
+      "line": "A single zircon crystal records water at the surface.",
+      "art": "subject",
+      "source": "Wilde et al. 2001, *Nature* — 4,404 ± 8 Ma"
+    },
+    {
+      "id": "steam-and-acid-rain",
+      "ma": 4300,
+      "tier": "I",
+      "date": "4,300 Ma",
+      "name": "Steam and acid rain",
+      "line": "The air is CO₂. The rain is acid. There is nothing yet you would call land.",
+      "art": "abstract",
+      "source": "Zahnle et al. 2007, *Space Sci. Rev.*"
+    },
+    {
+      "id": "oldest-surviving-crust",
+      "ma": 4160,
+      "tier": "I",
+      "contested": true,
+      "date": "≥ 4,160 Ma",
+      "name": "The oldest surviving crust",
+      "line": "Nuvvuagittuq, Quebec — a scrap of the first ocean floor.",
+      "art": "subject",
+      "source": "O'Neil et al. 2025, *Science* — ≥4.16 Ga"
+    },
+    {
+      "id": "oldest-rock",
+      "ma": 4031,
+      "tier": "M",
+      "date": "4,031 Ma",
+      "name": "The oldest rock we still have",
+      "line": "Acasta gneiss, north-west Canada. The Hadean ends here because this is where the record starts.",
+      "art": "subject",
+      "source": "Bowring & Williams 1999; ICS boundary 4,031 Ma"
+    },
+    {
+      "id": "oldest-sedimentary-rocks",
+      "ma": 3800,
+      "tier": "I",
+      "date": "3,800 Ma",
+      "name": "The oldest sedimentary rocks",
+      "line": "Isua, Greenland — mud, laid down under water, by a real ocean.",
+      "art": "subject",
+      "source": "Nutman et al. 1997, *Precambrian Res.*"
+    },
+    {
+      "id": "first-trace-of-life",
+      "ma": 3700,
+      "tier": "M",
+      "contested": true,
+      "date": "3,700 Ma",
+      "name": "The first trace of life",
+      "line": "Isotopically light carbon in Isua sediment. Not a fossil — a chemical shadow, and the oldest one anyone accepts.",
+      "art": "subject",
+      "source": "Rosing 1999, *Science*; Ohtomo et al. 2014"
+    },
+    {
+      "id": "microbial-mats",
+      "ma": 3600,
+      "tier": "I",
+      "date": "3,600 Ma",
+      "name": "Microbial mats",
+      "line": "Life is a film on the seabed, and stays that way for three billion years.",
+      "art": "subject",
+      "source": "Noffke et al. 2013, *Astrobiology*"
+    },
+    {
+      "id": "stromatolites",
+      "ma": 3480,
+      "tier": "M",
+      "contested": true,
+      "date": "3,480 Ma",
+      "name": "Stromatolites",
+      "line": "Mats build the first structures life leaves behind. Whether these particular ones did is still argued.",
+      "art": "subject",
+      "source": "Dresser Fm. 3.48 Ga; Baumgartner et al. 2024"
+    },
+    {
+      "id": "sulfur-microbes",
+      "ma": 3400,
+      "tier": "I",
+      "date": "3,400 Ma",
+      "name": "Microbes that eat sulfur",
+      "line": "No oxygen, no sunlight needed — chemistry alone.",
+      "art": "subject",
+      "source": "Wacey et al. 2011, *Nature Geosci.*"
+    },
+    {
+      "id": "s2-impact",
+      "ma": 3260,
+      "tier": "M",
+      "date": "3,260 Ma",
+      "name": "A fifty-kilometre asteroid",
+      "line": "The S2 impact — 50 to 200 times the mass of the one that killed the dinosaurs. It boils the top of the ocean, and life gets better.",
+      "art": "subject",
+      "source": "Drabon et al. 2024, *PNAS*"
+    },
+    {
+      "id": "first-continents",
+      "ma": 3220,
+      "tier": "I",
+      "date": "3,220 Ma",
+      "name": "The first continents",
+      "line": "Cratons stabilise. There is now permanent dry land.",
+      "art": "subject",
+      "source": "Hawkesworth et al. 2020"
+    },
+    {
+      "id": "photosynthesis",
+      "ma": 3000,
+      "tier": "M",
+      "contested": true,
+      "date": "3,000–2,400 Ma",
+      "name": "Photosynthesis",
+      "line": "Cyanobacteria split water and let the oxygen go. It will take 600 million years to matter.",
+      "art": "subject",
+      "source": "Sánchez-Baracaldo et al. 2021, *Proc. R. Soc. B*"
+    },
+    {
+      "id": "first-ice-age",
+      "ma": 2900,
+      "tier": "M",
+      "date": "2,900 Ma",
+      "name": "The first ice age",
+      "line": "The Pongola glaciation. Ice at mid-latitudes, on a planet with no oxygen.",
+      "art": "subject",
+      "source": "Young et al. 1998; Ojakangas et al. 2014"
+    },
+    {
+      "id": "cyanobacteria-everywhere",
+      "ma": 2800,
+      "tier": "I",
+      "date": "2,800 Ma",
+      "name": "Cyanobacteria, everywhere",
+      "line": "Still no free oxygen in the air — the rock is drinking all of it.",
+      "art": "subject",
+      "recurrence": "photosynthesis",
+      "source": "as 3,000 Ma"
+    },
+    {
+      "id": "whiffs-of-oxygen",
+      "ma": 2700,
+      "tier": "I",
+      "date": "2,700 Ma",
+      "name": "Whiffs of oxygen",
+      "line": "Oxygen appears in patches, hundreds of millions of years before the air changes.",
+      "art": "abstract",
+      "source": "Anbar et al. 2007, *Science*"
+    },
+    {
+      "id": "sky-flickers",
+      "ma": 2650,
+      "tier": "F",
+      "date": null,
+      "name": null,
+      "line": "The sky flickers orange and back, three to five times",
+      "art": null,
+      "source": "Zerkle et al. 2012; Izon et al. 2015, 2017"
+    },
+    {
+      "id": "banded-iron",
+      "ma": 2600,
+      "tier": "I",
+      "date": "2,600 Ma",
+      "name": "Banded iron",
+      "line": "Oxygen meets dissolved iron and it rusts out of the sea, in bands, for a billion years.",
+      "art": "subject",
+      "source": "Bekker et al. 2010, *Econ. Geol.*"
+    },
+    {
+      "id": "banded-iron-still",
+      "ma": 2500,
+      "tier": "I",
+      "date": "2,500 Ma",
+      "name": "Banded iron, still",
+      "line": "Still rusting out of the sea. It has been a hundred million years.",
+      "art": "subject",
+      "recurrence": "banded-iron",
+      "source": "as 2,600 Ma"
+    },
+    {
+      "id": "great-oxidation-begins",
+      "ma": 2430,
+      "tier": "M",
+      "contested": true,
+      "date": "2,430 Ma",
+      "name": "The Great Oxidation begins",
+      "line": "Free oxygen floods the air and poisons most of the life that made it.",
+      "art": "planet",
+      "source": "Gumsley et al. 2017, *PNAS* — onset 2.43 Ga"
+    },
+    {
+      "id": "huronian-glaciation",
+      "ma": 2400,
+      "tier": "M",
+      "date": "2,400 Ma",
+      "name": "The Huronian glaciation",
+      "line": "Oxygen destroys the methane greenhouse and the planet freezes, three times over.",
+      "art": "subject",
+      "recurrence": "first-ice-age",
+      "source": "Young 2013 — 2.45–2.22 Ga"
+    },
+    {
+      "id": "sky-is-blue",
+      "ma": 2320,
+      "tier": "F",
+      "date": null,
+      "name": null,
+      "line": "The sky is blue",
+      "art": null,
+      "source": "mid-GOE; Luo et al. 2016, *Sci. Adv.*"
+    },
+    {
+      "id": "great-oxidation-ends",
+      "ma": 2220,
+      "tier": "M",
+      "contested": true,
+      "date": "2,220 Ma",
+      "name": "The Great Oxidation ends",
+      "line": "Oxygen is permanent. The haze never comes back.",
+      "art": "abstract",
+      "source": "Poulton et al. 2021, *Nature* — ~2.22 Ga"
+    },
+    {
+      "id": "francevillian-structures",
+      "ma": 2100,
+      "tier": "I",
+      "contested": true,
+      "date": "2,100 Ma",
+      "name": "Francevillian structures?",
+      "line": "Centimetre-scale shapes in Gabon. Possibly the oldest multicellular life; possibly not life at all.",
+      "art": "subject",
+      "source": "El Albani et al. 2010, *Nature*; 2014, *PLoS ONE*"
+    },
+    {
+      "id": "oxygen-falls-back",
+      "ma": 2060,
+      "tier": "F",
+      "date": null,
+      "name": null,
+      "line": "Oxygen falls back",
+      "art": null,
+      "source": "Lomagundi ends 2.06 Ga; Bekker & Holland 2012"
+    },
+    {
+      "id": "grypania",
+      "ma": 1870,
+      "tier": "I",
+      "contested": true,
+      "date": "1,870 Ma",
+      "name": "*Grypania*?",
+      "line": "A coiled ribbon in Michigan iron. Big enough to see, but nothing of its cells survives.",
+      "art": "subject",
+      "source": "Han & Runnegar 1992, *Science*"
+    },
+    {
+      "id": "banded-iron-stops",
+      "ma": 1800,
+      "tier": "F",
+      "date": null,
+      "name": null,
+      "line": "Banded iron stops",
+      "art": null,
+      "source": "Bekker et al. 2010 — end of major BIF"
+    },
+    {
+      "id": "first-complex-cells",
+      "ma": 1635,
+      "tier": "M",
+      "date": "1,635 Ma",
+      "name": "The first complex cells",
+      "line": "*Qingshania* — cells with a nucleus, stuck together on purpose.",
+      "art": "subject",
+      "source": "Miao et al. 2024, *Sci. Adv.*"
+    },
+    {
+      "id": "sex",
+      "ma": 1047,
+      "tier": "M",
+      "date": "1,047 Ma",
+      "name": "Sex",
+      "line": "*Bangiomorpha*, a red alga. The oldest known sexual reproduction.",
+      "art": "subject",
+      "source": "Gibson et al. 2018, *Geology*"
+    },
+    {
+      "id": "rodinia",
+      "ma": 1000,
+      "tier": "M",
+      "date": "1,000 Ma",
+      "name": "Rodinia",
+      "line": "Every continent, gathered into one mass.",
+      "art": "abstract",
+      "source": "Li et al. 2008, *Precambrian Res.*"
+    },
+    {
+      "id": "first-sponges",
+      "ma": 890,
+      "tier": "I",
+      "contested": true,
+      "date": "890 Ma",
+      "name": "The first sponges?",
+      "line": "Sponge-like structures in Canadian reef rock, 300 million years before any agreed animal.",
+      "art": "subject",
+      "source": "Turner 2021, *Nature*"
+    },
+    {
+      "id": "boring-billion-ends",
+      "ma": 800,
+      "tier": "F",
+      "date": null,
+      "name": null,
+      "line": "The Boring Billion ends",
+      "art": null,
+      "source": "§6"
+    },
+    {
+      "id": "snowball-earth",
+      "ma": 717,
+      "tier": "M",
+      "date": "717 Ma",
+      "name": "Snowball Earth",
+      "line": "Ice reaches the tropics. The Sturtian lasts 56 million years.",
+      "art": "planet",
+      "source": "Rooney et al. 2015, *Geology*"
+    },
+    {
+      "id": "ice-retreats",
+      "ma": 661,
+      "tier": "I",
+      "date": "661 Ma",
+      "name": "The ice retreats",
+      "line": "Cap carbonate, laid down in a few thousand years on top of the ice.",
+      "art": "subject",
+      "source": "Rooney et al. 2015"
+    },
+    {
+      "id": "ice-breaks-for-good",
+      "ma": 635,
+      "tier": "M",
+      "contested": true,
+      "date": "635 Ma",
+      "name": "The ice breaks for good",
+      "line": "A second freeze, the Marinoan — perhaps only four million years — and then it is over. The Ediacaran begins.",
+      "art": "subject",
+      "recurrence": "snowball-earth",
+      "source": "ICS base Ediacaran 635.0 Ma; Wang et al. 2025, *PNAS*"
+    },
+    {
+      "id": "charnia",
+      "ma": 574,
+      "tier": "M",
+      "date": "574 Ma",
+      "name": "*Charnia*",
+      "line": "The first big bodies — soft, strange, rooted to the seabed.",
+      "art": "subject",
+      "source": "Matthews et al. 2021 — 574.17 ± 0.66 Ma"
+    },
+    {
+      "id": "cambrian-begins",
+      "ma": 538.8,
+      "tier": "M",
+      "date": "538.8 Ma",
+      "name": "The Cambrian begins",
+      "line": "Shells, eyes, guts, predators, and the first things burrowing through mud on purpose.",
+      "art": "subject",
+      "source": "ICS 2023 — 538.8 ± 0.6 Ma"
+    },
+    {
+      "id": "burgess-shale",
+      "ma": 508,
+      "tier": "I",
+      "date": "508 Ma",
+      "name": "The Burgess Shale",
+      "line": "*Anomalocaris* — a metre of segmented predator, with the first real eyes.",
+      "art": "subject",
+      "source": "Burgess Shale 508 Ma"
+    },
+    {
+      "id": "plants-reach-land",
+      "ma": 470,
+      "tier": "M",
+      "date": "470 Ma",
+      "name": "Plants reach land",
+      "line": "Spores, nothing you could call a plant yet. Land has been bare for four billion years.",
+      "art": "subject",
+      "source": "Rubinstein et al. 2010, *New Phytol.*"
+    },
+    {
+      "id": "late-ordovician-extinction",
+      "ma": 445,
+      "tier": "M",
+      "date": "445 Ma",
+      "name": "The Late Ordovician extinction",
+      "line": "Ice, then anoxia. About 85% of species go.",
+      "art": "subject",
+      "source": "Harper et al. 2014"
+    },
+    {
+      "id": "cooksonia",
+      "ma": 420,
+      "tier": "I",
+      "date": "420 Ma",
+      "name": "*Cooksonia*",
+      "line": "The first plants with stems. A few centimetres tall, and the tallest thing alive.",
+      "art": "subject",
+      "source": "*Cooksonia* 425–415 Ma"
+    },
+    {
+      "id": "tiktaalik",
+      "ma": 375,
+      "tier": "M",
+      "date": "375 Ma",
+      "name": "*Tiktaalik*",
+      "line": "A fish with a neck, and wrists.",
+      "art": "subject",
+      "source": "Daeschler et al. 2006, *Nature*"
+    },
+    {
+      "id": "coal-forests",
+      "ma": 320,
+      "tier": "I",
+      "date": "320 Ma",
+      "name": "The coal forests",
+      "line": "Trees 40 metres tall, in swamps that become every coal seam on Earth. The air is 30% oxygen and the dragonflies are 70 cm across.",
+      "art": "subject",
+      "source": "Pennsylvanian 323–299 Ma"
+    },
+    {
+      "id": "dimetrodon",
+      "ma": 295,
+      "tier": "I",
+      "date": "295 Ma",
+      "name": "*Dimetrodon*",
+      "line": "Not a dinosaur. A synapsid — our own branch, 60 million years before the first dinosaur.",
+      "art": "subject",
+      "source": "*Dimetrodon* 295–272 Ma"
+    },
+    {
+      "id": "great-dying",
+      "ma": 251.9,
+      "tier": "M",
+      "date": "251.9 Ma",
+      "name": "The Great Dying",
+      "line": "Siberian basalt cooks the ocean. 81% of marine species die, in about 60,000 years — one and a half pixels.",
+      "art": "subject",
+      "source": "Burgess et al. 2014, *PNAS*"
+    },
+    {
+      "id": "dinosaurs-and-mammals",
+      "ma": 227,
+      "tier": "M",
+      "contested": true,
+      "date": "233–225 Ma",
+      "name": "The first dinosaurs, and the first mammals",
+      "line": "Both lines appear inside the same eight million years. At this scale, the same moment.",
+      "art": "subject",
+      "source": "Ischigualasto 231.4 ± 0.3 Ma; Santa Maria ~233 Ma"
+    },
+    {
+      "id": "triassic-jurassic-extinction",
+      "ma": 201.4,
+      "tier": "M",
+      "date": "201.4 Ma",
+      "name": "The Triassic–Jurassic extinction",
+      "line": "The Atlantic starts to open. Half of everything dies, and the dinosaurs inherit it.",
+      "art": "abstract",
+      "source": "ICS T/J boundary 201.4 Ma"
+    },
+    {
+      "id": "archaeopteryx",
+      "ma": 150,
+      "tier": "I",
+      "date": "150 Ma",
+      "name": "*Archaeopteryx*",
+      "line": "Feathers, and the first wing that works.",
+      "art": "subject",
+      "source": "Solnhofen ~150.9 Ma"
+    },
+    {
+      "id": "first-flowers",
+      "ma": 125,
+      "tier": "M",
+      "contested": true,
+      "date": "125 Ma",
+      "name": "The first flowers",
+      "line": "*Archaefructus*: no petals yet, but a flower — the oldest anyone can date. Before this, nothing was in bloom.",
+      "art": "subject",
+      "source": "Sun et al. 2002, *Science*"
+    },
+    {
+      "id": "chicxulub",
+      "ma": 66.04,
+      "tier": "M",
+      "date": "66.04 Ma",
+      "name": "Chicxulub",
+      "line": "Everything larger than a badger dies.",
+      "art": "planet",
+      "source": "Renne et al. 2013, *Science* — 66.043 ± 0.011 Ma"
+    },
+    {
+      "id": "antarctica-freezes",
+      "ma": 33.9,
+      "tier": "M",
+      "date": "33.9 Ma",
+      "name": "Antarctica freezes",
+      "line": "The greenhouse world ends. The modern icehouse begins.",
+      "art": "abstract",
+      "source": "Hutchinson et al. 2021, *Clim. Past*"
+    },
+    {
+      "id": "human-chimp-split",
+      "ma": 7,
+      "tier": "M",
+      "contested": true,
+      "date": "9.3–6.5 Ma",
+      "name": "The human line splits from the chimpanzees",
+      "line": "Everything you would call human happens after this point — the next 175 pixels.",
+      "art": "subject",
+      "source": "*Sahelanthropus* 7.2–6.8 Ma; genetic 6.5–9.3 Ma"
+    }
+  ],
+
+  "withheldNote": "Held back from the scroll entirely, delivered in the finale fan. Label + date only. No line, no art, ever. Fan rows keep the point date (§8) — which is why `Fire, kept` shows `~800 ka` rather than the card notation `≥ 800 ka` it would carry if it had a card.",
+
+  "withheld": [
+    {
+      "id": "ardipithecus",
+      "yearsAgo": 4400000,
+      "date": "4.4 Ma",
+      "name": "*Ardipithecus* walks upright",
+      "source": "White et al. 2009, *Science*"
+    },
+    {
+      "id": "first-stone-tools",
+      "yearsAgo": 3300000,
+      "date": "3.3 Ma",
+      "name": "The first stone tools",
+      "source": "Harmand et al. 2015, *Nature* — Lomekwi 3"
+    },
+    {
+      "id": "first-homo",
+      "yearsAgo": 2800000,
+      "date": "2.8 Ma",
+      "name": "The first *Homo*",
+      "source": "Villmoare et al. 2015, *Science*"
+    },
+    {
+      "id": "homo-erectus",
+      "yearsAgo": 1900000,
+      "date": "1.9 Ma",
+      "name": "*Homo erectus*",
+      "source": "Antón 2003"
+    },
+    {
+      "id": "fire-kept",
+      "yearsAgo": 800000,
+      "contested": true,
+      "date": "~800 ka",
+      "name": "Fire, kept",
+      "source": "Goren-Inbar et al. 2004, *Science*"
+    },
+    {
+      "id": "homo-sapiens",
+      "yearsAgo": 300000,
+      "date": "300 ka",
+      "name": "*Homo sapiens*",
+      "source": "Hublin et al. 2017, *Nature*"
+    },
+    {
+      "id": "oldest-known-picture",
+      "yearsAgo": 51200,
+      "date": "51.2 ka",
+      "name": "The oldest known picture",
+      "source": "Oktaviana et al. 2024, *Nature*"
+    },
+    {
+      "id": "farming",
+      "yearsAgo": 12000,
+      "date": "12 ka",
+      "name": "Farming",
+      "source": "Fertile Crescent"
+    },
+    {
+      "id": "writing",
+      "yearsAgo": 5400,
+      "date": "5.4 ka",
+      "name": "Writing",
+      "source": "cuneiform, ~3400 BC"
+    },
+    {
+      "id": "industrial-revolution",
+      "yearsAgo": 250,
+      "date": "250 yr",
+      "name": "The industrial revolution",
+      "source": null
+    }
+  ]
+}

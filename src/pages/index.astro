@@ -1,0 +1,106 @@
+---
+/**
+ * Scaffold baseline. This is the no-JS document of §3 and nothing else yet:
+ * 55 arrivals in chronological order with their dates, names and lines, then the
+ * withheld ten. It loses the scale illusion and keeps every fact — which is
+ * exactly what the no-JS path is specified to do.
+ *
+ * Still to come, each in its own step: the field canvas (§6), the HUD and the
+ * true-scale bar (§3), the slot layout (§5), the art (§11), the finale (§9),
+ * and the servo scrims (§10). No styling is applied here on purpose — the visual
+ * work has not started, and a half-styled page would be a design decision.
+ */
+import {
+  arrivals,
+  arrivalY,
+  CONSTANTS,
+  emphasise,
+  plain,
+  pxFromNow,
+  spokenDate,
+  spokenName,
+  withheld,
+} from '../lib/timeline.ts';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Deep Time — the whole history of Earth, at true scale</title>
+    <meta
+      name="description"
+      content="The whole history of Earth on one linear scroll. This page is 115,000 pixels tall. One pixel is 40,000 years. The scale never changes."
+    />
+  </head>
+  <body>
+    <h1>Deep Time</h1>
+
+    <p class="sr-only">
+      The whole history of Earth at true scale. This page is {CONSTANTS.RUN.toLocaleString('en-US')} pixels
+      tall. One pixel is {CONSTANTS.YEARS_PER_PX.toLocaleString('en-US')} years. The scale never changes,
+      anywhere, including at the end.
+    </p>
+
+    <main>
+      {
+        arrivals.map((a) =>
+          a.tier === 'F' ? (
+            <p class="whisper" data-y={arrivalY(a)}>{a.line}</p>
+          ) : (
+            <figure class="arrival" data-tier={a.tier} data-y={arrivalY(a)} id={a.id}>
+              {/* <img> is added by bake-art.ts / art.json — no art exists yet. */}
+              <figcaption>
+                <span class="date" aria-hidden="true">{a.date}</span>
+                <span class="sr-only">{spokenDate(a.date!)}</span>
+                <span class="name" aria-hidden="true" set:html={emphasise(a.name!)} />
+                <span class="sr-only">{spokenName(a.name!)}</span>
+                <span class="line" set:html={emphasise(a.line)} />
+              </figcaption>
+            </figure>
+          ),
+        )
+      }
+    </main>
+
+    <section class="finale">
+      <p class="seam">never drawn on the page you just scrolled.</p>
+      <ol>
+        {
+          withheld.map((w) => (
+            <li data-px-from-now={pxFromNow(w)}>
+              <span class="date" aria-hidden="true">{w.date}</span>
+              <span class="sr-only">{spokenDate(w.date)}</span>
+              <span class="name" aria-hidden="true" set:html={emphasise(w.name)} />
+              <span class="sr-only">{plain(w.name)}</span>
+            </li>
+          ))
+        }
+      </ol>
+      <p class="closing">
+        The last ten happened in the final {pxFromNow(withheld[0]!)} of{' '}
+        {CONSTANTS.RUN.toLocaleString('en-US')} pixels. Everything humans have farmed, written, built or
+        remembered is the last three tenths of one pixel.
+      </p>
+      <p class="epilogue">
+        Two things could not fit on this page. <em>T. rex</em> is 50 pixels from the asteroid. The first
+        primates are 250 — they arrive with the impact that made room for them.
+      </p>
+    </section>
+  </body>
+</html>
+
+<style is:global>
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+</style>

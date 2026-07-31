@@ -135,10 +135,14 @@ function run(vp: Viewport): Result {
 
   /* --- 2. does the content fit its box, at every point of the glide? ----- */
   for (const p of placed) {
-    if (p.textH > p.rect.h + 1e-6) {
+    // The text is bottom-anchored `glide` px off the floor and travels ±glide,
+    // so the budget is the box minus twice the glide, not the box.
+    const budget = p.rect.h - p.glide * 2;
+    if (p.textH > budget + 1e-6) {
       fail(
         'text overflows its box',
-        `${p.id} text ${r2(p.textH)}px in a ${r2(p.rect.h)}px box (over by ${r2(p.textH - p.rect.h)}px)`,
+        `${p.id} text ${r2(p.textH)}px in a ${r2(budget)}px budget` +
+          ` (${r2(p.rect.h)}px box − 2×${r2(p.glide)}px glide; over by ${r2(p.textH - budget)}px)`,
       );
     }
     // The glide is bounded, so the two extremes bracket every frame in between.
@@ -229,7 +233,8 @@ function run(vp: Viewport): Result {
       shortened: placed.filter((p) => p.shortened).length,
       'brief (<600px on screen)': cards.filter((p) => p.onScreenPx < 600).length,
       'art dropped': cards.filter((p) => !p.hasArt).length,
-      'min text headroom': Math.round(Math.min(...placed.map((p) => p.rect.h - p.textH))),
+      'min text headroom': Math.round(Math.min(...placed.map((p) => p.rect.h - p.glide * 2 - p.textH))),
+      'line dropped to fit': placed.filter((p) => p.lineDroppedToFit).length,
     },
   };
 }

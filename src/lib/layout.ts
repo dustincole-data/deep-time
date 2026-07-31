@@ -28,8 +28,20 @@
  * The only way to collide is to overflow the box, so the fit of the text block
  * inside its slot is the one thing that has to be modelled rather than derived
  * — see TEXT below.
+ *
+ * TWO RULINGS BEYOND §5, both taken 2026-07-31 after the gate's 200%-text pass
+ * failed, and both extensions of moves §5 and §8 already make:
+ *
+ *   A. THE LINE IS DROPPED WHENEVER THE BOX CANNOT HOLD IT. §5 already drops it
+ *      on mobile and §8 already calls it "enrichment, never load-bearing"; this
+ *      generalises the same move to any viewport and any text scale. Enlarged
+ *      text eats the picture, then the line, and the box still never overflows.
+ *   B. THE WHISPER BAND GROWS TO FIT ITS TEXT. It is the one box with no art to
+ *      give up, so a fixed fraction of viewport height cannot hold a doubled
+ *      line. The band takes the height its own copy needs and the two slot rows
+ *      absorb the loss.
  */
-import { arrivalY, type Arrival, type Tier } from './timeline.ts';
+import { arrivals as ALL_ARRIVALS, type Arrival, type Tier, arrivalY } from './timeline.ts';
 
 /* ============================================================================
    TYPES
@@ -63,9 +75,9 @@ export interface Zones {
   clock: Rect;
   /** Reserved. The bar and its vertical caption. Nothing else ever enters it. */
   scale: Rect;
-  /** Everything the two reserved zones leave. */
+  /** Everything the two reserved zones and the whisper band leave. */
   stage: Rect;
-  /** One band across the top of the stage, for field whispers only. */
+  /** One band across the top of the stage, for field whispers only (ruling B). */
   whisper: Rect;
   slots: Slot[];
   /** Per column: the full-height rect a lone card takes (contract rule 5). */
@@ -94,13 +106,15 @@ export interface Placed {
   glide: number;
   /** True when the card sits in the right-hand column: art anchors right. */
   right: boolean;
-  /** Modelled height of the text block. See TEXT. */
+  /** Modelled height of the text block as finally rendered. See TEXT. */
   textH: number;
   /** Height left for the art once the text and the glide have taken theirs. */
   availH: number;
   hasArt: boolean;
-  /** Whether the description line is rendered at this viewport (§5, §8). */
+  /** Whether the description line is rendered here, after ruling A. */
   hasLine: boolean;
+  /** True when ruling A fired: the line would have shown, but the box was too short. */
+  lineDroppedToFit: boolean;
   /** dwell + 2×fade — how long the arrival is on screen at all. */
   onScreenPx: number;
   /** True when contention shortened the fade window (rule 6). */
@@ -190,74 +204,12 @@ export const windowsOverlap = (a: Placed, b: Placed): boolean =>
   a.y - a.fade < b.y + b.dwell + b.fade && b.y - b.fade < a.y + a.dwell + a.fade;
 
 /* ============================================================================
-   ZONES — viewport in, reserved zones + slot grid out
-   ========================================================================= */
-
-export function zones(vp: Viewport): Zones {
-  const w = vp.w;
-  const h = vp.h;
-  const textScale = vp.textScale ?? 1;
-  const mobile = w < MOBILE_BELOW;
-  const t = mobile ? T.mobile : T.desktop;
-
-  const clock: Rect = { x: 0, y: h - t.clockH, w: w * t.clockWFrac, h: t.clockH };
-  const scale: Rect = { x: w - t.scaleW, y: 0, w: t.scaleW, h };
-
-  const padX = w * t.padXFrac;
-  const topOff = h * t.topOffFrac;
-  const stageR = w - t.scaleW;
-
-  const whisper: Rect = { x: padX, y: topOff, w: stageR - padX, h: h * t.whisperHFrac };
-
-  const rowTop = topOff + whisper.h + h * t.rowGapTopFrac;
-  const rowBot = Math.min(h * STAGE_BOTTOM_FRAC, clock.y - t.clockClearance);
-  const bandH = (rowBot - rowTop - t.gutY * (ROWS - 1)) / ROWS;
-
-  const cols = t.cols;
-  const gutX = w * t.gutXFrac;
-  const colW = (stageR - padX - gutX * (cols - 1)) / cols;
-
-  const slots: Slot[] = [];
-  for (let r = 0; r < ROWS; r++) {
-    for (let c = 0; c < cols; c++) {
-      slots.push({
-        x: padX + c * (colW + gutX),
-        y: rowTop + r * (bandH + t.gutY),
-        w: colW,
-        h: bandH,
-        col: c,
-        row: r,
-      });
-    }
-  }
-
-  const colFull: Rect[] = [];
-  for (let c = 0; c < cols; c++) {
-    colFull.push({ x: padX + c * (colW + gutX), y: rowTop, w: colW, h: rowBot - rowTop });
-  }
-
-  return {
-    viewport: { w, h, textScale },
-    mobile,
-    clock,
-    scale,
-    stage: { x: padX, y: rowTop, w: stageR - padX, h: rowBot - rowTop },
-    whisper,
-    slots,
-    colFull,
-    nCols: cols,
-    nRows: ROWS,
-    fade: h * FADE_FRAC,
-  };
-}
-
-/* ============================================================================
    TEXT — the one modelled quantity
 
    The prototype read `tx.offsetHeight` off the DOM. Node has no DOM, so the
    height of the text block is modelled here from the type scale in §11 and a
    character-advance table for Archivo.
-   ...
+
    §13 already rules on this: "A Playwright pass over the live page stays a ship
    gate, because line wrapping is ultimately the browser's opinion." The model
    is therefore deliberately biased to OVER-estimate — advances rounded up,
@@ -370,36 +322,38 @@ const plainText = (s: string) => s.replace(/\*/g, '');
  * by textScale — which is how a text-only zoom behaves, and the conservative
  * reading either way.
  */
-function typeScale(z: Zones, tier: Tier) {
-  const { w, textScale: k } = z.viewport;
+function typeScale(vp: Required<Viewport>, mobile: boolean, tier: Tier) {
+  const { w, textScale: k } = vp;
   const cl = (lo: number, vw: number, hi: number) => clamp(w * vw, lo, hi);
   const isM = tier === 'M';
+  const dateSize = isM ? 11 : 9.5;
+  const lineSize = isM ? cl(12.5, 0.0102, 14.5) : 12;
   return {
     date: {
-      size: (isM ? 11 : 9.5) * k,
+      size: dateSize * k,
       lineHeight: 1.25, // `normal`, taken high
       tracking: 0.2,
       upper: true,
       weight: 1,
     } satisfies TypeSpec,
     /** `.d { margin-bottom: .5em }`, `.I .d { margin-bottom: .3em }` */
-    dateGap: (isM ? 0.5 : 0.3) * (isM ? 11 : 9.5) * k,
+    dateGap: (isM ? 0.5 : 0.3) * dateSize * k,
     name: {
-      size: (z.mobile ? (isM ? 20 : 15) : isM ? cl(19, 0.022, 30) : cl(14, 0.013, 18)) * k,
+      size: (mobile ? (isM ? 20 : 15) : isM ? cl(19, 0.022, 30) : cl(14, 0.013, 18)) * k,
       lineHeight: 1.12,
       tracking: isM ? -0.02 : -0.008,
       upper: false,
       weight: isM ? 1.04 : 1.03,
     } satisfies TypeSpec,
     line: {
-      size: (isM ? cl(12.5, 0.0102, 14.5) : 12) * k,
+      size: lineSize * k,
       lineHeight: 1.5,
       tracking: 0,
       upper: false,
       weight: 1,
     } satisfies TypeSpec,
     /** `.s { margin-top: .55em }` */
-    lineGap: 0.55 * (isM ? cl(12.5, 0.0102, 14.5) : 12) * k,
+    lineGap: 0.55 * lineSize * k,
     /** `.rule { height: 1px; margin-bottom: 11px }` — px, and decorative: it does not take text zoom. */
     ruleH: isM ? 12 : 0,
     whisper: {
@@ -413,7 +367,7 @@ function typeScale(z: Zones, tier: Tier) {
 }
 
 /**
- * Does this arrival render its description line at this viewport?
+ * Does this arrival render its description line at this viewport, before ruling A?
  *
  * §5: on mobile the description is dropped — a phone band cannot hold art +
  * name + a line. §8: EXCEPT the six abstract milestones, where the line
@@ -427,14 +381,90 @@ export const showsArt = (a: Pick<Arrival, 'art'>, z: Zones): boolean =>
   a.art !== null && !(z.mobile && a.art === 'abstract');
 
 /** Modelled height of one arrival's text block inside a column `availW` wide. */
-export function textHeight(a: Arrival, z: Zones, availW: number): number {
-  const f = typeScale(z, a.tier);
+export function textHeight(a: Arrival, z: Zones, availW: number, withLine = showsLine(a, z)): number {
+  const f = typeScale(z.viewport, z.mobile, a.tier);
   if (a.tier === 'F') return blockH(plainText(a.line), f.whisper, availW);
   let h = f.ruleH;
   h += blockH(a.date!, f.date, availW) + f.dateGap;
   h += blockH(plainText(a.name!), f.name, availW);
-  if (showsLine(a, z)) h += f.lineGap + blockH(plainText(a.line), f.line, availW);
+  if (withLine) h += f.lineGap + blockH(plainText(a.line), f.line, availW);
   return h;
+}
+
+/* ============================================================================
+   ZONES — viewport in, reserved zones + slot grid out
+   ========================================================================= */
+
+/** The copy deck's six whispers. The band is sized to hold the tallest (ruling B). */
+const WHISPER_COPY = ALL_ARRIVALS.filter((a) => a.tier === 'F').map((a) => plainText(a.line));
+
+export function zones(vp: Viewport): Zones {
+  const w = vp.w;
+  const h = vp.h;
+  const viewport: Required<Viewport> = { w, h, textScale: vp.textScale ?? 1 };
+  const mobile = w < MOBILE_BELOW;
+  const t = mobile ? T.mobile : T.desktop;
+
+  const clock: Rect = { x: 0, y: h - t.clockH, w: w * t.clockWFrac, h: t.clockH };
+  const scale: Rect = { x: w - t.scaleW, y: 0, w: t.scaleW, h };
+
+  const padX = w * t.padXFrac;
+  const topOff = h * t.topOffFrac;
+  const stageR = w - t.scaleW;
+  const stageW = stageR - padX;
+
+  /* Ruling B — the whisper band is the one box with no art to sacrifice, so it
+     takes the height its own copy needs whenever that exceeds the fixed band.
+     At 100% text nothing grows; this only fires under an enlarged text scale. */
+  const wf = typeScale(viewport, mobile, 'F').whisper;
+  const whisperTextH = Math.max(...WHISPER_COPY.map((s) => blockH(s, wf, stageW)));
+  const whisper: Rect = {
+    x: padX,
+    y: topOff,
+    w: stageW,
+    h: Math.max(h * t.whisperHFrac, whisperTextH),
+  };
+
+  const rowTop = topOff + whisper.h + h * t.rowGapTopFrac;
+  const rowBot = Math.min(h * STAGE_BOTTOM_FRAC, clock.y - t.clockClearance);
+  const bandH = (rowBot - rowTop - t.gutY * (ROWS - 1)) / ROWS;
+
+  const cols = t.cols;
+  const gutX = w * t.gutXFrac;
+  const colW = (stageW - gutX * (cols - 1)) / cols;
+
+  const slots: Slot[] = [];
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < cols; c++) {
+      slots.push({
+        x: padX + c * (colW + gutX),
+        y: rowTop + r * (bandH + t.gutY),
+        w: colW,
+        h: bandH,
+        col: c,
+        row: r,
+      });
+    }
+  }
+
+  const colFull: Rect[] = [];
+  for (let c = 0; c < cols; c++) {
+    colFull.push({ x: padX + c * (colW + gutX), y: rowTop, w: colW, h: rowBot - rowTop });
+  }
+
+  return {
+    viewport,
+    mobile,
+    clock,
+    scale,
+    stage: { x: padX, y: rowTop, w: stageW, h: rowBot - rowTop },
+    whisper,
+    slots,
+    colFull,
+    nCols: cols,
+    nRows: ROWS,
+    fade: h * FADE_FRAC,
+  };
 }
 
 /* ============================================================================
@@ -442,9 +472,7 @@ export function textHeight(a: Arrival, z: Zones, availW: number): number {
    ========================================================================= */
 
 export function place(arrivals: Arrival[], z: Zones): Placed[] {
-  const items = arrivals
-    .map((a) => ({ a, y: arrivalY(a) }))
-    .sort((p, q) => p.y - q.y);
+  const items = arrivals.map((a) => ({ a, y: arrivalY(a) })).sort((p, q) => p.y - q.y);
 
   const out: Placed[] = items.map(({ a, y }, i) => {
     // The last arrival has no next: the finale follows, so its dwell is
@@ -466,6 +494,7 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
       availH: 0,
       hasArt: false,
       hasLine: false,
+      lineDroppedToFit: false,
       onScreenPx: 0,
       shortened: false,
     } satisfies Placed;
@@ -527,8 +556,25 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
   const byId = new Map(arrivals.map((a) => [a.id, a]));
   for (const it of out) {
     const a = byId.get(it.id)!;
-    it.textH = textHeight(a, z, it.rect.w);
     it.hasLine = it.tier !== 'F' && showsLine(a, z);
+    it.textH = textHeight(a, z, it.rect.w, it.hasLine);
+
+    /* Ruling A — the line is enrichment, so it is what goes when the box is too
+       short for it. Everything a visitor must receive lives in the date or the
+       name (§8), both of which survive.
+
+       The budget is the box minus TWICE the glide, not the box: the text is
+       bottom-anchored `glide` px off the floor and then travels ±glide, so a
+       block that merely equals the box height still rides out through its top. */
+    if (it.hasLine && it.textH + it.glide * 2 > it.rect.h) {
+      const without = textHeight(a, z, it.rect.w, false);
+      if (without < it.textH) {
+        it.hasLine = false;
+        it.lineDroppedToFit = true;
+        it.textH = without;
+      }
+    }
+
     it.availH = it.rect.h - it.textH - it.glide * 3 - ART_TEXT_CLEARANCE;
     it.hasArt = it.tier !== 'F' && showsArt(a, z) && it.availH > ART_MIN_H;
   }
@@ -568,6 +614,9 @@ export function frame(
 
     let art: Rect | null = null;
     if (p.hasArt) {
+      // Aspect arrives with art.json. It cannot change containment — the art is
+      // fitted into `availH` and clipped to the column either way — so the gate
+      // is aspect-independent and 1 is a safe stand-in until the manifest exists.
       const aspect = artAspect[p.id] ?? 1;
       let h = p.tier === 'M' ? p.availH : p.availH * ART_H_FRAC_I;
       let w = h * aspect;

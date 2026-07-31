@@ -7,6 +7,9 @@
  * servo halo's spread-then-falloff ring (spread 4.5% @ blur 2%, then 8.5% @
  * blur 5.5%, §11), and the ladder search `[0.25, 0.45, 0.62, 0.78, 0.92]` ×
  * [dark, light] are all the prototype's own numbers, not re-derived here.
+ * One thing is deliberately NOT transcribed: the prototype spread the ring by
+ * scaling the silhouette about its centre, which only dilates a compact
+ * subject. See `haloRings()` — the radii and blurs are still the prototype's.
  *
  * Runs inside a real Chromium canvas via Playwright, same reason
  * gate-browser.ts does: byte-identical to what a real browser's canvas
@@ -223,33 +226,86 @@ async function bakeSheetInPage(
     return n ? s / n : 0.5;
   }
 
+  /** The pad the halo is composited into, both when measured and when baked. */
+  function padOf(src: HTMLCanvasElement): number {
+    return Math.round(Math.max(src.width, src.height) * 0.12);
+  }
+
+  /**
+   * §11's spread-then-falloff ring, as a true dilation of the silhouette.
+   *
+   * The prototype spread the silhouette by drawing it scaled up about its own
+   * centre, and this file transcribed that. A centre-scale is only a dilation
+   * for a compact subject: on a thin branching silhouette the copy slides
+   * radially outward instead of thickening, so the 4 px band the gate measures
+   * is left bare on the inner side of every stem. Cooksonia — bare forking
+   * stems, and luminance-matched to its own field (rim L 0.27 against sky
+   * L 0.25, so the halo has to do all of the work) — measured 2.77:1 at the
+   * top of the ladder because of it. Dilating by drawing the silhouette at K
+   * offsets around a circle of radius r covers that band for any shape.
+   *
+   * Ring radii and blurs are §11's, unchanged. Each ring is unioned at full
+   * alpha and blurred once, then composited at the servo's strength — blurring
+   * each offset copy separately would compound alpha where copies overlap and
+   * make `strength` mean something different for a thin subject than a fat one.
+   */
+  function haloRings(src: HTMLCanvasElement, dark: boolean): HTMLCanvasElement[] {
+    const S = Math.max(src.width, src.height);
+    const pad = padOf(src);
+    const sil = silhouette(src, dark ? 'rgb(6,10,15)' : 'rgb(255,248,235)');
+    const K = 24;
+    return ([[0.045, 0.02], [0.085, 0.055]] as const).map(([p, b]) => {
+      const union = document.createElement('canvas');
+      union.width = src.width + pad * 2;
+      union.height = src.height + pad * 2;
+      const ux = union.getContext('2d')!;
+      const r = S * p;
+      ux.drawImage(sil, pad, pad);
+      for (let k = 0; k < K; k++) {
+        const t = (2 * Math.PI * k) / K;
+        ux.drawImage(sil, pad + Math.cos(t) * r, pad + Math.sin(t) * r);
+      }
+      const ring = document.createElement('canvas');
+      ring.width = union.width;
+      ring.height = union.height;
+      const rx = ring.getContext('2d')!;
+      rx.filter = `blur(${Math.max(2, Math.round(S * b))}px)`;
+      rx.drawImage(union, 0, 0);
+      rx.filter = 'none';
+      return ring;
+    });
+  }
+
+  /** Field, halo, subject — the one composite order, shared by measure and bake. */
+  function compose(cx: CanvasRenderingContext2D, src: HTMLCanvasElement, rings: HTMLCanvasElement[] | null, strength: number) {
+    const pad = padOf(src);
+    if (rings && strength > 0) {
+      cx.save();
+      cx.globalAlpha = strength;
+      for (const ring of rings) cx.drawImage(ring, 0, 0);
+      cx.restore();
+    }
+    cx.drawImage(src, pad, pad);
+  }
+
   // Contrast across the subject's boundary, against a flat field colour.
-  function measureAgainstField(src: HTMLCanvasElement, field: [number, number, number], strength: number, dark: boolean | null): number {
+  function measureAgainstField(src: HTMLCanvasElement, rings: HTMLCanvasElement[] | null, field: [number, number, number], strength: number): number {
+    const pad = padOf(src);
     const cvs = document.createElement('canvas');
-    cvs.width = src.width;
-    cvs.height = src.height;
+    cvs.width = src.width + pad * 2;
+    cvs.height = src.height + pad * 2;
     const cx = cvs.getContext('2d', { willReadFrequently: true })!;
     cx.fillStyle = `rgb(${field[0]},${field[1]},${field[2]})`;
     cx.fillRect(0, 0, cvs.width, cvs.height);
-    if (dark !== null && strength > 0) {
-      const sil = silhouette(src, dark ? 'rgb(6,10,15)' : 'rgb(255,248,235)');
-      const S = Math.max(src.width, src.height);
-      cx.save();
-      cx.globalAlpha = strength;
-      for (const [p, b] of [[0.045, 0.02], [0.085, 0.055]] as const) {
-        const pad = S * p;
-        cx.filter = `blur(${Math.max(2, Math.round(S * b))}px)`;
-        cx.drawImage(sil, -pad, -pad, src.width + pad * 2, src.height + pad * 2);
-      }
-      cx.restore();
-      cx.filter = 'none';
-    }
-    cx.drawImage(src, 0, 0);
+    compose(cx, src, rings, strength);
     const img = cx.getImageData(0, 0, cvs.width, cvs.height).data;
     const md = src.getContext('2d', { willReadFrequently: true })!.getImageData(0, 0, src.width, src.height).data;
     const W = cvs.width, H = cvs.height, R = 4;
     let inSum = 0, inN = 0, outSum = 0, outN = 0;
-    const A = (x: number, y: number) => (x < 0 || y < 0 || x >= W || y >= H ? 0 : md[(y * W + x) * 4 + 3]!);
+    const A = (x: number, y: number) => {
+      const sx = x - pad, sy = y - pad;
+      return sx < 0 || sy < 0 || sx >= src.width || sy >= src.height ? 0 : md[(sy * src.width + sx) * 4 + 3]!;
+    };
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
         const a = A(x, y);
@@ -281,8 +337,11 @@ async function bakeSheetInPage(
   // The servo: smallest strength that clears GATE against the WORST sampled
   // field colour; never accept worse than no halo at all (§11).
   function solveHalo(src: HTMLCanvasElement, fields: [number, number, number][], gate: number, ladder: number[]) {
+    // Each polarity's rings depend only on the subject, so they are built once
+    // and reused across every rung of the ladder and every sampled field.
+    const ringsFor = [true, false].map((d) => haloRings(src, d));
     const worstOf = (strength: number, dark: boolean | null) =>
-      Math.min(...fields.map((f) => measureAgainstField(src, f, strength, dark)));
+      Math.min(...fields.map((f) => measureAgainstField(src, dark === null ? null : ringsFor[dark ? 0 : 1]!, f, strength)));
     let best = { r: worstOf(0, null), strength: 0, dark: null as boolean | null };
     if (best.r >= gate) return best;
     for (const a of ladder) {
@@ -296,25 +355,11 @@ async function bakeSheetInPage(
   }
 
   function bakeHalo(src: HTMLCanvasElement, strength: number, dark: boolean | null): HTMLCanvasElement {
+    const pad = padOf(src);
     const padded = document.createElement('canvas');
-    const S = Math.max(src.width, src.height);
-    const pad = Math.round(S * 0.12);
     padded.width = src.width + pad * 2;
     padded.height = src.height + pad * 2;
-    const cx = padded.getContext('2d')!;
-    if (dark !== null && strength > 0) {
-      const sil = silhouette(src, dark ? 'rgb(6,10,15)' : 'rgb(255,248,235)');
-      cx.save();
-      cx.globalAlpha = strength;
-      for (const [p, b] of [[0.045, 0.02], [0.085, 0.055]] as const) {
-        const hp = S * p;
-        cx.filter = `blur(${Math.max(2, Math.round(S * b))}px)`;
-        cx.drawImage(sil, pad - hp, pad - hp, src.width + hp * 2, src.height + hp * 2);
-      }
-      cx.restore();
-      cx.filter = 'none';
-    }
-    cx.drawImage(src, pad, pad);
+    compose(padded.getContext('2d')!, src, dark === null ? null : haloRings(src, dark), strength);
     return padded;
   }
 

@@ -8,7 +8,7 @@
       "strength": 0.45,
       "polarity": "dark"
     },
-    "contrast": 3.36,
+    "contrast": 3.42,
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "great-oxidation-begins": {
@@ -17,10 +17,10 @@
     "h": 634,
     "alt": "smooth and featureless like Titan, thick orange-tan haze, faint soft banding, no continents or oceans visible",
     "halo": {
-      "strength": 0.62,
-      "polarity": "dark"
+      "strength": 0.45,
+      "polarity": "light"
     },
-    "contrast": 3.51,
+    "contrast": 3.03,
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "snowball-earth": {
@@ -32,7 +32,7 @@
       "strength": 0.45,
       "polarity": "dark"
     },
-    "contrast": 4.19,
+    "contrast": 4.32,
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "archaeopteryx": {
@@ -56,7 +56,7 @@
       "strength": 0.45,
       "polarity": "light"
     },
-    "contrast": 3.91,
+    "contrast": 3.95,
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "dimetrodon": {
@@ -68,7 +68,7 @@
       "strength": 0.45,
       "polarity": "light"
     },
-    "contrast": 3.18,
+    "contrast": 3.83,
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "charnia": {
@@ -80,7 +80,19 @@
       "strength": 0.45,
       "polarity": "dark"
     },
-    "contrast": 3.82,
+    "contrast": 4.71,
+    "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
+  },
+  "cooksonia": {
+    "file": "/art/cooksonia.webp",
+    "w": 536,
+    "h": 590,
+    "alt": "a few centimetres of forking, leafless green stems, splitting into two even branches again and again, with small rounded capsules at the branch tips",
+    "halo": {
+      "strength": 0.45,
+      "polarity": "light"
+    },
+    "contrast": 3.05,
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "coal-forests": {
@@ -89,10 +101,10 @@
     "h": 628,
     "alt": "a giant dragonfly, long segmented body, two pairs of long net-veined wings held flat to the sides",
     "halo": {
-      "strength": 0.62,
+      "strength": 0.45,
       "polarity": "dark"
     },
-    "contrast": 3.13,
+    "contrast": 3.96,
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   }
 }

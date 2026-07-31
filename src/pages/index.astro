@@ -15,6 +15,7 @@ import {
   arrivalY,
   CONSTANTS,
   emphasise,
+  FINALE_CFG,
   plain,
   pxFromNow,
   spokenDate,
@@ -65,7 +66,7 @@ import {
     </main>
 
     <section class="finale">
-      <p class="seam">never drawn on the page you just scrolled.</p>
+      <p class="seam">{FINALE_CFG.copy.seamCaption}</p>
       <ol>
         {
           withheld.map((w) => (
@@ -78,15 +79,10 @@ import {
           ))
         }
       </ol>
-      <p class="closing">
-        The last ten happened in the final {pxFromNow(withheld[0]!)} of{' '}
-        {CONSTANTS.RUN.toLocaleString('en-US')} pixels. Everything humans have farmed, written, built or
-        remembered is the last three tenths of one pixel.
-      </p>
-      <p class="epilogue">
-        Two things could not fit on this page. <em>T. rex</em> is 50 pixels from the asteroid. The first
-        primates are 250 — they arrive with the impact that made room for them.
-      </p>
+      {/* Verbatim from timeline.json — the tests recompute every number in it from the constants. */}
+      <p class="closing">{FINALE_CFG.copy.closing}</p>
+      <p class="epilogue" set:html={emphasise(FINALE_CFG.copy.epilogue)} />
+      <a class="again" href="#top">{FINALE_CFG.copy.again}</a>
     </section>
   </body>
 </html>

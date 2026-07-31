@@ -4,10 +4,11 @@
  * cannot quietly move a zone and leave the sweep passing for the wrong reason.
  */
 import { describe, expect, it } from 'vitest';
-import { arrivals } from './timeline.ts';
+import { arrivals, CONSTANTS, fanRows, finaleBeats, FINALE_CFG, pxFromNow, withheld } from './timeline.ts';
 import {
   ART_MIN_H,
   contains,
+  fan,
   frame,
   intersects,
   place,
@@ -341,6 +342,129 @@ describe('enlarged text (§10, rulings A/B/C)', () => {
         expect([vp.w, p.id, p.dwell >= 150]).toEqual([vp.w, p.id, true]);
       }
     }
+  });
+});
+
+describe('the finale (§9)', () => {
+  const overrun = (() => {
+    const placed = place(arrivals, zones(DESKTOP));
+    const last = placed[placed.length - 1]!;
+    return last.y + last.dwell - CONSTANTS.RUN_END;
+  })();
+
+  it('stages the seven beats exactly where §9 puts them', () => {
+    // The 7 Ma card releases 485 px in, and the drain is that plus a 40 px pad.
+    expect(overrun).toBe(485);
+    const B = finaleBeats(overrun);
+    expect([B.drainEnd, B.cascadeEnd, B.breathEnd, B.tenStart, B.tenEnd]).toEqual([
+      525, 4125, 4725, 4725, 5325,
+    ]);
+    expect([B.holdEnd, B.lineStart, B.lineEnd, B.endStart, B.total]).toEqual([
+      6025, 6025, 6725, 6725, 7000,
+    ]);
+    expect(B.total).toBe(CONSTANTS.FINALE);
+  });
+
+  it('keeps both empty beats — §15 says cutting them will be proposed and must be refused', () => {
+    const B = finaleBeats(overrun);
+    expect(B.breathEnd - B.cascadeEnd).toBe(600); // breath
+    expect(B.holdEnd - B.tenEnd).toBe(700); // hold
+  });
+
+  it('cascades thirty rows at 120 px and runs the ten at 42', () => {
+    const B = finaleBeats(overrun);
+    expect(B.cascadeEnd - B.drainEnd).toBe(30 * FINALE_CFG.cascadePitchPx);
+    // A fast run, not one hit: you watch them accumulate onto one point.
+    expect(FINALE_CFG.tenPitchPx).toBe(42);
+  });
+
+  it('is the thirty ticks the visitor lit, then the withheld ten', () => {
+    expect(fanRows).toHaveLength(40);
+    expect(fanRows.filter((r) => r.ten)).toHaveLength(10);
+    expect(fanRows.slice(0, 30).map((r) => r.id)).toEqual(
+      arrivals.filter((a) => a.tier === 'M').map((a) => a.id),
+    );
+    expect(fanRows.slice(30).map((r) => r.id)).toEqual(withheld.map((w) => w.id));
+  });
+
+  it('lands the ten on the bar last pixel, which has no tick', () => {
+    // A tick means passed, and they never were. That absence IS the payoff, drawn.
+    const ticks = new Set(fanRows.filter((r) => !r.ten).map((r) => r.px));
+    for (const r of fanRows.filter((x) => x.ten)) {
+      expect([r.id, r.px]).toEqual([r.id, CONSTANTS.RUN_END]);
+      expect([r.id, ticks.has(r.px)]).toEqual([r.id, false]);
+    }
+  });
+
+  it('reproduces the pitch and type §9 measured', () => {
+    const d = fan(zones(DESKTOP));
+    expect(d.pitch).toBeCloseTo(20.0, 1);
+    expect(d.fontSize).toBeCloseTo(12.4, 1);
+
+    const m = fan(zones(PHONE));
+    expect(m.pitch).toBeCloseTo(19.1, 1);
+    expect(m.fontSize).toBeCloseTo(11.9, 1);
+    // §9: "Widest row 294 px in a 337 px phone column."
+    expect(Math.round(m.rowRight)).toBe(337);
+  });
+
+  it('puts the closing line beside the fan on desktop and after it on a phone', () => {
+    // Sequential, not a crossfade: two texts at 30% opacity stacked on each other
+    // is precisely the overlap the layout contract bans.
+    expect(fan(zones(DESKTOP)).closingPlacement).toBe('beside');
+    expect(fan(zones(PHONE)).closingPlacement).toBe('after');
+    expect(fan(zones(SHORT_PHONE)).closingPlacement).toBe('after');
+  });
+
+  it('keeps the bar inside its own reserved zone — the same object, unbroken', () => {
+    for (const vp of GATE_VIEWPORTS) {
+      const z = zones(vp);
+      expect([vp.w, vp.h, contains(z.scale, fan(z).bar)]).toEqual([vp.w, vp.h, true]);
+    }
+  });
+
+  it('never overlaps a row with another row, at any gate viewport or text scale', () => {
+    for (const vp of [...GATE_VIEWPORTS, ...GATE_VIEWPORTS.map((v) => ({ ...v, textScale: 2 }))]) {
+      const f = fan(zones(vp));
+      for (let i = 0; i < f.rows.length - 1; i++) {
+        expect([vp.w, i, intersects(f.rows[i]!.box, f.rows[i + 1]!.box)]).toEqual([vp.w, i, false]);
+      }
+      // Shrink-to-fit, anchored right (§9 staging rule 5). Full-width rows collide
+      // with the closing block at every viewport.
+      for (const r of f.rows) expect([vp.w, r.id, r.box.x > 0]).toEqual([vp.w, r.id, true]);
+    }
+  });
+
+  it('does not take the text scale — the convergence is the content (§10)', () => {
+    for (const vp of GATE_VIEWPORTS) {
+      const a = fan(zones(vp));
+      const b = fan(zones({ ...vp, textScale: 2 }));
+      expect([vp.w, a.pitch, a.fontSize]).toEqual([vp.w, b.pitch, b.fontSize]);
+    }
+  });
+
+  it('splits the fan at the seam: thirty passed above, ten withheld below', () => {
+    for (const vp of GATE_VIEWPORTS) {
+      const f = fan(zones(vp));
+      for (const r of f.rows) expect([vp.w, r.id, r.box.y > f.seamY]).toEqual([vp.w, r.id, r.ten]);
+    }
+  });
+});
+
+describe('the copy spends the constants, exactly (§8, §13)', () => {
+  // "A true-scale site cannot round its own punchline." Two of these numbers were
+  // wrong in an earlier prototype; nothing should be able to drift again.
+  it('recomputes every number in the closing line', () => {
+    const closing = FINALE_CFG.copy.closing;
+    expect(closing).toContain(`final ${pxFromNow(withheld[0]!)} of`);
+    expect(closing).toContain(`${CONSTANTS.RUN.toLocaleString('en-US')} pixels`);
+    expect(pxFromNow(withheld.find((w) => w.id === 'farming')!)).toBe(0.3);
+    expect(closing).toContain('three tenths of one pixel');
+  });
+
+  it('keeps the seam caption and the way back verbatim', () => {
+    expect(FINALE_CFG.copy.seamCaption).toBe('never drawn on the page you just scrolled.');
+    expect(FINALE_CFG.copy.again).toBe('↑ again');
   });
 });
 

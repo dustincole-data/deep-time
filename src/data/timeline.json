@@ -674,5 +674,33 @@
       "name": "The industrial revolution",
       "source": null
     }
-  ]
+  ],
+
+  "finaleNote": [
+    "The finale (spec \u00a79). Beat lengths are in px from RUN_END and sum to FINALE.",
+    "`drainPad` is added to the 7 Ma card's overrun: the card lands at 116,425 and wants 660px of",
+    "dwell, so it releases 485px into the finale and the drain runs 485 + 40 = 525px (\u00a79 staging 1).",
+    "Two beats are deliberately empty. \u00a715: cutting either one will be proposed and must be refused.",
+    "The copy is verbatim from \u00a78 and every number in it is recomputed from `constants` by the",
+    "tests \u2014 two of them were wrong in an earlier prototype."
+  ],
+
+  "finale": {
+    "beats": {
+      "drainPad": 40,
+      "cascade": 3600,
+      "breath": 600,
+      "ten": 600,
+      "hold": 700,
+      "line": 700
+    },
+    "cascadePitchPx": 120,
+    "tenPitchPx": 42,
+    "copy": {
+      "seamCaption": "never drawn on the page you just scrolled.",
+      "closing": "The last ten happened in the final 110 of 115,000 pixels. Everything humans have farmed, written, built or remembered is the last three tenths of one pixel.",
+      "epilogue": "Two things could not fit on this page. *T. rex* is 50 pixels from the asteroid. The first primates are 250 \u2014 they arrive with the impact that made room for them.",
+      "again": "\u2191 again"
+    }
+  }
 }

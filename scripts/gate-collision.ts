@@ -21,19 +21,18 @@
  *             boundary, and every visible rect is compared with every other.
  *             This is the pass that catches a mistake in `frame()` itself.
  */
-import { arrivals, CONSTANTS } from '../src/lib/timeline.ts';
+import { arrivals, CONSTANTS, finaleBeats } from '../src/lib/timeline.ts';
 import {
   contains,
+  fan,
   frame,
   intersects,
   place,
   windowsOverlap,
   zones,
-  type Placed,
   type Rect,
   type Viewport,
   type Visible,
-  type Zones,
 } from '../src/lib/layout.ts';
 
 const VERBOSE = process.argv.includes('--verbose');
@@ -85,6 +84,12 @@ function run(vp: Viewport): Result {
     'anything × clock': 0,
     'anything × scale bar': 0,
     'anything outside its box': 0,
+    'fan row × fan row': 0,
+    'fan row × seam caption': 0,
+    'fan row × closing block': 0,
+    'fan × scale bar': 0,
+    'fan row overflows its column': 0,
+    'finale beats': 0,
   };
   const failures: string[] = [];
   const fail = (key: string, msg: string) => {
@@ -220,6 +225,62 @@ function run(vp: Viewport): Result {
     }
   }
 
+  /* --- 5. THE FINALE (§9) — the fan, read against the same reserved zones --- */
+  const lastCard = placed[placed.length - 1]!;
+  const overrun = Math.max(0, lastCard.y + lastCard.dwell - CONSTANTS.RUN_END);
+  const B = finaleBeats(overrun);
+  const marks = [
+    ['drain', 0, B.drainEnd],
+    ['cascade', B.drainEnd, B.cascadeEnd],
+    ['breath', B.cascadeEnd, B.breathEnd],
+    ['the ten', B.tenStart, B.tenEnd],
+    ['hold', B.tenEnd, B.holdEnd],
+    ['the line', B.lineStart, B.lineEnd],
+    ['left holding', B.endStart, B.total],
+  ] as const;
+  for (const [name, a, b] of marks) {
+    // §15: the two empty beats will be proposed for cutting and must be refused.
+    if (!(b > a)) fail('finale beats', `beat "${name}" is ${r2(b - a)}px — beats never collapse`);
+  }
+  if (Math.abs(B.total - CONSTANTS.FINALE) > 1e-6)
+    fail('finale beats', `the beats sum to ${r2(B.total)}px, not FINALE (${CONSTANTS.FINALE})`);
+
+  const F = fan(z);
+  if (!contains(z.scale, F.bar))
+    fail('fan × scale bar', `the bar ${fmtRect(F.bar)} is outside its own reserved zone ${fmtRect(z.scale)}`);
+
+  const fanBoxes: [string, Rect][] = [
+    ...F.rows.map((r) => [`row ${r.i} ${r.id}`, r.box] as [string, Rect]),
+    ['seam caption', F.seamCaption],
+  ];
+  // §9 staging rule 3: when the free column cannot hold a sentence, the fan goes
+  // fully OUT before the line comes in — sequential, so they never co-exist.
+  if (F.closingPlacement === 'beside') fanBoxes.push(['closing block', F.closing]);
+
+  for (let i = 0; i < fanBoxes.length; i++) {
+    const [an, ar] = fanBoxes[i]!;
+    if (ar.x < 8)
+      fail('fan row overflows its column', `${an} ${fmtRect(ar)} runs past the left of its ${r2(F.rowRight)}px column`);
+    if (intersects(ar, z.scale))
+      fail('fan × scale bar', `${an} ${fmtRect(ar)} enters the reserved scale zone`);
+    for (let j = i + 1; j < fanBoxes.length; j++) {
+      const [bn, br] = fanBoxes[j]!;
+      if (!intersects(ar, br)) continue;
+      const key = an.startsWith('row') && bn.startsWith('row')
+        ? 'fan row × fan row'
+        : bn === 'seam caption' || an === 'seam caption'
+          ? 'fan row × seam caption'
+          : 'fan row × closing block';
+      fail(key, `${an} ${fmtRect(ar)} × ${bn} ${fmtRect(br)}`);
+    }
+  }
+  // The seam is what separates what you scrolled past from what was withheld.
+  for (const r of F.rows) {
+    const belowSeam = r.box.y > F.seamY;
+    if (belowSeam !== r.ten)
+      fail('fan row × seam caption', `row ${r.i} ${r.id} is on the wrong side of the seam`);
+  }
+
   const cards = placed.filter((p) => p.tier !== 'F');
   return {
     vp,
@@ -238,6 +299,11 @@ function run(vp: Viewport): Result {
       'grid rows': z.nRows,
       'min dwell': Math.round(Math.min(...cards.map((p) => p.dwell))),
       'min on-screen': Math.round(Math.min(...cards.map((p) => p.onScreenPx))),
+      'fan pitch': Math.round(F.pitch * 10) / 10,
+      'fan type': Math.round(F.fontSize * 10) / 10,
+      'widest row': Math.round(F.widestRow),
+      'free column': Math.round(F.freeColumn),
+      'closing placement': F.closingPlacement === 'beside' ? 1 : 0,
     },
   };
 }
@@ -261,6 +327,7 @@ for (const res of results) {
   );
   const lines = Object.entries(res.counts).map(([k, v]) => `${k} ${v}`);
   console.log(`  ${lines.join(' · ')}`);
+  console.log(`  finale: ${res.stats['closing placement'] === 1 ? 'closing beside the fan' : 'closing after the fan'}`);
   if (res.failures.length) {
     const show = VERBOSE ? res.failures : res.failures.slice(0, 4);
     for (const f of show) console.log(`    ${f}`);

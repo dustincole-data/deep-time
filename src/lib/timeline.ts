@@ -49,7 +49,22 @@ export interface Era {
   toMa: number;
 }
 
+export interface FinaleBeats {
+  /** px from RUN_END where the drain ends and the cascade starts. */
+  drainEnd: number;
+  cascadeEnd: number;
+  breathEnd: number;
+  tenStart: number;
+  tenEnd: number;
+  holdEnd: number;
+  lineStart: number;
+  lineEnd: number;
+  endStart: number;
+  total: number;
+}
+
 export const CONSTANTS = raw.constants;
+export const FINALE_CFG = raw.finale;
 export const { INTRO, RUN, FINALE, TOTAL, RUN_END, YEARS_PER_PX, EARTH_AGE, READABILITY_FLOOR_PX } = raw.constants;
 
 export const eras: Era[] = raw.eras;
@@ -138,6 +153,73 @@ export function spokenDate(date: string): string {
     .replace(/\s*ka$/, ' thousand years ago')
     .replace(/\s*yr$/, ' years ago');
 }
+
+/**
+ * The seven beats of §9, in px from RUN_END.
+ *
+ * The drain is not a chosen length: the 7 Ma card lands at 116,425 px and wants
+ * 660 px of dwell, so it runs `overrun` px past RUN_END and the drain is that
+ * overrun plus a pad. §9 staging rule 1 — a hard release at the boundary would
+ * give the site's last card the shortest read on the page.
+ */
+export function finaleBeats(overrunPx: number): FinaleBeats {
+  const b = FINALE_CFG.beats;
+  const drainEnd = overrunPx + b.drainPad;
+  const cascadeEnd = drainEnd + b.cascade;
+  const breathEnd = cascadeEnd + b.breath;
+  const tenEnd = breathEnd + b.ten;
+  const holdEnd = tenEnd + b.hold;
+  const lineEnd = holdEnd + b.line;
+  return {
+    drainEnd,
+    cascadeEnd,
+    breathEnd,
+    tenStart: breathEnd,
+    tenEnd,
+    holdEnd,
+    lineStart: holdEnd,
+    lineEnd,
+    endStart: lineEnd,
+    total: FINALE,
+  };
+}
+
+/**
+ * The fan's forty rows: the thirty milestones the visitor lit as ticks, then the
+ * withheld ten. Rows always carry the POINT date, never the card's hedged
+ * notation — the fan's job is position, and a position is a point (§8).
+ */
+export interface FanRowData {
+  id: string;
+  date: string;
+  name: string;
+  /** Where the row's leader line lands on the bar. The withheld ten share the last pixel. */
+  px: number;
+  /** True for the withheld ten: below the seam, amber, and pointing at a pixel with no tick. */
+  ten: boolean;
+  contested: boolean;
+}
+
+export const fanRows: FanRowData[] = [
+  ...milestones.map((m) => ({
+    id: m.id,
+    date: fanDate(m.ma),
+    name: plain(m.name!),
+    px: arrivalY(m),
+    ten: false,
+    contested: m.contested,
+  })),
+  ...withheld.map((w) => ({
+    id: w.id,
+    date: w.date,
+    name: plain(w.name),
+    // §9: the ten land on the bar's LAST pixel, which has no tick — because a
+    // tick means passed, and they never were. That absence is the payoff, drawn.
+    px: INTRO + RUN,
+    ten: true,
+    contested: w.contested,
+  })),
+];
 
 /** `*Grypania*?` → `Grypania — identity disputed` (§10). */
 export function spokenName(name: string): string {

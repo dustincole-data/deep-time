@@ -51,7 +51,18 @@
  * A, B and C are all inert at 100% text: the three gate viewports are
  * byte-identical to the geometry §5 swept.
  */
-import { arrivals as ALL_ARRIVALS, type Arrival, type Tier, arrivalY } from './timeline.ts';
+import {
+  arrivals as ALL_ARRIVALS,
+  arrivalY,
+  fanRows,
+  FINALE_CFG,
+  INTRO,
+  plain,
+  RUN,
+  type Arrival,
+  type FanRowData,
+  type Tier,
+} from './timeline.ts';
 
 /* ============================================================================
    TYPES
@@ -733,3 +744,208 @@ export const contains = (outer: Rect, inner: Rect, eps = 1e-6): boolean =>
 
 export const sameRect = (a: Rect, b: Rect, eps = 1e-6): boolean =>
   Math.abs(a.x - b.x) < eps && Math.abs(a.y - b.y) < eps && Math.abs(a.w - b.w) < eps && Math.abs(a.h - b.h) < eps;
+
+
+/* ============================================================================
+   THE FINALE (§9) — the true-scale bar being read
+
+   The bar persists: it is THE SAME OBJECT, unbroken, from 4.60 Ga to the last
+   frame, and the fan's thirty targets are the same thirty ticks the visitor has
+   been lighting for four minutes. §9 is explicit that an earlier prototype faded
+   the bar out and drew a lookalike rail for the fan, and that doing so throws
+   away the only thing that makes the ending mean anything. So the bar rect is
+   defined ONCE, here, and the run and the finale both draw that.
+
+   Geometry transcribed from .scratch/prototypes/finale/index.html — the build
+   §9's "0 collisions over 281 scroll samples × 4 variants × both viewports" was
+   measured on. It reproduces §9's published numbers exactly: 20.0 px pitch /
+   12.4 px type at 1440×900, 19.1 / 11.9 at 390×844, and a 337 px phone column.
+
+   ONE RECONCILIATION. The cadence and finale prototypes disagree on the bar's
+   own top and bottom (13vh–20vh vs 13vh–19vh desktop, 12vh–24vh vs 13vh–20vh
+   mobile). §9's "same object, unbroken" forces them to be equal, so the later
+   ticket's numbers win. Nothing in the collision contract depends on the choice:
+   what the contract reserves is the SCALE ZONE, and the bar is inside it either
+   way at every viewport.
+   ========================================================================= */
+
+export interface FanRow extends FanRowData {
+  i: number;
+  /** The row's baseline-ish centre line — where its leader line leaves. */
+  y: number;
+  fontSize: number;
+  /**
+   * The SHRINK-TO-FIT box, anchored to the fan's right edge. §9 staging rule 5:
+   * rows must stay shrink-to-fit — full-width rows collide with the closing
+   * block at every viewport.
+   */
+  box: Rect;
+  /** The leader line, drawn from the row's right edge to the bar. */
+  leader: { x1: number; y1: number; x2: number; y2: number };
+}
+
+export interface Fan {
+  /** The true-scale bar. Inside the reserved scale zone, and the same rect the run draws. */
+  bar: Rect;
+  rows: FanRow[];
+  /** The gap the withheld ten sit below — what you scrolled past, and what was withheld. */
+  seamY: number;
+  seamCaption: Rect;
+  /** Where the closing sentence and the epilogue sit. */
+  closing: Rect;
+  /** How much clear column the fan leaves to its left. */
+  freeColumn: number;
+  /**
+   * `beside` when the free column can hold a sentence; `after` when it cannot,
+   * in which case the fan goes fully out BEFORE the line comes in. Sequential,
+   * never a crossfade — two texts at 30% opacity stacked on each other is
+   * precisely the overlap the layout contract bans (§9 staging rule 3).
+   */
+  closingPlacement: 'beside' | 'after';
+  /** The widest row, modelled. §9 measured 322 px desktop / 294 px phone. */
+  widestRow: number;
+  pitch: number;
+  fontSize: number;
+  /** Rows span x = 0 to here; the leader lines run from here to the bar. */
+  rowRight: number;
+}
+
+const FAN_T = {
+  desktop: { barRight: 18, barRightFrac: 0.02, barW: 4, rowTopFrac: 0.06, rowBotFrac: 0.945, seam: 16, gutter: 290 },
+  mobile: { barRight: 10, barRightFrac: 0, barW: 3, rowTopFrac: 0.055, rowBotFrac: 0.955, seam: 13, gutter: 42 },
+} as const;
+
+const BAR_TOP_FRAC = 0.13;
+const BAR_BOT_FRAC = { desktop: 0.81, mobile: 0.8 } as const;
+/** Row type is 0.62 of the pitch, clamped — the fan must stay legible at any height. */
+const FAN_TYPE_OF_PITCH = 0.62;
+/**
+ * PENDING SIGN-OFF (2026-07-31) — the fan does not take the text scale.
+ *
+ * The fan's rows and its seam caption are GEOMETRY, not type: the pitch is fixed
+ * by fitting forty rows into the viewport, so doubling the type puts 24.8 px of
+ * text in a 20 px pitch and every row overlaps its neighbours. There is no
+ * setting that both doubles the type and keeps the convergence — forty rows at
+ * doubled type needs ~1,240 px and no gate viewport has it.
+ *
+ * §10 already makes exactly this argument for SC 2.5.8: "meeting the criterion
+ * means breaking the convergence — and the convergence is the content, not a
+ * presentation of it." Applying the same reading to SC 1.4.4 extends a claim §10
+ * makes on the record, so it needs Dustin's sign-off before ship. The
+ * compensating route already exists and costs nothing: §10 gives the finale its
+ * own visually-hidden summary that states the entire scale argument in numbers,
+ * and the site's punchline was always a number rather than a picture.
+ *
+ * The line drawn: inside the fan's convergence geometry (rows, seam caption) is
+ * the graphic; outside it (the closing sentence, the epilogue, `↑ again`) is
+ * text, and that scales normally.
+ */
+const FAN_TAKES_TEXT_SCALE = false;
+const FAN_TYPE_MIN = 8.5;
+const FAN_TYPE_MAX = 13;
+/** The gap between a row's right edge and the start of its leader line. */
+const LEADER_GAP = 7;
+/** `.fw { padding-left: 7px }` */
+const ROW_PAD_LEFT = 7;
+/** Clear space demanded between the fan's widest row and the closing block. */
+const CLOSING_CLEARANCE = 34;
+/** Below this much free column, "beside" is not available at this width (§9). */
+const CLOSING_BESIDE_MIN = 190;
+
+/** `.fd` — the date, then `.fn` — the name. One row, right-anchored. */
+function fanRowWidth(r: FanRowData, fs: number): number {
+  const date: TypeSpec = { size: fs, lineHeight: 1.25, tracking: 0.04, upper: false, weight: 1 };
+  const name: TypeSpec = { size: fs, lineHeight: 1.25, tracking: -0.004, upper: false, weight: r.ten ? 1.03 : 1 };
+  // `.frow.q .fd::after { content: "*" }` — the identity-doubt glyph.
+  const q = r.contested ? textWidth('*', date) : 0;
+  // `.fd { margin-right: .9em }`
+  return ROW_PAD_LEFT + textWidth(r.date, date) + q + 0.9 * fs + textWidth(r.name, name);
+}
+
+/** The geometry of the ending. A pure function of the viewport, like everything else here. */
+export function fan(z: Zones): Fan {
+  const { w, h, textScale: k } = z.viewport;
+  const t = z.mobile ? FAN_T.mobile : FAN_T.desktop;
+
+  const barRight = z.mobile ? t.barRight : Math.max(t.barRight, w * t.barRightFrac);
+  const barX = w - barRight - t.barW / 2;
+  const barTop = h * BAR_TOP_FRAC;
+  const barBot = h * (z.mobile ? BAR_BOT_FRAC.mobile : BAR_BOT_FRAC.desktop);
+  const bar: Rect = { x: barX - t.barW / 2, y: barTop, w: t.barW, h: barBot - barTop };
+
+  const rowTop = h * t.rowTopFrac;
+  const rowBot = h * t.rowBotFrac;
+  const seam = t.seam;
+  const n = fanRows.length;
+  const pitch = (rowBot - rowTop - seam) / (n - 1);
+  const fanK = FAN_TAKES_TEXT_SCALE ? k : 1;
+  const fontSize = clamp(pitch * FAN_TYPE_OF_PITCH, FAN_TYPE_MIN, FAN_TYPE_MAX) * fanK;
+  const rowRight = barX - t.gutter;
+  const rowYAt = (i: number) => rowTop + i * pitch + (i >= 30 ? seam : 0);
+
+  let widestRow = 0;
+  const rows: FanRow[] = fanRows.map((r, i) => {
+    const y = rowYAt(i);
+    const rw = fanRowWidth(r, fontSize);
+    if (rw > widestRow) widestRow = rw;
+    return {
+      ...r,
+      i,
+      y,
+      fontSize,
+      box: { x: rowRight - rw, y: y - fontSize * 0.72, w: rw, h: fontSize * 1.25 },
+      leader: {
+        x1: rowRight + LEADER_GAP,
+        y1: y,
+        x2: bar.x - 2,
+        // The tick this row has been lighting for four minutes.
+        y2: barTop + ((r.px - INTRO) / RUN) * (barBot - barTop),
+      },
+    };
+  });
+
+  const seamY = (rowYAt(29) + rowYAt(30)) / 2;
+  // The caption sits INSIDE the seam gap, so it is fan geometry too.
+  const capSize = Math.min(9, seam * 0.62) * fanK;
+  const capSpec: TypeSpec = { size: capSize, lineHeight: 1.25, tracking: 0.24, upper: true, weight: 1 };
+  const capW = textWidth(plain(FINALE_CFG.copy.seamCaption), capSpec);
+  const seamCaption: Rect = {
+    x: rowRight - capW,
+    y: seamY - capSize / 2,
+    w: capW,
+    h: capSize * 1.25,
+  };
+
+  const freeColumn = rowRight - widestRow - CLOSING_CLEARANCE;
+  const closingPlacement: 'beside' | 'after' = freeColumn < CLOSING_BESIDE_MIN ? 'after' : 'beside';
+  const closeLeft = Math.max(20, w * 0.034);
+  const closeBottom = Math.max(20, h * 0.055);
+  const closeW =
+    closingPlacement === 'after' ? Math.min(w * 0.82, 430) : Math.min(430, freeColumn);
+
+  const cl = (lo: number, vw: number, hi: number) => clamp(w * vw, lo, hi);
+  const lineSpec: TypeSpec = { size: cl(14, 0.015, 19) * k, lineHeight: 1.55, tracking: 0, upper: false, weight: 1 };
+  const epSpec: TypeSpec = { size: 13 * k, lineHeight: 1.6, tracking: 0, upper: false, weight: 1 };
+  const againSpec: TypeSpec = { size: 10 * k, lineHeight: 1.25, tracking: 0.28, upper: true, weight: 1 };
+  const c = FINALE_CFG.copy;
+  const closeH =
+    blockH(plain(c.closing), lineSpec, closeW) +
+    1.5 * epSpec.size +
+    blockH(plain(c.epilogue), epSpec, closeW) +
+    1.8 * againSpec.size +
+    blockH(plain(c.again), againSpec, closeW);
+
+  return {
+    bar,
+    rows,
+    seamY,
+    seamCaption,
+    closing: { x: closeLeft, y: h - closeBottom - closeH, w: closeW, h: closeH },
+    freeColumn,
+    closingPlacement,
+    widestRow,
+    pitch,
+    fontSize,
+    rowRight,
+  };
+}

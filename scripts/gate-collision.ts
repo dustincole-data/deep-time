@@ -148,7 +148,7 @@ function run(vp: Viewport): Result {
     // The glide is bounded, so the two extremes bracket every frame in between.
     // 0.9 of the fade, not 1.0: the opacity ramp is already zero at 0.98, so the
     // edge itself renders nothing and would make this check vacuous.
-    for (const at of [p.y - p.fade * 0.9, p.y, p.y + p.dwell, p.y + p.dwell + p.fade * 0.9]) {
+    for (const at of [p.y - p.fadeIn * 0.9, p.y, p.y + p.dwell, p.y + p.dwell + p.fadeOut * 0.9]) {
       for (const v of frame([p], at)) {
         if (!contains(p.rect, v.text))
           fail('text overflows its box', `${p.id} text ${fmtRect(v.text)} leaves ${fmtRect(p.rect)} at y=${r2(at)}`);
@@ -179,7 +179,7 @@ function run(vp: Viewport): Result {
   for (let y = 0; y <= CONSTANTS.TOTAL; y += STRIDE) samplePoints.add(y);
   samplePoints.add(CONSTANTS.TOTAL);
   for (const p of placed) {
-    for (const edge of [p.y - p.fade, p.y, p.y + p.dwell, p.y + p.dwell + p.fade]) {
+    for (const edge of [p.y - p.fadeIn, p.y, p.y + p.dwell, p.y + p.dwell + p.fadeOut]) {
       for (const d of [-0.5, 0, 0.5]) samplePoints.add(edge + d);
     }
   }
@@ -235,6 +235,9 @@ function run(vp: Viewport): Result {
       'art dropped': cards.filter((p) => !p.hasArt).length,
       'min text headroom': Math.round(Math.min(...placed.map((p) => p.rect.h - p.glide * 2 - p.textH))),
       'line dropped to fit': placed.filter((p) => p.lineDroppedToFit).length,
+      'grid rows': z.nRows,
+      'min dwell': Math.round(Math.min(...cards.map((p) => p.dwell))),
+      'min on-screen': Math.round(Math.min(...cards.map((p) => p.onScreenPx))),
     },
   };
 }

@@ -31,11 +31,11 @@ const GATE_VIEWPORTS = [DESKTOP, PHONE, SHORT_PHONE];
  * zero at 0.98 of the fade, so the edge itself renders nothing and sampling
  * there would assert nothing.
  */
-const windowSamples = (p: { y: number; fade: number; dwell: number }) => [
-  p.y - p.fade * 0.9,
+const windowSamples = (p: { y: number; fadeIn: number; fadeOut: number; dwell: number }) => [
+  p.y - p.fadeIn * 0.9,
   p.y,
   p.y + p.dwell,
-  p.y + p.dwell + p.fade * 0.9,
+  p.y + p.dwell + p.fadeOut * 0.9,
 ];
 
 describe('the reserved zones (§5, rule 1)', () => {
@@ -181,7 +181,7 @@ describe('dwell and the fade window (§5, rules 5 and 6)', () => {
   });
 
   it('shortens a fade rather than sharing a slot — density costs time, never a collision', () => {
-    for (const vp of GATE_VIEWPORTS) {
+    for (const vp of [...GATE_VIEWPORTS, ...GATE_VIEWPORTS.map((v) => ({ ...v, textScale: 2 }))]) {
       const z = zones(vp);
       const placed = place(arrivals, z);
       for (let i = 0; i < placed.length; i++) {
@@ -269,6 +269,77 @@ describe('the frame is a pure function of scrollY (§3)', () => {
       for (let y = 0; y <= 123_600; y += 25) max = Math.max(max, frame(placed, y).length);
       expect([vp.w, max]).toEqual([vp.w, max]);
       expect(max).toBeLessThanOrEqual(4);
+    }
+  });
+});
+
+describe('enlarged text (§10, rulings A/B/C)', () => {
+  const at2 = (vp: { w: number; h: number }) => zones({ ...vp, textScale: 2 });
+
+  it('changes nothing at 100% — the geometry §5 swept is untouched', () => {
+    for (const vp of GATE_VIEWPORTS) {
+      const z = zones(vp);
+      expect([vp.w, vp.h, z.nRows, z.rowsCollapsed]).toEqual([vp.w, vp.h, 2, false]);
+      // The whisper band only ever grows past its fixed fraction when the copy needs it.
+      const frac = z.mobile ? 0.055 : 0.05;
+      expect(z.whisper.h).toBeCloseTo(vp.h * frac, 6);
+      for (const p of place(arrivals, z)) expect([p.id, p.lineDroppedToFit]).toEqual([p.id, false]);
+    }
+  });
+
+  it('collapses the grid to one row rather than let a card overflow (ruling C)', () => {
+    for (const vp of GATE_VIEWPORTS) {
+      const z = at2(vp);
+      expect([vp.w, vp.h, z.nRows, z.rowsCollapsed]).toEqual([vp.w, vp.h, 1, true]);
+      expect(z.slots).toHaveLength(z.nCols);
+    }
+  });
+
+  it('grows the whisper band to hold its own copy (ruling B)', () => {
+    // The band has no art to give up, so it is the one box that has to grow.
+    expect(at2(PHONE).whisper.h).toBeGreaterThan(zones(PHONE).whisper.h);
+  });
+
+  it('keeps every text block inside its box, glide included', () => {
+    for (const vp of GATE_VIEWPORTS) {
+      const z = at2(vp);
+      for (const p of place(arrivals, z)) {
+        expect([vp.w, vp.h, p.id, p.textH + p.glide * 2 <= p.rect.h + 1e-6]).toEqual([
+          vp.w,
+          vp.h,
+          p.id,
+          true,
+        ]);
+      }
+    }
+  });
+
+  it('never puts two arrivals in one box, even with a single slot', () => {
+    // Rule 6's ladder has to reach the OUTGOING arrival's tail once the grid is
+    // down to one slot; shortening only the incoming lead-in is not enough there.
+    for (const vp of GATE_VIEWPORTS) {
+      const z = at2(vp);
+      const placed = place(arrivals, z);
+      for (let i = 0; i < placed.length; i++) {
+        for (let j = i + 1; j < placed.length; j++) {
+          const a = placed[i]!;
+          const b = placed[j]!;
+          if (!windowsOverlap(a, b)) continue;
+          expect([vp.w, a.id, b.id, intersects(a.rect, b.rect)]).toEqual([vp.w, a.id, b.id, false]);
+        }
+      }
+    }
+  });
+
+  it('never pays for it with an unreadable appearance', () => {
+    // §5's readability floor, restated as a UI budget: below ~600 px on screen an
+    // arrival cannot be read at the design speed, whatever the layout does.
+    for (const vp of GATE_VIEWPORTS) {
+      const z = at2(vp);
+      for (const p of place(arrivals, z).filter((x) => x.tier !== 'F')) {
+        expect([vp.w, p.id, p.onScreenPx >= 600]).toEqual([vp.w, p.id, true]);
+        expect([vp.w, p.id, p.dwell >= 150]).toEqual([vp.w, p.id, true]);
+      }
     }
   });
 });

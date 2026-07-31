@@ -40,6 +40,16 @@
  *      give up, so a fixed fraction of viewport height cannot hold a doubled
  *      line. The band takes the height its own copy needs and the two slot rows
  *      absorb the loss.
+ *   C. THE STAGE COLLAPSES TO ONE ROW WHEN A BAND CANNOT HOLD A CARD. Once the
+ *      line is gone there is nothing left to give up inside a half-height band,
+ *      but measured across all three gate viewports every card's date + name
+ *      fits a FULL column with zero exceptions. So the grid drops to 2×1
+ *      (desktop) / 1×1 (mobile) rather than let anything overflow. Contention
+ *      rises and rule 6 pays for it in shortened fades — density costing an
+ *      arrival screen-time is exactly what rule 6 sanctions; a collision is not.
+ *
+ * A, B and C are all inert at 100% text: the three gate viewports are
+ * byte-identical to the geometry §5 swept.
  */
 import { arrivals as ALL_ARRIVALS, type Arrival, type Tier, arrivalY } from './timeline.ts';
 
@@ -84,6 +94,8 @@ export interface Zones {
   colFull: Rect[];
   nCols: number;
   nRows: number;
+  /** True when ruling C fired: the grid dropped to one row so every card fits. */
+  rowsCollapsed: boolean;
   /** The fade half-window every arrival gets before contention shortens it. */
   fade: number;
 }
@@ -96,7 +108,12 @@ export interface Placed {
   /** Distance to the next arrival. `Infinity` for the last: the finale follows. */
   gap: number;
   dwell: number;
+  /** The nominal half-window, before contention. */
   fade: number;
+  /** The lead-in, after rule 6. Shortened when the slot is still occupied. */
+  fadeIn: number;
+  /** The tail, after rule 6. Shortened when the next arrival needs the slot. */
+  fadeOut: number;
   /** -1 for a field whisper, which lives in the whisper band and owns no slot. */
   slot: number;
   /** True when nothing shares this card's column inside its window (rule 5). */
@@ -174,7 +191,8 @@ const T = {
   },
 } as const;
 
-const ROWS = 2;
+/** The grid is two rows deep unless ruling C collapses it. */
+const ROWS_MAX = 2;
 /** The stage never runs past 72% of the viewport height, clock or no clock. */
 const STAGE_BOTTOM_FRAC = 0.72;
 /** Half the fade window, as a fraction of viewport height. */
@@ -201,7 +219,10 @@ const smooth = (e0: number, e1: number, x: number) => {
 
 /** The prototype's `ov()`: do two arrivals share any pixel of scroll? */
 export const windowsOverlap = (a: Placed, b: Placed): boolean =>
-  a.y - a.fade < b.y + b.dwell + b.fade && b.y - b.fade < a.y + a.dwell + a.fade;
+  a.y - a.fadeIn < b.y + b.dwell + b.fadeOut && b.y - b.fadeIn < a.y + a.dwell + a.fadeOut;
+
+/** The scroll interval an arrival occupies its box for, lead-in and tail included. */
+export const windowOf = (p: Placed): [number, number] => [p.y - p.fadeIn, p.y + p.dwell + p.fadeOut];
 
 /* ============================================================================
    TEXT — the one modelled quantity
@@ -380,9 +401,18 @@ export const showsLine = (a: Pick<Arrival, 'art'>, z: Zones): boolean => !z.mobi
 export const showsArt = (a: Pick<Arrival, 'art'>, z: Zones): boolean =>
   a.art !== null && !(z.mobile && a.art === 'abstract');
 
-/** Modelled height of one arrival's text block inside a column `availW` wide. */
-export function textHeight(a: Arrival, z: Zones, availW: number, withLine = showsLine(a, z)): number {
-  const f = typeScale(z.viewport, z.mobile, a.tier);
+/**
+ * The Zones-free core, so `zones()` can size its own grid against the copy deck
+ * without needing the grid it is in the middle of computing.
+ */
+function textBlockH(
+  a: Arrival,
+  vp: Required<Viewport>,
+  mobile: boolean,
+  availW: number,
+  withLine: boolean,
+): number {
+  const f = typeScale(vp, mobile, a.tier);
   if (a.tier === 'F') return blockH(plainText(a.line), f.whisper, availW);
   let h = f.ruleH;
   h += blockH(a.date!, f.date, availW) + f.dateGap;
@@ -391,12 +421,19 @@ export function textHeight(a: Arrival, z: Zones, availW: number, withLine = show
   return h;
 }
 
+/** Modelled height of one arrival's text block inside a column `availW` wide. */
+export function textHeight(a: Arrival, z: Zones, availW: number, withLine = showsLine(a, z)): number {
+  return textBlockH(a, z.viewport, z.mobile, availW, withLine);
+}
+
 /* ============================================================================
    ZONES — viewport in, reserved zones + slot grid out
    ========================================================================= */
 
 /** The copy deck's six whispers. The band is sized to hold the tallest (ruling B). */
 const WHISPER_COPY = ALL_ARRIVALS.filter((a) => a.tier === 'F').map((a) => plainText(a.line));
+/** Every card. A row of the grid must hold the tallest of them (ruling C). */
+const CARD_ARRIVALS = ALL_ARRIVALS.filter((a) => a.tier !== 'F');
 
 export function zones(vp: Viewport): Zones {
   const w = vp.w;
@@ -427,14 +464,25 @@ export function zones(vp: Viewport): Zones {
 
   const rowTop = topOff + whisper.h + h * t.rowGapTopFrac;
   const rowBot = Math.min(h * STAGE_BOTTOM_FRAC, clock.y - t.clockClearance);
-  const bandH = (rowBot - rowTop - t.gutY * (ROWS - 1)) / ROWS;
 
   const cols = t.cols;
   const gutX = w * t.gutXFrac;
   const colW = (stageW - gutX * (cols - 1)) / cols;
 
+  /* Ruling C — the shortest a card's text can be made is date + name, after the
+     line has already gone (ruling A). If a row of the grid cannot hold even that,
+     the grid loses the row rather than the card losing its box. */
+  const worstCard = Math.max(...CARD_ARRIVALS.map((a) => textBlockH(a, viewport, mobile, colW, false)));
+  const bandFor = (rows: number) => (rowBot - rowTop - t.gutY * (rows - 1)) / rows;
+  const holds = (rows: number) => {
+    const bh = bandFor(rows);
+    return bh > 0 && worstCard <= bh - 2 * Math.min(GLIDE_MAX, bh * GLIDE_FRAC);
+  };
+  const rows = holds(ROWS_MAX) ? ROWS_MAX : 1;
+  const bandH = bandFor(rows);
+
   const slots: Slot[] = [];
-  for (let r = 0; r < ROWS; r++) {
+  for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       slots.push({
         x: padX + c * (colW + gutX),
@@ -462,7 +510,8 @@ export function zones(vp: Viewport): Zones {
     slots,
     colFull,
     nCols: cols,
-    nRows: ROWS,
+    nRows: rows,
+    rowsCollapsed: rows < ROWS_MAX,
     fade: h * FADE_FRAC,
   };
 }
@@ -470,6 +519,14 @@ export function zones(vp: Viewport): Zones {
 /* ============================================================================
    PLACEMENT — the whole set at once, because slot contention is global
    ========================================================================= */
+
+/** Steps 2 and 3 of rule 6's ladder: make `p` release its box by `at`. */
+function yieldTo(p: Placed, at: number): void {
+  p.shortened = true;
+  p.fadeOut = Math.max(0, at - (p.y + p.dwell));
+  if (p.y + p.dwell > at) p.dwell = Math.max(0, at - p.y);
+  p.onScreenPx = p.dwell + p.fadeIn + p.fadeOut;
+}
 
 export function place(arrivals: Arrival[], z: Zones): Placed[] {
   const items = arrivals.map((a) => ({ a, y: arrivalY(a) })).sort((p, q) => p.y - q.y);
@@ -485,6 +542,8 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
       gap,
       dwell: clamp(gap * DWELL_OF_GAP, DWELL_MIN, DWELL_MAX),
       fade: z.fade,
+      fadeIn: z.fade,
+      fadeOut: z.fade,
       slot: -1,
       tall: false,
       rect: z.whisper,
@@ -501,17 +560,28 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
   });
 
   /* Round-robin with a correctness fallback (rule 6). Where density would put
-     two arrivals in one slot at once, the later one's fade window is SHORTENED
-     until it fits. There is no floor on that shortening. */
+     two arrivals in one slot at once, screen-time is given up until they fit.
+     There is no floor on that shortening.
+
+     The ladder, cheapest thing first:
+       1. shorten the INCOMING arrival's lead-in;
+       2. if that reaches zero and the slot is still busy, shorten the OUTGOING
+          arrival's tail;
+       3. if that reaches zero too, cut the outgoing arrival's dwell.
+
+     The prototype had step 1 alone, which is sufficient while the grid always has
+     a second row to round-robin over. Ruling C can leave a phone with a single
+     slot, and there step 1 by itself lets two cards share one box. */
   const N = z.slots.length;
   const freeAt = new Array<number>(N).fill(-1e9);
+  const owner = new Array<Placed | null>(N).fill(null);
   const cards = out.filter((p) => p.tier !== 'F');
   let last = -1;
   for (const it of cards) {
     let chosen = -1;
     for (let k = 1; k <= N; k++) {
       const s = (last + k) % N;
-      if (freeAt[s]! <= it.y - it.fade) {
+      if (freeAt[s]! <= it.y - it.fadeIn) {
         chosen = s;
         break;
       }
@@ -519,22 +589,27 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
     if (chosen < 0) {
       let best = 0;
       for (let s = 1; s < N; s++) if (freeAt[s]! < freeAt[best]!) best = s;
-      it.fade = Math.max(0, it.y - freeAt[best]!);
-      it.shortened = true;
       chosen = best;
+      it.shortened = true;
+      it.fadeIn = Math.max(0, it.y - freeAt[best]!);
+      if (freeAt[best]! > it.y) yieldTo(owner[best]!, it.y);
     }
     it.slot = chosen;
     last = chosen;
-    it.onScreenPx = it.dwell + it.fade * 2;
-    freeAt[chosen] = it.y + it.dwell + it.fade;
+    it.onScreenPx = it.dwell + it.fadeIn + it.fadeOut;
+    freeAt[chosen] = it.y + it.dwell + it.fadeOut;
+    owner[chosen] = it;
   }
 
   // Whispers share one band, so they queue against each other and nothing else.
   let wFree = -1e9;
+  let wOwner: Placed | null = null;
   for (const it of out.filter((p) => p.tier === 'F')) {
-    it.fade = Math.min(z.fade, Math.max(0, it.y - wFree));
-    it.onScreenPx = it.dwell + it.fade * 2;
-    wFree = it.y + it.dwell + it.fade;
+    it.fadeIn = Math.min(z.fade, Math.max(0, it.y - wFree));
+    if (wFree > it.y && wOwner) yieldTo(wOwner, it.y);
+    it.onScreenPx = it.dwell + it.fadeIn + it.fadeOut;
+    wFree = it.y + it.dwell + it.fadeOut;
+    wOwner = it;
   }
 
   /* Rule 5 — a card takes its column's full height whenever nothing else shares
@@ -597,14 +672,17 @@ export function frame(
     const raw = p.y - scrollY;
     // Held through the dwell, then fading on the far side.
     const vd = raw > 0 ? raw : raw < -p.dwell ? raw + p.dwell : 0;
-    if (Math.abs(vd) > p.fade) continue;
-    // A fade shortened all the way to zero (rule 6) means the arrival is on
-    // screen for its dwell only, at full opacity — never a NaN ramp.
-    const opacity = p.fade === 0 ? 1 : 1 - smooth(p.fade * 0.3, p.fade * 0.98, Math.abs(vd));
+    // Lead-in and tail are shortened independently by rule 6, so each side of
+    // the window is measured against its own fade.
+    const f = vd >= 0 ? p.fadeIn : p.fadeOut;
+    if (Math.abs(vd) > f) continue;
+    // A fade shortened all the way to zero means the arrival is on screen for
+    // its dwell only, at full opacity — never a NaN ramp.
+    const opacity = f === 0 ? 1 : 1 - smooth(f * 0.3, f * 0.98, Math.abs(vd));
     if (opacity <= 0) continue;
 
     const r = p.rect;
-    const gl = p.fade === 0 ? 0 : clamp(vd / p.fade, -1, 1) * p.glide;
+    const gl = f === 0 ? 0 : clamp(vd / f, -1, 1) * p.glide;
 
     const text: Rect =
       p.tier === 'F'

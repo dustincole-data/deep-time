@@ -1,0 +1,970 @@
+# Deep Time — build spec
+
+`deeptime.dustincoledata.com` · a dustincoledata data-toy · **spec locked 2026-07-31**
+
+This document is the handoff. It is assembled from nine resolved wayfinder tickets in `.scratch/deep-time/issues/`, and it is written so that **an implementation session can build the whole site without making a single further design decision.** Where a number appears here, it was measured or verified, not estimated; the tickets carry the workings and the sources.
+
+Two things are deliberately *not* closed, and both sit behind a human gate that already exists — see [§14](#14-open-only-at-the-art-gate). Nothing in the build is blocked on them.
+
+---
+
+## 1 — The thesis, and the constraints that are not negotiable
+
+**One sentence:** the whole history of Earth at true scale, on one linear scroll, so that the human era arrives as a vanishingly small sliver at the end.
+
+The site exists to deliver one moment. Every decision below was judged by whether it makes that moment hit harder.
+
+| Constraint | |
+|---|---|
+| **Earth is 4.6 billion years old** | Not 46 billion. The original brief was wrong. |
+| **Scientific accuracy is non-negotiable** | A site whose claim is "true to scale" cannot fudge a date, a scale or a colour. Every milestone has an authoritative source ([§7](#7-the-verified-set--the-single-source-of-truth)); every modelled quantity is labelled `MODELLED`; every contested date carries its hedge in the card. |
+| **The scale never changes** | 1 px = 40,000 years, from the first pixel to the last, including at the payoff. There is no warp, no scale break, no rescale for reduced motion, and no different page height on any device. |
+| **Nothing overlaps, anywhere, ever** | Dustin, verbatim: *"stuff can't overlap. spacing must be good throughout site with text and elements etc."* Enforced by the [layout contract](#5--the-no-collision-layout-contract) and swept by script. A **ship gate**, not a review note. |
+| **Mobile is first-class** | A real-device phone pass is a ship gate. |
+| **~3–5 minutes, single sitting** | 123,600 px ÷ 500 px/s = **4.1 minutes**. |
+| **Art spend** | gpt-image-1, style locked. **Proof first, Dustin approves before any batch.** No exploratory burn. |
+
+**Borrowed by observation, not by asset.** The anchor is [neal.fun/deep-sea](https://neal.fun/deep-sea/), done for deep time — the fun and the design language, not the subject or the mood. Nothing from neal.fun ships.
+
+---
+
+## 2 — The scale mechanic
+
+```
+INTRO    = 1,600 px      the scale explainer; clock holds at 4.60 Ga
+RUN      = 115,000 px    4.60 Ga → 0, linear, 40,000 yr/px
+FINALE   = 7,000 px      clock holds at 0
+TOTAL    = 123,600 px
+RUN_END  = 116,600 px    INTRO + RUN
+
+yearsAgo(scrollY)   = clamp(4.6e9 − (scrollY − INTRO) × 40,000, 0, 4.6e9)
+milestoneY(yearsAgo)= INTRO + (4.6e9 − yearsAgo) / 40,000
+```
+
+Before `INTRO` the clock is pinned at 4.60 Ga; after `RUN_END` it is pinned at 0 and the finale takes over. `40,000` was chosen over `46,000` because it is a round number a visitor can hold in their head — the page height follows from the rate, not the other way round.
+
+**The document is one viewport taller than the scroll.** `maxScroll = height − innerHeight`, so without a pad the last beats of the finale are unreachable on every device (measured: the visitor stops at 6,156 px of 7,000 on a phone — the closing line barely starts and the epilogue never renders).
+
+```css
+.spacer { height: calc(123600px + 100lvh); }  /* lvh, not vh */
+```
+
+`lvh` so the document never shrinks under a scrolled visitor when the URL bar reappears. Overscrolling the surplus shows the held final state, which holds indefinitely by design. Verified: `scrollHeight` comes back as exactly `123600`, and CSS pixels are device-independent — **the page is the same number of pixels tall on every device**, which is what makes "115,000 pixels" a fact rather than a figure of speech.
+
+**What the rate costs, stated plainly:**
+
+| | at 40,000 yr/px |
+|---|---|
+| Precambrian share of the scroll | **88.29%** (101,530 px) |
+| Whole Cenozoic | 1,650 px |
+| *Homo sapiens* (300 ka) | 7.5 px |
+| Everything after the chimpanzee split | **175 px** |
+| Human civilisation (12 ka) | **0.3 px** |
+| Industrial era (250 yr) | 0.006 px |
+
+**Three things make linear survivable**, and none of them touch the scale:
+
+1. **The scale is explained before time starts** — the intro frame states the page height, the years per pixel, and that it never changes. Restated in the HUD for the whole run and again at the end.
+2. **A persistent true-scale bar on the right, the entire journey.** It fills as you go, carries a marker head, and lights one tick per milestone passed. At true scale the bar *is* the scroll position — that identity is the point, and it is what makes the ending legible rather than arbitrary.
+3. **Moments too close to draw are withheld, not crushed.** Cards render down to 7 Ma only. The ten more recent moments never appear during the scroll; they are held for the finale.
+
+**The design speed is 500 px/s.** It is a reference for judging cadence, not something the site controls. Cadence is *specified* in pixels and only *judged* in seconds.
+
+---
+
+## 3 — Page anatomy
+
+**The layer split — the one architectural ruling.** The canvas draws the field and nothing else. **Anything carrying text or art is DOM**, absolutely positioned, driven by `transform` and `opacity` only.
+
+It pays in four places: the collision sweep reads `getBoundingClientRect()` on real elements instead of trusting a hand-maintained box; an arrival becomes `<figure><img alt><figcaption>`, which is what the accessibility model needs; the no-JS document is the 55 arrivals in chronological order with their dates, names, lines and pictures (it loses the scale illusion and keeps every fact); and a DOM image that only changes `transform`/`opacity` is composited, where the same image on canvas is re-rastered every frame.
+
+**One clock.** One `requestAnimationFrame` loop, per frame, in this order:
+
+```
+1. read window.scrollY            ← the ONLY layout read in the frame
+2. derive yearsAgo, field colour, beat state          (pure arithmetic)
+3. repaint the field canvas in full                   (never a partial repaint)
+4. write transform + opacity on the arrivals inside their fade window
+5. write a HUD string ONLY if it differs from what is already there
+```
+
+Four build rules fall out:
+
+- **The loop never reads layout.** Every rect comes from precomputed slot geometry, recomputed only in the `ResizeObserver` callback. A `getBoundingClientRect()` in step 4 turns the frame into a layout thrash.
+- **The canvas is cleared or fully repainted every frame.** A partial repaint leaves stale pixels from the opening frames visible for the entire scroll — this bug has already happened once.
+- **The scale bar fills with `transform: scaleY()`, not `height`.** Height is layout; transform is not.
+- **The HUD clock changes once every 250 px** (`4.60 Ga` is two decimals of Ga = 10 Myr); the px counter changes every frame. Guarding writes on string inequality removes ~3 of 4 text relayouts per frame at no cost.
+
+**The frame is a pure function of `scrollY`.** No layer integrates against `dt` ([§10](#10--accessibility)). Two frames at the same scroll position are byte-identical.
+
+---
+
+## 4 — The document
+
+```html
+<h1>Deep Time</h1>
+<p class="sr-only">…intro summary, §10…</p>
+
+<div class="intro">…held frame, §8…</div>
+
+<canvas id="field" aria-hidden="true"></canvas>       <!-- position: fixed -->
+<div id="hud" aria-hidden="true">…</div>              <!-- reserved zone, bottom-left -->
+<div id="bar" role="img" aria-label="True-scale bar: 0 percent of Earth's history passed.">…</div>
+
+<main>
+  <figure class="arrival" data-y="2425" data-w="M">   <!-- ×55, chronological -->
+    <img src="/art/solar-system.webp" alt="…" width height>
+    <figcaption>
+      <span class="date" aria-hidden="true">4,567 Ma</span>
+      <span class="sr-only">4,567 million years ago</span>
+      <span class="name">The Solar System forms</span>
+      <span class="line">Dust and ice collapse around a new star. …</span>
+    </figcaption>
+  </figure>
+  …
+  <aside class="plate">…the Boring Billion, §8…</aside>
+</main>
+
+<section class="finale" inert>                        <!-- until scrollY ≥ RUN_END -->
+  <p class="sr-only">…finale summary, §10…</p>
+  <svg aria-hidden="true">…leader lines…</svg>
+  <ol>…40 rows, each a link…</ol>
+  <p class="closing">…</p>
+  <p class="epilogue">…</p>
+  <a href="#top">↑ again</a>
+</section>
+
+<div class="spacer"></div>
+<div aria-live="polite" class="sr-only" id="announce"></div>
+```
+
+Everything renders to HTML at build. No client-side templating: the copy is in the document for a screen reader, for no-JS, and for `view-source`.
+
+---
+
+## 5 — The no-collision layout contract
+
+Instrumented, not eyeballed. Before the contract, a sweep of 688 scroll positions found 92 card-or-art × clock collisions, 23 card × art, 15 whisper × bar, 3 art × art, 1 card × card. Max concurrent arrivals is **4**, and ≥2 only 6% of the time — so this was never a density problem, it was a missing contract.
+
+1. **Two zones are reserved and inviolable** — the **clock** (bottom-left) and the **scale bar** (right edge). Nothing else ever enters either. **The scale bar's caption runs vertically** so it stays inside its own zone instead of reaching left into the stage.
+2. **What is left is the stage**, divided into a fixed grid of slot rects that never overlap each other or the reserved zones — **2 columns × 2 rows on desktop, 1 × 2 on mobile**, plus one **whisper band** across the top of the stage for field events.
+3. **An arrival is ONE box.** Art and text together, inside exactly one slot, **text bottom-anchored and the art drawn into whatever height is left above it**. Art never floats free. This alone removes the entire card × art class.
+4. **Travel happens inside the box.** The card glides ≤28 px within its slot and fades; it never crosses into another slot.
+5. **A card takes its column's full height whenever nothing else shares that column** — so in the sparse ~94% the art is larger, and only in genuine crowding does a card fall back to its single band. On mobile this is what keeps art at a usable size at all.
+6. **Slot assignment is round-robin with a correctness fallback.** Where density would put two arrivals in one slot at once, the later one's fade window is **shortened** until it fits. There is no floor on that shortening. **Density can cost an arrival screen-time; it can never cost it a collision.**
+
+**Two things the contract forces, both real design decisions:**
+
+- **On mobile the description line is dropped.** A phone band cannot hold art + name + a line. The card becomes date + name + art. Without this, 16 of 37 subjects — including Snowball Earth, the Great Oxidation, *Charnia* and the Cambrian — showed no art at all on a phone. With it, 3. **Exception: the six abstract milestones**, where the line replaces the art instead ([§8](#8--the-copy-deck)).
+- **A readability floor exists that layout cannot fix: below ~600 px of gap, an arrival cannot be read at the design speed.** That is a constraint on the milestone set, not on the layout, and it is discharged in [§7](#7-the-verified-set--the-single-source-of-truth).
+
+**Card dwell** is gap-adaptive, clamped **150–660 px**. Two lanes (left/right) at two anchor heights, cycling, so two or three cards can be legible at once even 125 px apart. **Planet portraits take their own band, 600–1,200 px**, and own the whole slot grid for their dwell.
+
+**Result after the contract: zero collisions.** Desktop 1440×900 and mobile, all variants, 688 samples each. Card×card 0 · card×art 0 · art×art 0 · versus clock 0 · versus scale bar 0 · anything outside its own slot 0.
+
+---
+
+## 6 — The field
+
+One `<canvas>`, `position: fixed`, 2D context, repainted in full every frame. Layers, from back to front: the colour field (vertical gradient `sky0 → sky1`), the sun, the receding Moon, two parallax ridgelines, the ground bands, a near ridgeline, particles.
+
+**Kept:** the code-drawn colour field · parallax ridgelines · particles (ash → haze → snow, tied to the era) · the sun.
+**Cut:** procedural creature silhouettes — once painted subjects are arriving, silhouettes compete with them and read as a second, worse art style.
+**Promoted — the Moon.** It really does recede: ~24 → ~58 Earth-radii across the Precambrian, so apparent width runs **2.5× → 1.06× today's**, paired in the HUD with modelled day length **6 h → 22 h**. This is the one thing that visibly changes during dead air, and it is a fact rather than decoration. The deep anchors are model-dependent; the ~620 Ma anchor (≈58 R⊕, day ≈21.9 h) comes from the Elatina tidal rhythmites. Both are labelled `MODELLED`.
+
+### Colour is a data channel
+
+The background is the era's *actual* sky and ocean colour — a real scientific claim, so it teaches, and so it cannot drift into a decorative rainbow. **Every transition takes its true duration in pixels.** No arbitrary easing, no announced cuts. The drift *rate* is therefore itself a data channel.
+
+| yearsAgo | px | sky | ocean / ground |
+|---:|---:|---|---|
+| 4.60–4.30 Ga | 1,600 | black, molten glow | molten rock |
+| 4.30–3.80 Ga | 9,100 | dim grey-white, thick steam and cloud | first ocean, dark |
+| 3.80–3.20 Ga | 21,600 | clear, dim, washed blue-white | green |
+| 3.20–2.70 Ga | 36,600 | orange haze, sustained `MODELLED` | green |
+| 2.70–2.50 Ga | 49,100 | the hazy state, held (see rider) | green |
+| 2.50–2.43 Ga | 54,100 | the last hazy state | green |
+| 2.43 → 2.22 Ga | 55,850 | **haze gone for good, sky clears** | green |
+| 2.22–1.80 Ga | 61,100 | clear blue | **still green** |
+| 1.80 → 1.60 Ga | 71,600 | blue | **green → blue** |
+| 720 → 635 Ma | 98,600 | **blue** (not white — see rider) | white ice |
+| 635 Ma → now | 100,725 | one slow ramp to daylight | blue |
+
+**Three earned colour events, not two:**
+
+| px | | |
+|---:|---|---|
+| 55,850 → 61,100 | **the haze burns off for the last time** | 5,250 px — the longest transition on the page |
+| 71,600 → 76,600 | **the ocean turns green → blue** as the banded iron stops | |
+| 98,675 → 100,725 | **Snowball** | ~2,050 px — a flash, not a stretch |
+
+| | true span | pixels | at 500 px/s |
+|---|---|---|---|
+| Great Oxidation (permanent oxygenation) | 2.43 → 2.22 Ga | **5,250 px** | ~10.5 s |
+| Sturtian snowball | 717 → 661 Ma | 1,400 px | 2.8 s |
+| Marinoan | ~639 → 635 Ma | ~100 px | 0.2 s |
+| **Whole Cryogenian** | 717 → 635 Ma | **2,050 px** | **~4 s** |
+
+**Four riders, all of them corrections that cost something to get right:**
+
+- **The GOE's claim is not that the sky turns blue.** The sky was already blue whenever the haze was thin. What the GOE gives is *permanence* — **the haze never comes back.** The 2.22 → 2.06 Ga stretch that follows is the Lomagundi excursion, an oxygen overshoot that ends with oxygen falling back (the 2,060 Ma whisper).
+- **The flicker cannot be drawn.** Each Neoarchean hazy episode is under a million years — 25 px, 0.05 s. Rendering it honestly makes it invisible; rendering it visibly makes it a lie and a strobe. The field **holds** the hazy state across 2.7–2.5 Ga and the fact is carried by a whisper at 2,650 Ma ([§8](#8--the-copy-deck)).
+- **A snowball planet's sky is not white.** Cold, dry, clear air is deep blue; the white belongs to the ice, i.e. the ground band. Recommended on accuracy alone — measured, it is very slightly *worse* for legibility, and the servo halo clears both versions.
+- **The brightness ramp is a fact, not a mood.** Solar luminosity really does rise ~30% across the run. Modelled, so labelled.
+
+### The Boring Billion — 1.80 to 0.80 Ga, 25,000 px
+
+Named, and left empty on purpose. It holds four real arrivals; the single hole runs 1.65 → 1.05 Ga, **15,000 px, ~30 s at the design speed**.
+
+- A **held plate**, centred in the stage box, with a live counter ticking down in both units ([§8](#8--the-copy-deck)).
+- Fades in over the last 4 Myr before 1.80 Ga and out over the first 16 Myr after 0.80 Ga. The four real arrivals still render on top of it.
+- **The field deliberately slows** — particle count and drift drop to 25%. Parallax is scroll-driven and still tracks, so the stillness reads as the planet's, not the page's.
+
+**Why this beats filling it:** the only true content available there is repetition of sameness, and four labels saying *still nothing* is the same dead air wearing a badge. The site's thesis is that emptiness is information — the Boring Billion is a **rehearsal for the payoff**, teaching the visitor to read emptiness as information ~20,000 px before the ending asks them to do exactly that.
+
+---
+
+## 7 — The verified set — the single source of truth
+
+**55 arrivals: 30 milestone (M) · 19 inhabitant (I) · 6 field whisper (F).** Minimum gap **622 px**, zero violations of the 600 px floor. Mean 2,151 px. First arrival 2,425 px, last 116,425 px. Precambrian: 39 arrivals over 101,530 px.
+
+- **M — milestone:** a dated first or event. Card (date · name · one line) + art + **a tick on the true-scale bar**.
+- **I — inhabitant / condition:** a real organism or state of the world, placed at a date inside its true range. Makes no "first" claim. Card + art, quieter type, **no tick**.
+- **F — field whisper:** the field itself does something. One line in the whisper band — no art, no card, no tick.
+
+**Recurrence is legitimate and it is what makes the count affordable.** Banded iron, stromatolites and the Huronian ice each arrive more than once, because each persisted for hundreds of millions of years. *The Precambrian's honest content is conditions that persist, not events that happen* — so the same painted subject can recur at a different date without lying.
+
+`px` = `INTRO + (4.6e9 − yearsAgo) / 40,000` · `date` = the string shown on the card (where it differs from the point date, the notation is carrying a hedge and **the tick still sits at the point date**) · `art`: `subject` / `abstract` / `planet` / `—` · ⚠ = contested, hedge required.
+
+| Ma | px | w | date shown | Name | Line (desktop) | art | Source |
+|---:|---:|:--|---|---|---|---|---|
+| 4,567 | 2,425 | M | `4,567 Ma` | The Solar System forms | Dust and ice collapse around a new star. Nothing older has ever been dated. | subject | Connelly et al. 2012, *Science* — CAIs 4567.30 ± 0.16 Ma |
+| 4,540 | 3,100 | M | `4,540 Ma` | Earth reaches full size | Accretion finishes. The whole surface is molten rock. | planet | Dalrymple 2001 — 4.54 ± 0.05 Ga |
+| ⚠ 4,510 | 3,850 | M | `≥ 4,510 Ma` | The Moon is torn out | A Mars-sized body strikes, at least 4.51 billion years ago. The debris becomes a Moon that hangs enormous and close. | subject | Barboni et al. 2017, *Sci. Adv.* — ≥4.51 Ga |
+| 4,450 | 5,350 | F | — | *(whisper)* | The Moon is two and a half times wider than it is today | — | recession model, §6 |
+| 4,404 | 6,500 | M | `4,404 Ma` | Liquid water | A single zircon crystal records water at the surface. | subject | Wilde et al. 2001, *Nature* — 4,404 ± 8 Ma |
+| 4,300 | 9,100 | I | `4,300 Ma` | Steam and acid rain | The air is CO₂. The rain is acid. There is nothing yet you would call land. | abstract | Zahnle et al. 2007, *Space Sci. Rev.* |
+| ⚠ 4,160 | 12,600 | I | `≥ 4,160 Ma` | The oldest surviving crust | Nuvvuagittuq, Quebec — a scrap of the first ocean floor. | subject | O'Neil et al. 2025, *Science* — ≥4.16 Ga |
+| 4,031 | 15,825 | M | `4,031 Ma` | The oldest rock we still have | Acasta gneiss, north-west Canada. The Hadean ends here because this is where the record starts. | subject | Bowring & Williams 1999; ICS boundary 4,031 Ma |
+| 3,800 | 21,600 | I | `3,800 Ma` | The oldest sedimentary rocks | Isua, Greenland — mud, laid down under water, by a real ocean. | subject | Nutman et al. 1997, *Precambrian Res.* |
+| ⚠ 3,700 | 24,100 | M | `3,700 Ma` | The first trace of life | Isotopically light carbon in Isua sediment. Not a fossil — a chemical shadow, and the oldest one anyone accepts. | subject | Rosing 1999, *Science*; Ohtomo et al. 2014 |
+| 3,600 | 26,600 | I | `3,600 Ma` | Microbial mats | Life is a film on the seabed, and stays that way for three billion years. | subject | Noffke et al. 2013, *Astrobiology* |
+| ⚠ 3,480 | 29,600 | M | `3,480 Ma` | Stromatolites | Mats build the first structures life leaves behind. Whether these particular ones did is still argued. | subject | Dresser Fm. 3.48 Ga; Baumgartner et al. 2024 |
+| 3,400 | 31,600 | I | `3,400 Ma` | Microbes that eat sulfur | No oxygen, no sunlight needed — chemistry alone. | subject | Wacey et al. 2011, *Nature Geosci.* |
+| 3,260 | 35,100 | M | `3,260 Ma` | A fifty-kilometre asteroid | The S2 impact — 50 to 200 times the mass of the one that killed the dinosaurs. It boils the top of the ocean, and life gets better. | subject | Drabon et al. 2024, *PNAS* |
+| 3,220 | 36,100 | I | `3,220 Ma` | The first continents | Cratons stabilise. There is now permanent dry land. | subject | Hawkesworth et al. 2020 |
+| ⚠ 3,000 | 41,600 | M | `3,000–2,400 Ma` | Photosynthesis | Cyanobacteria split water and let the oxygen go. It will take 600 million years to matter. | subject | Sánchez-Baracaldo et al. 2021, *Proc. R. Soc. B* |
+| 2,900 | 44,100 | M | `2,900 Ma` | The first ice age | The Pongola glaciation. Ice at mid-latitudes, on a planet with no oxygen. | subject | Young et al. 1998; Ojakangas et al. 2014 |
+| 2,800 | 46,600 | I | `2,800 Ma` | Cyanobacteria, everywhere | Still no free oxygen in the air — the rock is drinking all of it. | subject *(recurrence)* | as 3,000 Ma |
+| 2,700 | 49,100 | I | `2,700 Ma` | Whiffs of oxygen | Oxygen appears in patches, hundreds of millions of years before the air changes. | abstract | Anbar et al. 2007, *Science* |
+| **2,650** | **50,350** | **F** | — | *(whisper)* | The sky flickers orange and back, three to five times | — | Zerkle et al. 2012; Izon et al. 2015, 2017 |
+| 2,600 | 51,600 | I | `2,600 Ma` | Banded iron | Oxygen meets dissolved iron and it rusts out of the sea, in bands, for a billion years. | subject | Bekker et al. 2010, *Econ. Geol.* |
+| 2,500 | 54,100 | I | `2,500 Ma` | Banded iron, still | Still rusting out of the sea. It has been a hundred million years. | subject *(recurrence)* | as 2,600 Ma |
+| ⚠ 2,430 | 55,850 | M | `2,430 Ma` | The Great Oxidation begins | Free oxygen floods the air and poisons most of the life that made it. | planet | Gumsley et al. 2017, *PNAS* — onset 2.43 Ga |
+| 2,400 | 56,600 | M | `2,400 Ma` | The Huronian glaciation | Oxygen destroys the methane greenhouse and the planet freezes, three times over. | subject *(recurrence)* | Young 2013 — 2.45–2.22 Ga |
+| 2,320 | 58,600 | F | — | *(whisper)* | The sky is blue | — | mid-GOE; Luo et al. 2016, *Sci. Adv.* |
+| ⚠ 2,220 | 61,100 | M | `2,220 Ma` | The Great Oxidation ends | Oxygen is permanent. The haze never comes back. | abstract | Poulton et al. 2021, *Nature* — ~2.22 Ga |
+| ⚠ 2,100 | 64,100 | I | `2,100 Ma` | Francevillian structures**?** | Centimetre-scale shapes in Gabon. Possibly the oldest multicellular life; possibly not life at all. | subject | El Albani et al. 2010, *Nature*; 2014, *PLoS ONE* |
+| 2,060 | 65,100 | F | — | *(whisper)* | Oxygen falls back | — | Lomagundi ends 2.06 Ga; Bekker & Holland 2012 |
+| ⚠ 1,870 | 69,850 | I | `1,870 Ma` | *Grypania* **?** | A coiled ribbon in Michigan iron. Big enough to see, but nothing of its cells survives. | subject | Han & Runnegar 1992, *Science* |
+| 1,800 | 71,600 | F | — | *(whisper)* | Banded iron stops | — | Bekker et al. 2010 — end of major BIF |
+| 1,635 | 75,725 | M | `1,635 Ma` | The first complex cells | *Qingshania* — cells with a nucleus, stuck together on purpose. | subject | Miao et al. 2024, *Sci. Adv.* |
+| 1,047 | 90,425 | M | `1,047 Ma` | Sex | *Bangiomorpha*, a red alga. The oldest known sexual reproduction. | subject | Gibson et al. 2018, *Geology* |
+| 1,000 | 91,600 | M | `1,000 Ma` | Rodinia | Every continent, gathered into one mass. | abstract | Li et al. 2008, *Precambrian Res.* |
+| ⚠ 890 | 94,350 | I | `890 Ma` | The first sponges**?** | Sponge-like structures in Canadian reef rock, 300 million years before any agreed animal. | subject | Turner 2021, *Nature* |
+| 800 | 96,600 | F | — | *(whisper)* | The Boring Billion ends | — | §6 |
+| 717 | 98,675 | M | `717 Ma` | Snowball Earth | Ice reaches the tropics. The Sturtian lasts 56 million years. | planet | Rooney et al. 2015, *Geology* |
+| 661 | 100,075 | I | `661 Ma` | The ice retreats | Cap carbonate, laid down in a few thousand years on top of the ice. | subject | Rooney et al. 2015 |
+| ⚠ 635 | 100,725 | M | `635 Ma` | The ice breaks for good | A second freeze, the Marinoan — perhaps only four million years — and then it is over. The Ediacaran begins. | subject *(recurrence)* | ICS base Ediacaran 635.0 Ma; Wang et al. 2025, *PNAS* |
+| 574 | 102,250 | M | `574 Ma` | *Charnia* | The first big bodies — soft, strange, rooted to the seabed. | subject | Matthews et al. 2021 — 574.17 ± 0.66 Ma |
+| 538.8 | 103,130 | M | `538.8 Ma` | The Cambrian begins | Shells, eyes, guts, predators, and the first things burrowing through mud on purpose. | subject | ICS 2023 — 538.8 ± 0.6 Ma |
+| 508 | 103,900 | I | `508 Ma` | The Burgess Shale | *Anomalocaris* — a metre of segmented predator, with the first real eyes. | subject | Burgess Shale 508 Ma |
+| 470 | 104,850 | M | `470 Ma` | Plants reach land | Spores, nothing you could call a plant yet. Land has been bare for four billion years. | subject | Rubinstein et al. 2010, *New Phytol.* |
+| 445 | 105,475 | M | `445 Ma` | The Late Ordovician extinction | Ice, then anoxia. About 85% of species go. | subject | Harper et al. 2014 |
+| 420 | 106,100 | I | `420 Ma` | *Cooksonia* | The first plants with stems. A few centimetres tall, and the tallest thing alive. | subject | *Cooksonia* 425–415 Ma |
+| 375 | 107,225 | M | `375 Ma` | *Tiktaalik* | A fish with a neck, and wrists. | subject | Daeschler et al. 2006, *Nature* |
+| 320 | 108,600 | I | `320 Ma` | The coal forests | Trees 40 metres tall, in swamps that become every coal seam on Earth. The air is 30% oxygen and the dragonflies are 70 cm across. | subject | Pennsylvanian 323–299 Ma |
+| 295 | 109,225 | I | `295 Ma` | *Dimetrodon* | Not a dinosaur. A synapsid — our own branch, 60 million years before the first dinosaur. | subject | *Dimetrodon* 295–272 Ma |
+| 251.9 | 110,302 | M | `251.9 Ma` | The Great Dying | Siberian basalt cooks the ocean. 81% of marine species die, in about 60,000 years — one and a half pixels. | subject | Burgess et al. 2014, *PNAS* |
+| ⚠ 227 | 110,925 | M | `233–225 Ma` | The first dinosaurs, and the first mammals | Both lines appear inside the same eight million years. At this scale, the same moment. | subject | Ischigualasto 231.4 ± 0.3 Ma; Santa Maria ~233 Ma |
+| 201.4 | 111,565 | M | `201.4 Ma` | The Triassic–Jurassic extinction | The Atlantic starts to open. Half of everything dies, and the dinosaurs inherit it. | abstract | ICS T/J boundary 201.4 Ma |
+| 150 | 112,850 | I | `150 Ma` | *Archaeopteryx* | Feathers, and the first wing that works. | subject | Solnhofen ~150.9 Ma |
+| ⚠ 125 | 113,475 | M | `125 Ma` | The first flowers | *Archaefructus*: no petals yet, but a flower — the oldest anyone can date. Before this, nothing was in bloom. | subject | Sun et al. 2002, *Science* |
+| 66.04 | 114,949 | M | `66.04 Ma` | Chicxulub | Everything larger than a badger dies. | planet | Renne et al. 2013, *Science* — 66.043 ± 0.011 Ma |
+| 33.9 | 115,752 | M | `33.9 Ma` | Antarctica freezes | The greenhouse world ends. The modern icehouse begins. | abstract | Hutchinson et al. 2021, *Clim. Past* |
+| ⚠ 7 | 116,425 | M | `9.3–6.5 Ma` | The human line splits from the chimpanzees | Everything you would call human happens after this point — the next 175 pixels. | subject | *Sahelanthropus* 7.2–6.8 Ma; genetic 6.5–9.3 Ma |
+
+### The withheld ten
+
+Held back from the scroll entirely, delivered in the finale fan. **Label + date only. No line, no art, ever.** Everything here is inside the last 175 px.
+
+| date shown | px from now | Name | Source |
+|---|---:|---|---|
+| `4.4 Ma` | 110 | *Ardipithecus* walks upright | White et al. 2009, *Science* |
+| `3.3 Ma` | 83 | The first stone tools | Harmand et al. 2015, *Nature* — Lomekwi 3 |
+| `2.8 Ma` | 70 | The first *Homo* | Villmoare et al. 2015, *Science* |
+| `1.9 Ma` | 48 | *Homo erectus* | Antón 2003 |
+| ⚠ `≥ 800 ka` | 20 | Fire, kept | Goren-Inbar et al. 2004, *Science* |
+| `300 ka` | 7.5 | *Homo sapiens* | Hublin et al. 2017, *Nature* |
+| `51.2 ka` | 1.3 | The oldest known picture | Oktaviana et al. 2024, *Nature* |
+| `12 ka` | 0.3 | Farming | Fertile Crescent |
+| `5.4 ka` | 0.14 | Writing | cuneiform, ~3400 BC |
+| `250 yr` | 0.006 | The industrial revolution | — |
+
+### The 600 px floor is what edits this page
+
+600 px = **24 million years**. The floor cuts *T. rex* (50 px from the asteroid), the first primates (250 px) and *Dickinsonia* (400 px from *Charnia*) on arithmetic alone — and it is what stops the recent end being crowded. Heavy bombardment (3.9 Ga) is cut on **evidence**, not space: the 3.9 Ga cluster can be a sampling artefact of Imbrium ejecta, and 2026 far-side samples show no clustering, so the impact beat is carried by the well-dated S2 impact at 3.26 Ga instead.
+
+**`check.py` is a ship gate**, the same way zero-collisions is:
+
+```
+arrivals=55  M=30 I=19 F=6
+min gap=622px  max gap=14700px
+sub-600px pairs: 0
+Precambrian px: 101530 of 115000 = 88.29%
+```
+
+---
+
+## 8 — The copy deck
+
+**The voice is a captioner, not a narrator.** One factual sentence. Third person. No `you`, no `we`, no questions, no build-up, no addressing the visitor. **The wit is a fact stated flat** — *"Not a dinosaur."*, *"Everything larger than a badger dies."*, *"and life gets better."* — never a joke added to a fact.
+
+**The line is enrichment, never load-bearing.** The layout contract drops the description on mobile, so **anything a visitor must receive lives in the date or the name**, both of which survive mobile. The site is already labels-and-dates-only on a phone; the desktop line is what the phone visitor is missing, and it must be survivable to miss.
+
+**Six abstract milestones are the exception, because the art is the weak half.** A stand-in for *whiffs of oxygen* carries no fact by construction. **For these six only, the mobile card is date + name + line and the stand-in art is dropped:** `4,300` · `2,700` · `2,220` · `1,000` · `201.4` · `33.9`. Layout-neutral — swapping contents inside a box changes no rectangle, so the collision sweep is untouched. Desktop is unchanged: art *and* line.
+
+The principle, for anything added later: **where there is nothing real to paint, say the words instead of painting a fake.**
+
+### The hedge — the field matches the kind of doubt
+
+Fourteen dates are contested. A hedging clause in all fourteen was rejected: it makes the page sound unsure, it cannot reach mobile, and it cannot reach the one ⚠ that has no line at all (*Fire, 800 ka*, one of the withheld ten).
+
+| kind of doubt | carrier | examples |
+|---|---|---|
+| **Date doubt** — we know what, not exactly when | the number's own notation | `≥ 4,510 Ma` · `3,000–2,400 Ma` · `233–225 Ma` · `≥ 800 ka` · `≥ 4,160 Ma` |
+| **Identity doubt** — we know when, not what | a `?` in the name | `Francevillian structures?` · `Grypania?` · `The first sponges?` |
+| **The doubt *is* the fact** | one clause in the desktop line | *"Possibly the oldest multicellular life; possibly not life at all."* |
+
+**Five hedging sentences across 4.6 billion years** (#1 Moon, #3 first trace of life, #4 stromatolites, #10 Marinoan, #12 first flowers). Six are notation, two are a question mark, one is structural (the GOE's 200-Myr oscillation is *drawn* as two cards 5,250 px apart plus the 2,060 whisper — no extra words). **The page states uncertainty fourteen times and sounds unsure roughly never** — a range in a date field on a science site reads as precision, not doubt.
+
+Two constraints on the notation:
+
+- **Fan rows keep the point date.** The widest fan row is 294 px in a 337 px phone column — 43 px of slack, and a range would eat it. The fan's job is *position*, and a position is a point. The one exception is cheap: `~800 ka` costs one character.
+- **The displayed date is text; the tick position is the point date.** Widening the label never moves a tick.
+
+### The intro — a held frame, and 1,600 px that adds no words
+
+Scroll 0 is held indefinitely, so the intro is not 1,600 px of reading — it is an unlimited held frame plus 3.2 s of scroll. All the words go in the frame, read at the visitor's own pace.
+
+```
+[held at scroll 0, indefinitely]
+
+    D E E P   T I M E
+    The whole history of Earth, at true scale.
+
+    This page is 115,000 pixels tall.
+    One pixel is 40,000 years.
+    The scale never changes.
+
+    scroll
+```
+
+**It says 115,000, not 123,600** — the closing line spends the same number, and quoting total page height would measure the punchline against a number the visitor was never given. Same referent in the HUD.
+
+**The 1,600 px adds no words. It is where the instrument assembles** — the clock fades in reading `4.60 Ga`, the true-scale bar draws down the right edge empty, the field comes up black and molten. The visitor learns to read the HUD before there is anything to read on it. At 1,600 px, time starts.
+
+**No run-length promise.** *"About four minutes"* was considered and rejected: it buys commitment from one visitor and loses another before they have felt anything.
+
+### The HUD
+
+The HUD's footprint **is** the clock's reserved rect — every row grows it and shrinks the slot grid. That is the budget the strings are written against.
+
+```
+  4.60 Ga
+  HADEAN
+  ─────────────────────
+  MODELLED
+  moon    2.5× wide
+  day     6 hours
+  ─────────────────────
+  1 px = 40,000 years
+  2,425 / 115,000 px
+```
+
+- **`MODELLED` is a group header, said once.** One row instead of two repetitions of `(modelled)` held for four minutes — and it is *less* ambiguous, scoping exactly the two numbers under it.
+- **Mobile drops the modelled block**, leaving clock · era · scale reminder. Nothing is lost: the Moon fact reaches the phone as the 4,450 Ma whisper.
+- **Era labels are six**, switching at ICS boundaries: `HADEAN` → `ARCHEAN` (4,031) → `PROTEROZOIC` (2,500) → `PALEOZOIC` (538.8) → `MESOZOIC` (251.902) → `CENOZOIC` (66.043). Eons for the Precambrian, eras for the Phanerozoic — the only compromise that avoids labelling 88% of the page with one word or the last 12% with one.
+
+### The Boring Billion plate
+
+The plate holds through the whole 15,000 px hole — **~30 s uninterrupted, 23× the longest card dwell**. A sentence fine for one second becomes wallpaper at thirty, and the counter is the only thing on it that moves.
+
+```
+        1.8 – 0.8 BILLION YEARS AGO
+
+        The Boring Billion
+        geologists' name for it
+
+        The chemistry settles.
+        The oxygen stops rising.
+        Nothing much happens for a
+        thousand million years.
+
+        14,200 px · 568 million years to go
+```
+
+- **The boredom is described, never apologised for.** No wink, no "bear with it". *Nothing much happens* is a fact about the planet.
+- **The attribution is a sub-kicker.** Without it, a site whose claim is accuracy looks like it is editorialising a name it did not invent; as a sub-kicker it stays third person instead of nudging the reader.
+- **The counter shows both units**, ticking down together. This is the one place on the page where the conversion sits still long enough to be absorbed — **the Boring Billion is where the visitor learns the exchange rate the closing line spends.**
+
+### The finale copy — fixed verbatim
+
+Seam caption, above the withheld ten:
+
+> never drawn on the page you just scrolled.
+
+The closing line:
+
+> The last ten happened in the final **110** of 115,000 pixels. Everything humans have farmed, written, built or remembered is the last **three tenths** of one pixel.
+
+Both numbers are exact and neither may be rounded: the withheld ten start at 4.4 Ma (`4.4e6 ÷ 40,000 = 110`), and `12 ka ÷ 40,000 = 0.3 px`. **A true-scale site cannot round its own punchline.** Rejected alternatives: a measured *your-clock* line (a number that changes every visit is a number nobody can quote back), *one pixel* (describes the screen rather than landing a fact), and *metres* (true only at the CSS reference of 96 px/inch, never on a real screen).
+
+The epilogue — what the visitor is left holding:
+
+> Two things could not fit on this page. *T. rex* is 50 pixels from the asteroid. The first primates are 250 — they arrive with the impact that made room for them.
+
+Then `↑ again`, and nothing else. This turns **the scale's edit of the page** into a second-order version of the same thesis: not just *humans are small*, but *the scale is so severe it deleted things from this page*.
+
+---
+
+## 9 — The finale
+
+**The finale is the true-scale bar being read.** The bar persists — it is **the same object, unbroken, from 4.60 Ga to the last frame** — and the fan's thirty targets are the same thirty ticks the visitor has been lighting for four minutes. The reveal is not a new screen; it is the instrument you have been ignoring, finally read.
+
+**The withheld ten land on the bar's last pixel, which has no tick** — because a tick means *passed*, and they never were. **That absence is the payoff, drawn.**
+
+*(An earlier prototype faded the bar out and drew a separate lookalike rail for the fan. That throws away the only thing that makes the ending mean anything. Do not reintroduce it.)*
+
+### The beats, in px from `RUN_END` (116,600)
+
+| | px | at 500 px/s | what happens |
+|---|---:|---:|---|
+| **drain** | 0 → 525 | 1.0 s | Field darkens to black. HUD clock fades. **The 7 Ma card holds and finishes its dwell**, releasing at 485. The bar brightens and stays. |
+| **cascade** | 525 → 4,125 | 7.2 s | The thirty, chronological, top to bottom, **120 px apart**. Each label fades in at its final position and its leader line *draws* toward the bar. **Nothing travels.** |
+| **breath** | 4,125 → 4,725 | 1.2 s | Nothing. |
+| **the ten** | 4,725 → 5,325 | 1.2 s | A **fast run at 42 px** — line after line piling onto the same point, no new destination ever appearing. Amber, below the seam caption. |
+| **hold** | 5,325 → 6,025 | 1.4 s | Nothing. The full fan on screen. The sit-back. |
+| **the line** | 6,025 → 6,725 | 1.4 s | The closing sentence. |
+| **left holding** | 6,725 → 7,000 | 0.6 s | The epilogue, and `↑ again`. Last state; holds indefinitely. |
+
+**Two of the seven beats are deliberately empty.** That is not padding — 1.2 s of nothing before the ten is what converts a list into an avalanche. **Cutting it is the first thing that will be proposed and must be refused.**
+
+### Staging rules
+
+1. **The 7 Ma card's overrun: let it finish.** It lands at 116,425 px and wants 660 px of dwell, so it releases 485 px into the finale, over a draining field. A hard release at the boundary would give the site's *last* card 0.35 s — the shortest read on the page. **Scale-safe**: the clock is pinned at 0 through the whole finale, so a card's dwell is a UI behaviour, never a time claim.
+2. **The ten arrive as a fast run, not one hit.** 42 px apart. You watch them accumulate onto one point; a single block reads as a paragraph.
+3. **Placement is measured, not taste.** Rows are **shrink-to-fit boxes anchored to the fan's right edge**, so the left of the stage is genuinely free. Desktop leaves a **763 px** free column, so the closing line sits *beside* the fan. Mobile leaves **9 px** — so below ~190 px of free column the line comes *after*: the fan goes fully out, **then** the line comes in. Sequential, not a crossfade, because two texts at 30% opacity stacked on each other is precisely the overlap the layout contract bans.
+4. **The `TRUE SCALE` caption runs vertically**, inside the bar's reserved zone. A horizontal caption reaches left and collides with the top fan rows.
+5. **Rows must stay shrink-to-fit.** Full-width rows collide with the closing block at every viewport.
+
+### Measured
+
+| | |
+|---|---|
+| Fan rows | **40 at 20.0 px pitch / 12.4 px type** (1440×900) · **19.1 px / 11.9 px** (390×844) |
+| Row overflow | **0.** Widest row 294 px in a 337 px phone column — full names fit; no short fan labels needed |
+| Collisions | **0** over 281 scroll samples × 4 variants × both viewports, including the reserved scale-bar zone |
+
+### Repeatability and the share artifact
+
+- **The fan doubles as the site's index.** Once the ending lands, every row is a link back to its moment in the scroll. First visit you feel it; second visit you read it and navigate with it. The payoff screen is the table of contents — no second surface, near-zero cost.
+- **Showing it over someone's shoulder does not work, and must not be fixed.** A deep link to the finale shows 40 labels and one bright pixel to someone who has not scrolled 123,600 px — which is the entire reason it lands. Deliberately not built.
+- **The share artifact is the fan as a still**, pre-rendered at build at 1200×630 by the same layout code, with the closing line as `og:description`. **No image generation, no runtime cost, no art spend.**
+
+---
+
+## 10 — Accessibility
+
+**One rule at the top: every pixel of motion is bought with a pixel of the visitor's own scroll.** It answers reduced motion, motion sickness, WCAG 2.2.2 and the keyboard model at once, and it does it by removing a mechanism rather than adding one.
+
+### Motion
+
+**No layer integrates against `dt`.** Particle drift is a function of `scrollY`, like the ridgelines (`0.055×`, `0.115×`, `0.24×`), the sun and the Moon. Nothing on the page moves on its own.
+
+- **SC 2.2.2 (Pause, Stop, Hide) does not apply** — there is nothing to pause. No toggle is added, so the intro's held frame stays clean.
+- **The vection ceiling is provable: no layer moves faster than the scroll, and every layer moves with it.** The fastest is 0.24×. That is the line between alive and nauseating, and it is a property of the code.
+- **The frame is deterministic**, which is what makes screenshot gates and the build-time OG still reproducible.
+- **`scroll-behavior` is never `smooth`, for anybody.** `↑ again` and every jump are instantaneous.
+
+Cost, accepted: stop scrolling and the field is completely still.
+
+### `prefers-reduced-motion: reduce`
+
+**The page does not get shorter.** Reduced motion is a request about animation the page performs, not about movement the visitor performs — and shortening the run would make `115,000` untrue for that visitor, on the one site that never rescales.
+
+| | reduced motion |
+|---|---|
+| Page height | **unchanged, 123,600 px + 100lvh** |
+| Particles | 0 |
+| Parallax ridgelines | frozen at their scroll-0 offset |
+| Field | degradation ladder level 4 — repainted only when the era colour changes. The colour channel survives; it is data |
+| Card glide (≤28 px) | 0 — cards cut in at their final position |
+| Opacity fades | **kept** — a fade has no vector and no vection |
+| Receding Moon, sun, finale leader lines | **kept** — all scroll-bought, and the Moon is content |
+
+### Keyboard
+
+123,600 px is ~157 Page Downs at 900 px and ~176 at 390×780. Jumping already exists on this site — the fan rows link back into the scroll — so the question is only whether it announces itself.
+
+| key | behaviour |
+|---|---|
+| `←` `→` · `J` `K` | previous / next arrival. **Instant**, never smooth |
+| `Home` / `End` | scroll 0 / the held final state |
+| `PageUp` `PageDown` `Space` arrows | native, untouched |
+
+**Every jump announces its own cost** into the polite live region — where you are first, what it cost second:
+
+```
+The Great Oxidation begins. 2,430 million years ago.
+Skipped 2,000 pixels — 80 million years.
+```
+```
+Bangiomorpha. 1,047 million years ago.
+Skipped 15,000 pixels — 600 million years — the Boring Billion.
+```
+
+Jumping *does* destroy the felt distance — and then hands it back as a number, the same move the Boring Billion counter makes. A visitor who crosses the Precambrian in eleven keystrokes is told, eleven times, what eleven keystrokes cost.
+
+**The fan is `inert` until `scrollY ≥ RUN_END`.** The 40 rows and `↑ again` sit at ≈117,000 px, and a browser scrolls a focused element into view — so **the first `Tab` press at scroll 0 would teleport the visitor to the ending and spoil the only moment the site exists for.** No stored state is needed: a screen-reader user browsing linearly reaches those nodes only after the browser has scrolled them into view, which *is* `scrollY ≥ RUN_END`; and on a second visit `End` is one press.
+
+### Contrast
+
+**Text never sits on the field.** Measured over 615 interpolated frames, all four bands a card can land on:
+
+| | worst case | |
+|---|---:|---|
+| Lightness flip (`lum > 150 ? dark : light`) | **1.23:1** | 486/615 frames under 4.5:1 |
+| **The best possible single text colour, chosen per frame** | **1.88:1** | **425/615 frames under 4.5:1** |
+| Always light `#f4f1ea` | 1.05:1 | |
+| Always dark `#12161a` | 1.00:1 | |
+| **Text on its own ground** | **16.1–17.2:1** | field-independent |
+
+The worst frame is **719.9 Ma**, the Snowball onset, and no colour can fix it: that one frame holds `sky0` at `L=.021` and `gnd1` at `L=.509`. **Near-black and near-white are on screen together, so there is no colour to flip to.**
+
+**Every text box carries a servo scrim, solved per box at build time** — the same instrument used for the art halo, pointed at the text:
+
+```
+for each arrival (and the HUD, the whisper band, the Boring Billion plate):
+    sample the field under the box across its ENTIRE dwell window
+    for opacity in [0, .18, .34, .52, .70, .86]:
+        for polarity in [dark rgb(6,10,15), light rgb(255,248,235)]:
+            keep the first that clears 4.5:1 body text / 3:1 for the ≥24 px clock
+    if nothing on the ladder clears — the build fails
+```
+
+- **The scrim is usually near-zero.** Across the dark Precambrian the field is already a ground; the treatment appears only where it is earned. The site does not acquire a permanent panel.
+- **It is solved over the dwell, not at a point**, because the field drifts under a pinned card — which bites hardest at Snowball, where the field crosses its whole range in ~2,050 px.
+- **The HUD and the scale bar take a permanent scrim**, solved against the full keyframe set, because they are fixed and cross every field on the page.
+
+**Text at 200% costs art, never legibility.** The layout contract bottom-anchors text and gives art the remainder, and art drops out below 46 px of available height — so enlarged text eats the picture and then the picture leaves. The box never overflows. **The collision sweep gains a 200%-text pass.**
+
+### Screen reader — three fixed points, not fifty-four
+
+The document is already right: 55 arrivals in chronological order as real `<figure><img alt><figcaption>`. What is added is **where the scale argument is said out loud**, and it is three places — nothing is added to the cards.
+
+**One — the intro**, visually hidden, immediately after the `<h1>`:
+
+```
+The whole history of Earth at true scale.
+
+This page is 115,000 pixels tall. One pixel is 40,000 years. The scale never
+changes, anywhere, including at the end.
+
+What follows is 55 arrivals in chronological order, from 4,567 million years ago
+to 7 million years ago. Ten more recent moments are listed at the end instead:
+they are too close together to be drawn on this page at all.
+
+Left and right arrow keys move between arrivals.
+```
+
+**Two — the Boring Billion**, appended to the visible plate copy, visually hidden:
+
+```
+This stretch is 25,000 pixels long — a fifth of the page — and holds four
+arrivals. The longest gap between them is 15,000 pixels: 600 million years
+in which nothing on this page happens.
+```
+
+Without it, a list with nothing in it reads as a list that ended — and this stretch is the site's rehearsal for the payoff.
+
+**Three — the finale**, visually hidden, before the `<ol>`:
+
+```
+The ending.
+
+Everything below happened in the last 175 pixels of this page.
+
+The thirty moments you have passed are listed first, in order. Then ten more.
+Those ten are drawn nowhere on the page above, because at 40,000 years to the
+pixel they all fall inside its final 110 pixels — and the last of them,
+everything humans have farmed, written, built or remembered, is three tenths
+of one pixel.
+```
+
+**The visual convergence is not described.** No "forty lines converge on one point". A sighted visitor is not told what the fan means either; they are shown a fact and left with it. The equivalent is the fact, not a description of the graphic. The leader-line SVG is `aria-hidden="true"`.
+
+**The true-scale bar** is `role="img"` with a label recomputed **once per 1%** (≈1,150 px, ≈2.3 s):
+
+```
+aria-label="True-scale bar: 34 percent of Earth's history passed."
+```
+
+`role="img"` is queried, not announced. It is **not** a live region and **not** `role="progressbar"` — both announce on change, 100 times.
+
+**The HUD is `aria-hidden="true"` in its entirety.** Its clock changes ~460 times and its px counter every frame; no announcement policy survives that. Nothing is lost — every arrival carries its own date at a readable cadence, the scale reminder is in the intro summary, and the era is carried by the dates.
+
+**`alt` text is the subject's own analogy clause.** The art recipe already requires a concrete physical analogy per subject — *"like a stack of bowls"*, *"like a pinecone or crocodile skin"*, *"three flat blades, not a fish tail"* — written to stop the model drawing the wrong thing. That analogy is already a plain-words description of the shape, written once per subject. **It is carried into `art.json` at bake time; a manifest entry with no `alt` fails the build.** Zero new copy, and the alt is guaranteed to describe the picture that was actually drawn, because it is the sentence the picture was drawn from.
+
+**The notation, spoken.** Each visible glyph is `aria-hidden` beside a visually-hidden expansion:
+
+| shown | spoken |
+|---|---|
+| `≥ 4,510 Ma` | at least 4,510 million years ago |
+| `3,000–2,400 Ma` | 3,000 to 2,400 million years ago |
+| `≥ 800 ka` | at least 800 thousand years ago |
+| `250 yr` | 250 years ago |
+| *Grypania* **?** | Grypania — identity disputed |
+
+### What this trades away
+
+| path | does the scale argument survive? | accepted because |
+|---|---|---|
+| Reduced motion | **Fully.** Nothing traded | the distance is not animation |
+| Keyboard jumping | **Traded — felt distance becomes stated distance** | unavoidable at 157 Page Downs; the announcement is the compensation |
+| Screen reader | **Traded in full** | the argument becomes the numbers, at three points. The site's punchline was always a number, not a picture |
+| Scroll-bought particles | untouched | costs an idle shimmer; buys 2.2.2, no toggle, a deterministic frame |
+
+### Conformance
+
+**WCAG 2.2 AA, with SC 2.5.8 taken under the Essential exception.**
+
+| | |
+|---|---|
+| 1.1.1 Non-text | `alt` = the analogy clause, build-asserted. Leader-line SVG `aria-hidden` |
+| 1.4.3 Contrast (text) | **≥ 4.5:1**, servo scrim, solved per box at build |
+| 1.4.4 / 1.4.12 Resize & spacing | 200% text costs the art, never the box — swept |
+| 1.4.11 Non-text contrast | **≥ 3:1** across each subject's boundary, build-enforced |
+| 2.1.1 / 2.1.2 Keyboard | jump model above; nothing traps focus |
+| 2.2.2 Pause, Stop, Hide | **does not apply** — no motion starts automatically |
+| 2.3.1 Flashes | none. The haze flicker is deliberately not rendered; no other layer flashes |
+| 2.4.7 / 2.4.11 Focus | visible ring on the fan rows and `↑ again`, on the scrim ground, ≥ 3:1 |
+| 2.5.8 Target size | **Essential exception, claimed and documented** — see below |
+| 3.2.5 Change on request | no auto-scroll, no smooth scroll, no autoplay |
+| 4.1.2 / 4.1.3 Name, role, value | bar `role="img"` per 1%; jump region `polite`; HUD `aria-hidden` |
+
+**The one claimed exception, on the record.** The fan is 40 rows at **20.0 px pitch on desktop, 19.1 px on a phone**, each a link — below SC 2.5.8's 24×24, and the spacing exception does not rescue it. Forty rows at 24 px is 960 px and does not fit an 844 px phone, so meeting the criterion means breaking the convergence — and **the convergence is the content, not a presentation of it**. Three mitigations: `↑ again` is a full-size control; the keyboard and AT routes have no size floor; and the worst outcome of a mis-tap is landing on the wrong milestone, from which `End` returns in one press. **If the pitch ever changes, this exception is re-examined. It is not a licence.**
+
+---
+
+## 11 — Art
+
+### What an image is
+
+**Subjects on a field, not full-screen environments.** Discrete illustrated subjects dropped on the code-drawn field at their true date, each labelled. Every image is a labelled fact rather than a mood; a fossil sits at its true date, where an environment has no true position.
+
+**There are no full-bleed moments.** The four planet moments are cut-outs like everything else — a complete circular disc grown to own the stage. The field runs underneath, so **there is no seam**, and because **a circle has no aspect ratio** the same asset composes identically at 1440×900 and 390×844. No mobile recomposition exists.
+
+### The locked style recipe
+
+Sheets of **4 subjects per generation** (six per sheet silently drops a subject and pads the slot with a duplicate). Sheets buy style consistency by construction — one generation is one style.
+
+> Subjects arranged in a 2×2 grid, evenly spaced and fully separated, on a pure flat solid pure-black background. No scenery, no habitat, no ground, no shadow.
+>
+> Bright, colourful painted natural-history specimen illustration. Soft brushy edges, **no outline and no line art of any kind** — form built entirely from masses of colour. Rich saturated colour, each subject with its own distinct colour identity rather than a shared muted tone. Flat even lighting like a watercolour plate, light modelling only, no dramatic volumetric shading, no cast shadow. Graphic and simplified: bold clear shapes readable as a strong silhouette at small size, detail suggested in a few confident strokes. Playful and appealing, not solemn or antique. Scientifically accurate anatomy. No text, no labels, no numbers, no captions, no arrows.
+
+Register: a **bright natural-history book plate** — knowingly a step warmer than the anchor's soberer field guide, because the site has to hold someone through 88% Precambrian and the warmth is what buys that.
+
+### The accuracy recipe — the real finding
+
+gpt-image-1 draws a confident, charming, **wrong** extinct organism by default, and **it fails by familiarity, not by complexity.** Subjects with a living analogue land in one shot; genuinely obscure ones default to the nearest familiar thing — *Lepidodendron* drew as a palm then a bare winter oak, a stromatolite drew as a mushroom, a mammoth drew as an Asian elephant.
+
+Required per subject, all three:
+
+1. **A concrete physical analogy** — *"like a stack of bowls"*, *"like a pinecone or crocodile skin"*, *"three flat blades, not a fish tail"*. Analogies beat adjectives every time. **This clause is also the `alt` text** ([§10](#10--accessibility)).
+2. **An explicit negative naming the model's default** — *"it is not an elephant and does not have large ears"*, *"it is not a palm tree"*, *"it is a rock, not a mushroom"*.
+3. **Verification against a real reference before it ships** ([PhyloPic](https://www.phylopic.org/), published reconstructions). Every subject ships with the reference it was checked against, recorded in `art.json`. **Non-negotiable.**
+
+**Ten subjects are in the obscure class** and should be assumed to need more than one round: stromatolite · banded iron · *Grypania* · *Qingshania* · *Bangiomorpha* · Francevillian structures · the 890 Ma sponge · *Charnia* · *Anomalocaris* · *Cooksonia* · *Lepidodendron*.
+
+### The four planets
+
+Same recipe, one addition and one prohibition:
+
+- **Addition — the subject is the whole Earth as a complete circular disc, seen from space, face-on**, composed centred and square.
+- **Prohibition — no night side, no crescent, no dark limb.** Not a style preference: the pipeline keys transparency off luminance (`α = smoothstep(0.045, 0.14, L)`), so a near-black region inside the disc is **punched out of the artwork**. Measured, a terminator also *hurts* legibility (1.24:1 vs 1.96:1 on the Snowball field).
+
+| | analogy | the negative that must be stated |
+|---|---|---|
+| **4,540 Ma molten** | a ball of liquid rock, glowing orange-red, brighter yellow-white cracks, a few darker cooling crusts floating on it | *not* a rocky planet with lava rivers |
+| **2,430 Ma hazy** | smooth and featureless like Titan, thick orange-tan haze, faint soft banding, no continents or oceans visible | *not* Jupiter — no bold stripes, no storms |
+| **717 Ma Snowball** | ice pole to pole, pale blue-grey fracture lines like cracked porcelain, a few small bare rock patches near the middle | *not* a modern Earth with white poles and blue oceans |
+| **66.04 Ma Chicxulub** | land, ocean and swirling cloud, one brilliant white-hot flash and an expanding pale dust ring at a single point | *not* modern continents — see below |
+
+**A planet portrait shows palaeogeography, and the model draws the modern world.** Three of the four hide their geography behind the state itself (molten, total haze, total ice). **Only Chicxulub exposes it**, and the proof came back with present-day continents and the flash in the mid-Atlantic. Required at batch time: prompt Late Cretaceous configuration (no Panama, a narrow Atlantic, India at sea, an epicontinental sea across North America), place the flash at the Yucatán, and **verify against a 66 Ma palaeomap before it ships**. Assume more than one round.
+
+### Portrait rules
+
+1. **A portrait never replaces the field.** It is composited over it like every cut-out. Nothing cross-fades, nothing letterboxes, no transition is announced.
+2. **The field keeps its own clock** — every transition still takes its true duration.
+3. **A portrait owns the stage for its dwell**, occupying the full slot grid, so nothing else may be on stage with it. Gated by `planet-check.py`.
+4. **The Moon yields** — it fades out across a portrait's entry and returns on release. Two discs reads as a solar-system diagram, not a portrait.
+5. **The portrait must agree with the field it sits on.** Each planet's dominant colour is a sample of the same data channel the field is drawing at that pixel. If a keyframe changes, the art is re-checked, not just re-placed.
+
+**Dwell is the true duration of the state depicted**, inside a 600–1,200 px band:
+
+```
+portrait                    px   before    after  true dur   dwell
+molten Hadean             3100      675      750      3400     615
+the Great Oxidation      55850     1750      750      5250     690
+Snowball Earth           98675     2075     1400      1400    1200
+Chicxulub               114949     1474      804         0     600
+```
+
+**The longest portrait is the one whose state really lasted longest, and the shortest is the one that was over in a second.** The most famous event on the page gets the biggest image and the shortest dwell — and it is earned, because **Chicxulub is the calibrator for the payoff**: it is the one date a general audience already has a feel for, landing 1,650 px from the end, and establishing "the dinosaurs died *this close* to the end" is what makes "everything human is in the last 175 px" land 1,650 px later.
+
+### The legibility gate — 3:1, measured
+
+**Contrast across the subject's own boundary must hold 3:1** — the mean luminance of the subject's outer rim against whatever the page draws immediately outside it (WCAG 2.2 SC 1.4.11). Measured over 6 subjects × 5 fields on real keyed art:
+
+| treatment | worst case | verdict |
+|---|---:|---|
+| nothing | **1.08:1** | the problem, stated numerically |
+| a blurred copy of the art as a glow | **1.00:1** | **worth nothing** — it glows the subject's own colours, so on a light field it adds light to light |
+| field lightness ceiling | 3.03–3.08 | no better than the servo alone — **dropped**, and the daylight arc survives intact |
+| **the servo halo** | **3.02:1** | passes everywhere, max strength `a0.78` |
+
+**The servo halo** is a *silhouette* of the subject — not a copy of its art — blurred outward as a spread-then-falloff ring, at a strength and polarity **chosen by measurement, never by a rule about the art**:
+
+```
+for strength in [0.25, 0.45, 0.62, 0.78, 0.92]:
+    for polarity in [dark rgb(6,10,15), light rgb(255,248,235)]:
+        render; measure the boundary
+        keep the first that reaches 3:1     # never accept worse than no halo
+ring geometry: spread 4.5% of subject size @ blur 2%, then 8.5% @ blur 5.5%
+```
+
+**The halo is baked into the shipped asset, not drawn at runtime.** Measured: `ctx.filter = 'blur()'` re-blurs from scratch every frame and cost **9.7 fps for one draw** (46.6 vs 56.3), 54 of 187 frames over 20 ms — and it was worse than no halo in every pair measured. Baking makes runtime cost zero and makes the halo resolution-independent by construction. Cost: a subject recurring on both a dark and a bright field ships twice — at most five extra files.
+
+**Two consequences worth carrying:** the halo is **usually zero** (across the dark Precambrian nearly every subject clears the gate unaided), and **polarity flips where intuition says it should not** — the mammoth takes a *light* halo on the Snowball field and a *dark* one on the hazy field. An earlier hand-authored rule keyed to the field made six of twenty cases *worse* than no halo.
+
+**If no strength on the ladder reaches 3:1, the build fails and the art is revised.**
+
+### Type
+
+**One family, no display face — Archivo** (free, variable, real tabular figures; the locked dustincoledata brand face). The numbers carry the emotional payload and a counter needs tabular figures or it jitters as it counts. A second display face is where data toys start looking like posters.
+
+| Role | Treatment |
+|---|---|
+| Clock / scale numbers | Archivo 700, tabular, `clamp(34–74px)`, tight tracking |
+| Era names | Archivo 600, uppercase, wide tracking, small |
+| Subject label + one line | Archivo 400/500, 14–16 px |
+| HUD (px counter, scale reminder) | Archivo 500, 11 px, uppercase, wide tracking |
+
+Self-hosted via `@fontsource-variable/archivo`, roman **and italic** (the copy deck sets every genus name in italic), subset.
+
+### The order
+
+| | |
+|---|---|
+| Distinct cut-out subjects | **~35**, in **9 sheets of 4** |
+| Planet singles | **4**, at 1024×1024 |
+| Proofs already spent | 4 generations (3 style sheets + 1 planet sheet) |
+| **Total generations** | **~13**, plus re-rounds for the obscure class and Chicxulub |
+| **Transfer budget** | 1.45 MB at current sheet size · ≤3.5 MB if the bigger sheets are taken |
+
+---
+
+## 12 — Stack, budget, degradation
+
+### The stack
+
+| layer | what | why |
+|---|---|---|
+| **Site** | Astro 5, static output, one page, zero framework islands | 55 arrivals + 40 fan rows render to HTML at build |
+| **Field** | one `<canvas>`, `position: fixed`, 2D, repainted every frame | gradients, three polyline fills, ≤200 arcs, a radial sun, two Moon arcs. Nothing here is a 3D problem |
+| **Everything with text or art** | DOM, absolutely positioned, `transform`/`opacity` only | [§3](#3--page-anatomy) |
+| **Scroll driver** | the native document scrollbar, read once per frame in **one** rAF loop | |
+| **Type** | `@fontsource-variable/archivo`, roman + italic, self-hosted, subset | |
+| **Build steps** | `node --experimental-strip-types scripts/*.ts`, tests in vitest | matches Cascade and Namesake; no new tooling |
+| **Share still** | `@resvg/resvg-js` rasterising SVG emitted by the site's own layout module | no headless browser in CI |
+
+**Total runtime dependencies: zero.** The shipped JavaScript is this site's own.
+
+**Rejected, and on what:**
+
+| rejected | why |
+|---|---|
+| **GSAP + ScrollTrigger** | Sells pinning, snapping, timeline orchestration. There is no pinning, no snapping, and the "timeline" is a pure function of `scrollY` — 45 lines of arithmetic. ~50 KB and a second clock to schedule work the field loop must do anyway |
+| **Native scroll-driven CSS animations** | Genuinely attractive, but **cannot drive a canvas** — the field would still need rAF and the site would have two clocks. Also cannot express the contended-slot fade shortening |
+| **A virtual / hijacked scroller** | Breaks native momentum, find-in-page, keyboard paging and the scrollbar position — and the scrollbar *is* the progress indicator. Faking a 123,600 px document throws away the one honest thing on the page |
+| **three.js / WebGL** | Nothing in the design asks for it. The consequence is the useful part: **there is no "WebGL unavailable" branch in the ladder, because there is no WebGL** |
+| **Drawing the cards' art on the canvas** | [§3](#3--page-anatomy) |
+
+### Measured
+
+The cadence prototype — real field, real keyed cut-outs, real slot layout — autoscrolling at 500 px/s at **390×844 DPR 3 with 4× CPU throttling**:
+
+| where | fps | p50 | p95 | max | frames > 50 ms |
+|---|---:|---:|---:|---:|---:|
+| Hadean, from scroll 0 | **59.7** | 16.7 | 16.8 | 33.4 | **0** |
+| Snowball — white field, particles at maximum | **58.0** | 16.7 | 16.8 | 33.5 | **0** |
+| Ediacaran → Cambrian tail — the densest arrivals | **59.9** | 16.7 | 16.8 | 33.4 | **0** |
+
+One honest caveat: absolute fps drifts with whatever else the host machine is doing (later batches of the same code ran 38–45 fps). Rankings within an interleaved A/B are stable; absolute numbers across batches are not. **A real-device pass remains the ship gate.**
+
+### Assets
+
+**WebP, one format, no `<picture>`, no fallback.** Measured at matched error (RGB RMSE ≤ 5.0 over visible pixels, both codecs at high effort), it is smaller than AVIF on every cut-out — by 2% at worst and 28% at best — and it is the only one of the two that reproduces the **alpha channel exactly**, which is the channel the 3:1 boundary gate is measured across. AVIF wins only at 1024², by ~16 KB per planet; 65 KB across the whole site is not worth a second format in the pipeline.
+
+| | |
+|---|---|
+| Whole art set, WebP | **1.45 MB** transfer (36 cut-outs + 4 planets) |
+| **Decoded, every asset resident at once** | **36.5 MB** |
+
+The decoded figure is the one that matters — a phone dies on resident bitmaps, not on transfer — and at 36.5 MB **the entire art set can simply stay in memory.**
+
+**Loading strategy: there isn't one.**
+
+- **First paint needs zero images.** The intro is a held text frame with no images in it. LCP is text. Nothing about the art can block the reveal.
+- After first paint, fetch **every** asset, in scroll order, at low priority. The first arrival is at 2,425 px — 4.9 s at the design speed on top of however long the intro is read.
+- Native `loading="lazy"` is **not** used and would not work: arrivals are pinned into viewport slots during dwell, so the viewport heuristic sees most of them as near-visible and fetches everything at once anyway, in DOM order rather than scroll order.
+- `navigator.connection.saveData` → fetch on a 6,000 px lookahead instead of all at once. One branch, one flag.
+
+**No asset is ever drawn larger than 2× its intrinsic size in device pixels** (`maxDrawCSS = 2 × intrinsicPx / devicePixelRatio`). 2× is chosen for this style specifically — the recipe forbids outlines and line art, so there is no hard edge to alias. The art box is a maximum, not a target.
+
+### The numeric budget — gates, not targets
+
+| | gate | measured |
+|---|---|---|
+| **Frame, phone** | p50 ≤ 16.7 ms · p95 ≤ 20 ms · **zero frames > 50 ms**, full autoscroll at 390×844 / 4× CPU throttle | 16.7 / 16.8 / 0 ✅ |
+| **Frame, desktop** | p95 ≤ 16.7 ms at 1440×900, unthrottled | — |
+| **Art transfer** | ≤ 2.0 MB at current sheet size · ≤ 3.5 MB at the bigger sheets | 1.45 MB ✅ |
+| **Everything else** | HTML + CSS + JS + fonts ≤ 180 KB gzipped, of which JS ≤ 30 KB | — |
+| **Peak decoded image memory** | ≤ 80 MB | 36.5 MB ✅ |
+| **JS heap** | ≤ 25 MB | 1.7 MB ✅ |
+| **Load** | LCP ≤ 1.5 s on Fast 4G · no long task > 50 ms after first paint | — |
+| **Text contrast** | every text box ≥ 4.5:1 against the field across its dwell — asserted at build | — |
+| **Non-text contrast** | every arrival ≥ 3:1 across its own boundary — asserted from the art manifest at build | — |
+| **Collisions** | zero pairwise intersections over the scroll sweep, at **three** viewport heights (1440×900, 390×844, 390×780) **and at 200% text** | — |
+| **Milestone floor** | zero sub-600 px gaps across all 55 arrivals | ✅ |
+| **Real device** | one full scroll on Dustin's phone, both ends, before ship | — |
+
+### The degradation ladder
+
+Ordered by measured cost. A rolling p95 over the last 60 frames drives it; a level is entered after 60 consecutive frames over budget and left only after 600 under it, and the ladder never climbs back more than one step — so it cannot oscillate.
+
+| level | what goes |
+|---|---|
+| 0 | nothing — DPR capped at 2 desktop / 1.5 mobile, 200 particles, 3 ridgelines |
+| 1 | particles → 50% |
+| 2 | canvas DPR → 1.25 |
+| 3 | particles → 0, the far ridgeline goes |
+| 4 | the field stops animating — repainted only when the era colour changes |
+| **floor** | **the clock, the scale bar, the cards, the art, the finale. These carry the thesis and are never degraded.** |
+
+Below the ladder: `prefers-reduced-motion` enters level 4 immediately and disables the glide ([§10](#10--accessibility)); a lost canvas context falls back to a CSS gradient body background; and no-JS is the 55 arrivals as a plain chronological document.
+
+### The scars, discharged
+
+- **iOS URL-bar collapse.** The canvas re-syncs its buffer from its **own box** via `ResizeObserver`, never from window `resize`, and the slot grid recomputes in the same callback. **`100vh` is banned outright** — the fixed overlay is sized from the canvas's `clientHeight`. The collision sweep runs at 390×780 as well as 390×844 precisely because this height changes mid-scroll.
+- **iOS first-tap-is-hover.** Structurally avoided: the scroll has **no interactive elements at all**, and the only controls are the finale's row links and `↑ again`. Rules anyway — no `:hover`-only affordance anywhere, selection on `pointerup`, nothing whose hover mutates the DOM.
+- **The stale strip.** Full repaint every frame; no partial-region drawing.
+- **Astro `ClientRouter`.** Not used. One page, one entry script, no view transitions — the failure where a module script never re-runs after navigation cannot occur.
+
+---
+
+## 13 — Project shape
+
+```
+Deep_Time/
+  art/source/*.png            gpt-image-1 output, committed — it cost money and
+                              cannot be regenerated deterministically
+  public/art/*.webp           keyed, halo-baked, encoded. Committed: ~1.5 MB
+  scripts/
+    bake-art.ts               keys → trims → solves the halo to 3:1 → bakes it →
+                              encodes WebP → writes src/data/art.json
+    solve-scrim.ts            solves the text scrim to 4.5:1 per box → timeline.json
+    gate-collision.ts         the sweep, in Node, over the pure layout module
+    og.ts                     the fan still, 1200×630, via layout.ts → SVG → resvg
+  src/
+    data/timeline.json        THE SINGLE SOURCE OF TRUTH
+    data/art.json             generated: file, intrinsic w/h, halo params, alt,
+                              measured contrast, reference checked against
+    lib/timeline.ts           typed loader + yearsAgo() / milestoneY()
+    lib/layout.ts             PURE: viewport → zones + slots; arrival → rect
+    lib/field.ts              keyframes → colour at a pixel
+    pages/index.astro         the only page
+    scripts/main.ts           the one rAF loop
+  .scratch/prototypes/…       the gates and instruments, repointed at timeline.json
+```
+
+**One data file, because every gate needs to see all of it at once.** `timeline.json` holds the constants (`INTRO`, `RUN`, `FINALE`, `YEARS_PER_PX`), the 55 arrivals, the withheld ten, the eleven field keyframes, the finale beats, the solved scrims, and the copy deck. The Python gates read the same file the site renders from, so **a date cannot be verified in one place and shipped from another**.
+
+**`layout.ts` is a pure function and is used three times** — by the runtime, by the collision gate in Node, and by the OG renderer. That is what makes "the share still is rendered by the same layout code" true rather than aspirational, and it is why the collision sweep needs no browser on every build. A Playwright pass over the live page stays a ship gate, because line wrapping is ultimately the browser's opinion.
+
+**Build-time assertions, all of them catching mistakes this project has already made once:**
+
+- Every number in the copy is recomputed from the constants and compared to the string — `110`, `115,000`, `0.3 px`, `175 px`, `25,000`, `15,000`. Two of these were wrong in an earlier prototype; nothing should be able to drift again.
+- Every arrival with art has a file in the manifest; every manifest entry records a measured contrast ≥ 3:1, an `alt` string, and the reference it was checked against.
+- Every text box has a solved scrim clearing 4.5:1.
+- Zero sub-600 px gaps; zero collisions at three viewports and at 200% text.
+
+### Instruments
+
+| | |
+|---|---|
+| `prototypes/milestone-check/check.py` | the 600 px floor over all 55 arrivals |
+| `prototypes/milestone-check/planet-check.py` | portrait stage-clearance |
+| `prototypes/legibility/index.html` | the 3:1 boundary gate on real art (serve over `http://` — keying needs `getImageData`) |
+| `prototypes/text-contrast/measure.py` | the 4.5:1 text sweep across the field keyframes |
+| `prototypes/asset-budget/measure.py` | per-asset smallest encode holding a fixed error bar, per format |
+| `prototypes/finale/index.html` | the finale's in-page `check` button re-runs the no-collision sweep |
+
+---
+
+## 14 — Open only at the art gate
+
+Everything in the build is decided. **Two art-order questions remain, and both sit behind the standing rule that Dustin approves any batch before it is generated** — so neither blocks implementation, and neither may be resolved by the implementer alone.
+
+1. **Stand-ins for the six abstract milestones** — *steam and acid rain* (4,300) · *whiffs of oxygen* (2,700) · *the Great Oxidation ends* (2,220) · *Rodinia* (1,000) · *the Triassic–Jurassic extinction* (201.4) · *Antarctica freezes* (33.9). The mobile fallback ([§8](#8--the-copy-deck)) lowers the stakes — a weak stand-in now costs desktop polish rather than costing the fact — but it does not remove the decision. Suggested for the extinctions: **paint what died** (a graptolite for 445, a trilobite for 251.9) rather than paint the event. Rodinia is the genuinely hard one, because a landmass is a map and a map is a different visual language from a natural-history plate.
+2. **Sheet size.** Sheets at 1024² yield subjects of 198–534 px on the long edge, so the 2× draw cap binds on desktop. Recommended: generate the remaining sheets at **1536×1024** (or 1024×1536 for tall subjects, grouped by orientation), lifting the per-subject long edge to ~700 px. Same generation count, same style guarantee, budget ~2.8 MB transfer / ~71 MB decoded — still inside the gates.
+
+---
+
+## 15 — Settled. Do not relitigate.
+
+| | |
+|---|---|
+| **Warped or piecewise scale** | Built, reviewed, rejected. So was an announced mid-scroll scale break. The honesty claim is absolute |
+| **A separate rail for the fan** | The bar persists unbroken. Faking a lookalike rail throws away the only thing that makes the ending mean anything |
+| **Cutting either empty finale beat** | 1.2 s of nothing is what converts a list into an avalanche. **This will be proposed and must be refused** |
+| **Audio** | The site is silent. WebAudio needs a gesture and phones are on silent, so only a minority would ever hear it — while the enabling toggle degrades the intro frame for everyone. Era ambience is invented, so it fails the accuracy constraint; sonifying day length needs an arbitrary transpose, which is a rescale on the site that never rescales; and it would be the only decision here with no measurable gate |
+| **Full-bleed scenes** | Replaced by planet cut-outs. Full-frame buys two seams per moment, a second art register, and a portrait recomposition for phones |
+| **Filling the Boring Billion** | The only true content available is repetition of sameness. Four labels saying *still nothing* is the same dead air wearing a badge |
+| **A deep link to the finale** | Deliberately not built. It shows 40 labels and one bright pixel to someone who has not scrolled 123,600 px — which is the entire reason it lands |
+| **A motion or audio toggle** | No control is added. The site's only controls are the fan rows and `↑ again` |
+| **Procedural creature silhouettes** | Cut. Once painted subjects arrive, silhouettes read as a second, worse art style |
+| **The blurred-copy glow** | Measured at 1.00:1. Worth nothing. Replaced by the servo halo |
+| **A field lightness ceiling** | Bought nothing over the servo alone, and would have cost the daylight arc |
+| **Universe scale, or the future** | Out of scope. This is Earth, past to present |
+
+---
+
+## Provenance
+
+Assembled from the resolved tickets in `.scratch/deep-time/issues/`, which carry the workings, the rejected alternatives, the prototypes and the full source list:
+
+[01 Scroll & scale mechanic](../../.scratch/deep-time/issues/01-scroll-scale-mechanic.md) · [02 Milestone set & verified dates](../../.scratch/deep-time/issues/02-milestone-set.md) · [03 Visual identity](../../.scratch/deep-time/issues/03-visual-identity.md) · [04 The payoff moment](../../.scratch/deep-time/issues/04-the-payoff-moment.md) · [05 Tech stack & budget](../../.scratch/deep-time/issues/05-tech-stack-perf-budget.md) · [06 Environment cadence](../../.scratch/deep-time/issues/06-environment-cadence.md) · [07 Accessibility path](../../.scratch/deep-time/issues/07-accessibility-path.md) · [08 Planet moments](../../.scratch/deep-time/issues/08-full-bleed-moments.md) · [09 Copy & narration](../../.scratch/deep-time/issues/09-copy-and-narration.md) · [map](../../.scratch/deep-time/map.md)
+
+Out of scope here, as they always were: building the site, the `dustincoledata.com/projects` brand card, and the subdomain setup.

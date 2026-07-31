@@ -1,27 +1,39 @@
 ---
 /**
- * Scaffold baseline. This is the no-JS document of §3 and nothing else yet:
- * 55 arrivals in chronological order with their dates, names and lines, then the
- * withheld ten. It loses the scale illusion and keeps every fact — which is
- * exactly what the no-JS path is specified to do.
+ * Deep Time — the only page (spec §4).
  *
- * Still to come, each in its own step: the field canvas (§6), the HUD and the
- * true-scale bar (§3), the slot layout (§5), the art (§11), the finale (§9),
- * and the servo scrims (§10). No styling is applied here on purpose — the visual
- * work has not started, and a half-styled page would be a design decision.
+ * Everything renders to HTML at build. No client-side templating: the copy is in
+ * the document for a screen reader, for no-JS, and for `view-source`.
+ *
+ * Without JS this is the 55 arrivals in chronological order with their dates,
+ * names and lines, then the withheld ten. It loses the scale illusion and keeps
+ * every fact — which is exactly what the no-JS path is specified to do. The
+ * runtime adds `.js` to <html> and only then does the document become the
+ * fixed-overlay instrument.
+ *
+ * THE LAYER SPLIT is the one architectural ruling (§3): the canvas draws the
+ * field and nothing else. Anything carrying text or art is DOM, absolutely
+ * positioned, driven by `transform` and `opacity` only.
  */
+import '@fontsource-variable/archivo';
 import {
   arrivals,
   arrivalY,
   CONSTANTS,
   emphasise,
+  fanDate,
+  fanRows,
   FINALE_CFG,
+  milestones,
   plain,
   pxFromNow,
   spokenDate,
   spokenName,
   withheld,
 } from '../lib/timeline.ts';
+
+const { RUN, YEARS_PER_PX, TOTAL } = CONSTANTS;
+const nf = (n: number) => n.toLocaleString('en-US');
 ---
 
 <!doctype html>
@@ -32,32 +44,80 @@ import {
     <title>Deep Time — the whole history of Earth, at true scale</title>
     <meta
       name="description"
-      content="The whole history of Earth on one linear scroll. This page is 115,000 pixels tall. One pixel is 40,000 years. The scale never changes."
+      content={`The whole history of Earth on one linear scroll. This page is ${nf(RUN)} pixels tall. One pixel is ${nf(YEARS_PER_PX)} years. The scale never changes.`}
     />
+    <meta name="color-scheme" content="dark" />
   </head>
-  <body>
-    <h1>Deep Time</h1>
 
+  <body>
+    <h1 class="sr-only">Deep Time</h1>
+
+    {/* §10, fixed point one: where the scale argument is said out loud. */}
     <p class="sr-only">
-      The whole history of Earth at true scale. This page is {CONSTANTS.RUN.toLocaleString('en-US')} pixels
-      tall. One pixel is {CONSTANTS.YEARS_PER_PX.toLocaleString('en-US')} years. The scale never changes,
-      anywhere, including at the end.
+      The whole history of Earth at true scale. This page is {nf(RUN)} pixels tall. One pixel is{' '}
+      {nf(YEARS_PER_PX)} years. The scale never changes, anywhere, including at the end. What follows is{' '}
+      {arrivals.length} arrivals in chronological order, from {arrivals[0]!.date} to{' '}
+      {arrivals[arrivals.length - 1]!.date}. Ten more recent moments are listed at the end instead: they are
+      too close together to be drawn on this page at all. Left and right arrow keys move between arrivals.
     </p>
+
+    <canvas id="field" aria-hidden="true"></canvas>
+
+    {/* The held frame. All the words go here, read at the visitor's own pace. */}
+    <div id="intro" aria-hidden="true">
+      <div class="in">
+        <p class="wordmark">Deep Time</p>
+        <p class="thesis">The whole history of Earth, at true scale.</p>
+        <ul class="facts">
+          <li>This page is {nf(RUN)} pixels tall.</li>
+          <li>One pixel is {nf(YEARS_PER_PX)} years.</li>
+          <li>The scale never changes.</li>
+        </ul>
+        <p class="scroll">scroll</p>
+      </div>
+    </div>
+
+    {/* The clock. aria-hidden in its entirety: it changes ~460 times and its px
+        counter every frame — no announcement policy survives that (§10). */}
+    <div id="hud" aria-hidden="true">
+      <p id="hud-clock">4.60 Ga</p>
+      <p id="hud-era">HADEAN</p>
+      <div class="modelled">
+        <p class="kicker">Modelled</p>
+        <p><span>moon</span><b id="hud-moon">2.51× wide</b></p>
+        <p><span>day</span><b id="hud-day">6.0 hours</b></p>
+      </div>
+      <div class="rule"></div>
+      <p class="rate">1 px = {nf(YEARS_PER_PX)} years</p>
+      <p id="hud-count">0 / {nf(RUN)} px</p>
+    </div>
+
+    {/* The bar IS the scroll position — that identity is the point, and it is
+        what makes the ending legible rather than arbitrary. */}
+    <div id="bar" role="img" aria-label="True-scale bar: 0 percent of Earth's history passed.">
+      <i class="track"></i>
+      <i class="fill" id="bar-fill"></i>
+      <i class="head" id="bar-head"></i>
+      <span class="cap" aria-hidden="true">True scale</span>
+    </div>
 
     <main>
       {
         arrivals.map((a) =>
           a.tier === 'F' ? (
-            <p class="whisper" data-y={arrivalY(a)}>{a.line}</p>
+            <p class="ar F" id={`a-${a.id}`} data-y={arrivalY(a)}>
+              <span class="tx"><span class="n">{a.line}</span></span>
+            </p>
           ) : (
-            <figure class="arrival" data-tier={a.tier} data-y={arrivalY(a)} id={a.id}>
-              {/* <img> is added by bake-art.ts / art.json — no art exists yet. */}
-              <figcaption>
-                <span class="date" aria-hidden="true">{a.date}</span>
+            <figure class="ar" class:list={[a.tier]} id={`a-${a.id}`} data-y={arrivalY(a)}>
+              {/* <img> arrives with art.json — no art exists yet (§14). */}
+              <figcaption class="tx">
+                <i class="rule"></i>
+                <span class="d" aria-hidden="true">{a.date}</span>
                 <span class="sr-only">{spokenDate(a.date!)}</span>
-                <span class="name" aria-hidden="true" set:html={emphasise(a.name!)} />
+                <span class="n" aria-hidden="true" set:html={emphasise(a.name!)} />
                 <span class="sr-only">{spokenName(a.name!)}</span>
-                <span class="line" set:html={emphasise(a.line)} />
+                <span class="s" set:html={emphasise(a.line)} />
               </figcaption>
             </figure>
           ),
@@ -65,38 +125,319 @@ import {
       }
     </main>
 
-    <section class="finale">
-      <p class="seam">{FINALE_CFG.copy.seamCaption}</p>
+    {/* Named, and left empty on purpose. The counter is the only thing that moves. */}
+    <div id="plate" aria-hidden="true">
+      <div class="in">
+        <p class="kicker">1.8 – 0.8 billion years ago</p>
+        <p class="t">The Boring Billion</p>
+        <p class="sub">geologists' name for it</p>
+        <p class="body">
+          The chemistry settles.<br />The oxygen stops rising.<br />Nothing much happens for a thousand
+          million years.
+        </p>
+        <p class="cnt"><b id="plate-count">0</b><span id="plate-years"></span></p>
+      </div>
+    </div>
+
+    {/* §10, fixed point two — without it, a list with nothing in it reads as a
+        list that ended, and this stretch is the rehearsal for the payoff. */}
+    <p class="sr-only">
+      This stretch is 25,000 pixels long — a fifth of the page — and holds four arrivals. The longest gap
+      between them is 15,000 pixels: 600 million years in which nothing on this page happens.
+    </p>
+
+    <section id="finale" inert>
+      {/* §10, fixed point three. The visual convergence is deliberately NOT
+          described: a sighted visitor is not told what the fan means either. */}
+      <p class="sr-only">
+        The ending. Everything below happened in the last 175 pixels of this page. The thirty moments you
+        have passed are listed first, in order. Then ten more. Those ten are drawn nowhere on the page
+        above, because at {nf(YEARS_PER_PX)} years to the pixel they all fall inside its final{' '}
+        {pxFromNow(withheld[0]!)} pixels — and the last of them, everything humans have farmed, written,
+        built or remembered, is three tenths of one pixel.
+      </p>
+
+      <svg id="leaders" aria-hidden="true"></svg>
+
+      <p id="seam-caption" aria-hidden="true">{FINALE_CFG.copy.seamCaption}</p>
+
       <ol>
         {
-          withheld.map((w) => (
-            <li data-px-from-now={pxFromNow(w)}>
-              <span class="date" aria-hidden="true">{w.date}</span>
-              <span class="sr-only">{spokenDate(w.date)}</span>
-              <span class="name" aria-hidden="true" set:html={emphasise(w.name)} />
-              <span class="sr-only">{plain(w.name)}</span>
+          fanRows.map((r, i) => (
+            <li data-fan-row={i} class:list={[r.ten && 'ten']}>
+              <a href={`#a-${r.id}`}>
+                <span class="fd" aria-hidden="true">{r.date}{r.contested && '*'}</span>
+                <span class="sr-only">{spokenDate(r.date)}</span>
+                <span class="fn">{r.name}</span>
+              </a>
             </li>
           ))
         }
       </ol>
-      {/* Verbatim from timeline.json — the tests recompute every number in it from the constants. */}
-      <p class="closing">{FINALE_CFG.copy.closing}</p>
-      <p class="epilogue" set:html={emphasise(FINALE_CFG.copy.epilogue)} />
-      <a class="again" href="#top">{FINALE_CFG.copy.again}</a>
+
+      <div id="closing-block">
+        <p class="closing">{FINALE_CFG.copy.closing}</p>
+        <p class="epilogue" set:html={emphasise(FINALE_CFG.copy.epilogue)} />
+        <a class="again" href="#top">{FINALE_CFG.copy.again}</a>
+      </div>
     </section>
+
+    {/* lvh, not vh — so the document never shrinks under a scrolled visitor when
+        the URL bar reappears. Without the pad the last beats of the finale are
+        unreachable on every device. */}
+    <div class="spacer"></div>
+    <div aria-live="polite" class="sr-only" id="announce"></div>
+
+    <script>import '../scripts/main.ts';</script>
   </body>
 </html>
 
-<style is:global>
+<style is:global define:vars={{ total: `${TOTAL}px` }}>
+  :root {
+    --paper: #f4f1ea;
+    --ink: #12161a;
+    --face: 'Archivo Variable', ui-sans-serif, system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html {
+    /* Never smooth, for anybody. `↑ again` and every jump are instantaneous. */
+    scroll-behavior: auto !important;
+    background: #05070a;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--face);
+    color: var(--paper);
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
   .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip-path: inset(50%);
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+  }
+
+  /* ---------- no-JS: a plain chronological document ---------- */
+  #field, #intro, #hud, #bar, #plate, .spacer { display: none; }
+  main { max-width: 34rem; margin: 0 auto; padding: 3rem 1.25rem; }
+  .ar { margin: 0 0 2.75rem; }
+  .ar .rule { display: none; }
+  .ar .d { display: block; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.6; }
+  .ar .n { display: block; font-size: 1.35rem; font-weight: 650; letter-spacing: -0.02em; margin: 0.35rem 0; }
+  .ar .s { display: block; opacity: 0.75; line-height: 1.55; }
+  #finale { max-width: 34rem; margin: 0 auto; padding: 0 1.25rem 6rem; }
+  #leaders { display: none; }
+
+  /* ---------- the instrument ---------- */
+  .js #field, .js #intro, .js #hud, .js #bar, .js #plate, .js .spacer { display: block; }
+  .js #leaders { display: block; }
+
+  .js #field {
+    position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0;
+    display: block;
+  }
+
+  .js main {
+    position: fixed; inset: 0; z-index: 2; pointer-events: none; max-width: none;
+    margin: 0; padding: 0;
+  }
+
+  /* THE NO-COLLISION CONTRACT, in CSS. Every rect below is written by layout.ts;
+     nothing here may position an arrival. An arrival is ONE box, text anchored to
+     the bottom, art drawn into whatever height is left above it. */
+  .js .ar {
+    position: absolute; margin: 0; display: flex; align-items: flex-end;
+    opacity: 0; will-change: transform, opacity;
+  }
+  .js .ar .tx { width: 100%; }
+  .js .ar.R .tx { text-align: right; }
+  .js .ar .rule {
+    display: block; height: 1px; width: 38px; background: currentColor;
+    opacity: 0.42; margin-bottom: 11px;
+  }
+  .js .ar.R .rule { margin-left: auto; }
+  .js .ar .d {
+    display: block; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    opacity: 0.7; margin: 0 0 0.5em;
+  }
+  .js .ar .n {
+    display: block; font-size: clamp(19px, 2.2vw, 30px); line-height: 1.12;
+    letter-spacing: -0.02em; font-weight: 650; margin: 0;
+    text-shadow: 0 2px 22px rgba(0, 0, 0, 0.4);
+  }
+  .js .ar .s {
+    display: block; font-size: clamp(12.5px, 1.02vw, 14.5px); line-height: 1.5;
+    opacity: 0.76; margin: 0.55em 0 0;
+  }
+  /* An inhabitant is quieter — an arrival, not a milestone. No tick, either. */
+  .js .ar.I .rule { display: none; }
+  .js .ar.I .n { font-size: clamp(14px, 1.3vw, 18px); font-weight: 600; letter-spacing: -0.008em; }
+  .js .ar.I .d { font-size: 9.5px; opacity: 0.5; margin-bottom: 0.3em; }
+  .js .ar.I .s { font-size: 12px; opacity: 0.62; }
+  /* A field whisper: one line in its own band. No art, no card, no tick. */
+  .js .ar.F { align-items: center; justify-content: center; }
+  .js .ar.F .tx { text-align: center; }
+  .js .ar.F .n {
+    font-size: clamp(11px, 1.1vw, 13px); font-weight: 500; letter-spacing: 0.26em;
+    text-transform: uppercase; opacity: 0.62; text-shadow: none;
+  }
+  /* layout.ts decides this, not a media query — so the gate and the DOM agree by
+     construction. The line is enrichment, and it is what goes when a box is short. */
+  .js .ar.no-line .s { display: none; }
+
+  /* ---------- the intro: a held frame ---------- */
+  .js #intro {
+    position: fixed; inset: 0; z-index: 4; display: grid; place-items: center;
+    pointer-events: none; padding: 6vw;
+  }
+  #intro .in { max-width: 30rem; }
+  #intro .wordmark {
+    margin: 0; font-size: clamp(30px, 6.4vw, 62px); font-weight: 700;
+    letter-spacing: 0.22em; text-transform: uppercase; line-height: 1;
+  }
+  #intro .thesis { margin: 1.4em 0 0; font-size: clamp(14px, 1.6vw, 18px); opacity: 0.8; }
+  #intro .facts {
+    list-style: none; margin: 2.6em 0 0; padding: 0; display: grid; gap: 0.5em;
+    font-size: clamp(13px, 1.4vw, 16px); opacity: 0.62;
+  }
+  #intro .scroll {
+    margin: 3.4em 0 0; font-size: 10px; letter-spacing: 0.34em;
+    text-transform: uppercase; opacity: 0.45;
+  }
+
+  /* ---------- the clock: a reserved zone, and its footprint IS the budget ---------- */
+  .js #hud {
+    position: fixed; z-index: 3; pointer-events: none;
+    text-shadow: 0 2px 22px rgba(0, 0, 0, 0.5);
+  }
+  #hud p { margin: 0; }
+  #hud-clock {
+    font-size: clamp(34px, 5vw, 74px); font-weight: 700; letter-spacing: -0.035em;
+    line-height: 0.94;
+  }
+  #hud-era {
+    font-size: clamp(11px, 1.2vw, 14px); font-weight: 600; letter-spacing: 0.22em;
+    text-transform: uppercase; opacity: 0.72; margin-top: 0.8em;
+  }
+  #hud .rule { height: 1px; background: currentColor; opacity: 0.22; margin: 0.9em 0; width: 128px; }
+  #hud .modelled { margin-top: 1.1em; }
+  /* MODELLED is a group header, said once — one row instead of two repetitions of
+     "(modelled)" held for four minutes, and it scopes exactly the two numbers under it. */
+  #hud .kicker {
+    font-size: 9.5px; letter-spacing: 0.28em; text-transform: uppercase; opacity: 0.45;
+    margin-bottom: 0.6em;
+  }
+  #hud .modelled p { display: flex; gap: 1em; font-size: 11.5px; opacity: 0.66; line-height: 1.9; }
+  #hud .modelled span { width: 3.2em; opacity: 0.7; }
+  #hud .modelled b { font-weight: 500; }
+  #hud .rate, #hud-count {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase;
+    opacity: 0.5; line-height: 1.8;
+  }
+
+  /* ---------- the true-scale bar: one object, 4.60 Ga to the last frame ---------- */
+  .js #bar { position: fixed; z-index: 3; pointer-events: none; }
+  #bar i { position: absolute; display: block; }
+  #bar .track { inset: 0; background: currentColor; opacity: 0.16; border-radius: 2px; }
+  #bar .fill {
+    inset: 0; background: currentColor; opacity: 0.55; border-radius: 2px;
+    transform-origin: top; transform: scaleY(0);
+  }
+  #bar .head { left: -7px; width: 18px; height: 2px; background: currentColor; top: 0; }
+  #bar .tick { left: -3px; width: 10px; height: 1px; background: currentColor; opacity: 0.7; }
+  /* The caption runs VERTICALLY so it stays inside its own zone instead of
+     reaching left into the stage. */
+  #bar .cap {
+    position: absolute; right: 14px; top: 0; writing-mode: vertical-rl;
+    font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.45;
     white-space: nowrap;
-    border: 0;
+  }
+
+  /* ---------- the Boring Billion plate ---------- */
+  .js #plate {
+    position: fixed; inset: 0; z-index: 2; display: grid; place-items: center;
+    pointer-events: none; opacity: 0; text-align: center; padding: 8vw;
+  }
+  #plate .in { max-width: 34rem; }
+  #plate p { margin: 0; }
+  #plate .kicker {
+    font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase; opacity: 0.5;
+    margin-bottom: 1.4em;
+  }
+  #plate .t {
+    font-size: clamp(26px, 4.6vw, 54px); font-weight: 700; letter-spacing: -0.04em; line-height: 1.02;
+  }
+  #plate .sub { font-size: clamp(12px, 1.3vw, 15px); opacity: 0.5; margin-top: 0.7em; }
+  #plate .body { font-size: clamp(13px, 1.4vw, 16px); opacity: 0.72; line-height: 1.7; margin-top: 1.6em; }
+  #plate .cnt { margin-top: 2.4em; display: grid; gap: 0.5em; }
+  #plate .cnt b { font-size: clamp(15px, 1.9vw, 22px); font-weight: 650; }
+  #plate .cnt span {
+    font-size: 10px; letter-spacing: 0.26em; text-transform: uppercase; opacity: 0.45;
+  }
+
+  /* ---------- the finale ---------- */
+  .js #finale {
+    position: fixed; inset: 0; z-index: 5; max-width: none; margin: 0; padding: 0;
+    pointer-events: none; opacity: 0; visibility: hidden;
+  }
+  .js #finale.live { opacity: 1; visibility: visible; }
+  .js #leaders { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .js #finale ol { list-style: none; margin: 0; padding: 0; }
+  .js #finale li {
+    position: absolute; left: 0; text-align: right; white-space: nowrap; opacity: 0;
+  }
+  .js #finale li a {
+    display: inline-block; color: inherit; text-decoration: none; pointer-events: auto;
+    padding: 1px 0 1px 7px; border-radius: 3px;
+  }
+  .js #finale li a:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
+  #finale .fd { opacity: 0.5; margin-right: 0.9em; letter-spacing: 0.04em; }
+  #finale .fn { font-weight: 500; letter-spacing: -0.004em; }
+  /* The withheld ten: amber, below the seam, pointing at a pixel with no tick. */
+  #finale li.ten .fd, #finale li.ten .fn { color: #ffd9a0; }
+  #finale li.ten .fn { font-weight: 600; }
+  .js #seam-caption {
+    position: absolute; left: 0; margin: 0; text-align: right; white-space: nowrap;
+    letter-spacing: 0.24em; text-transform: uppercase; color: #ffd9a0; opacity: 0;
+    line-height: 1.25;
+  }
+  .js #closing-block { position: absolute; opacity: 0; }
+  #closing-block p { margin: 0; }
+  #closing-block .closing { font-size: clamp(14px, 1.5vw, 19px); line-height: 1.55; }
+  #closing-block .epilogue {
+    font-size: 13px; line-height: 1.6; opacity: 0; margin-top: 1.5em;
+    transition: opacity 0.4s linear;
+  }
+  #closing-block.ep .epilogue { opacity: 0.62; }
+  #closing-block .again {
+    display: inline-block; margin-top: 1.8em; font-size: 10px; letter-spacing: 0.28em;
+    text-transform: uppercase; opacity: 0; color: inherit; text-decoration: none;
+    border-bottom: 1px solid currentColor; padding-bottom: 3px; pointer-events: auto;
+    transition: opacity 0.4s linear;
+  }
+  #closing-block.ep .again { opacity: 0.6; }
+
+  /* The document is one viewport taller than the scroll: without a pad the last
+     beats of the finale are unreachable on every device. lvh, not vh. */
+  .js .spacer { width: 1px; height: calc(var(--total) + 100lvh); }
+
+  /* 759.98, not 760: the breakpoint must agree with layout.ts's MOBILE_BELOW, or
+     the collision gate is measuring a page that does not exist. */
+  @media (max-width: 759.98px) {
+    /* §8: mobile drops the modelled block, leaving clock · era · scale reminder.
+       Nothing is lost — the Moon fact reaches the phone as the 4,450 Ma whisper. */
+    #hud .modelled, #hud .rule { display: none; }
+    #hud-clock { font-size: clamp(30px, 11vw, 44px); }
+  }
+
+  /* Nothing on this page starts moving on its own, so SC 2.2.2 does not apply and
+     no toggle is added. Reduced motion still removes the glide and the parallax —
+     never the distance, and never the fades, which have no vector. */
+  @media (prefers-reduced-motion: reduce) {
+    .js .ar .tx { transform: none !important; }
   }
 </style>

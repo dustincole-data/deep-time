@@ -676,6 +676,70 @@
     }
   ],
 
+  "fieldNote": [
+    "The field keyframes (spec \u00a76). Colour is a DATA CHANNEL: the background is the era's actual",
+    "sky and ocean colour, so it is a scientific claim and cannot drift into a decorative rainbow.",
+    "Every transition takes its TRUE duration in pixels \u2014 no arbitrary easing, no announced cuts \u2014",
+    "so the drift RATE is itself a data channel. Pixel positions are derived from `ma`, never stored.",
+    "`origin` records where each value came from: `prototype` = the cadence prototype's measured table;",
+    "`spec` = forced by a \u00a76 rider; `approved` = authored here from §6's words and signed off by Dustin 2026-07-31."
+  ],
+
+  "field": [
+    {
+      "ma": 4600, "note": "black, molten glow / molten rock", "origin": "prototype",
+      "sky0": "#180402", "sky1": "#7d1a06", "horizon": "#100201", "ground": "#1c0503"
+    },
+    {
+      "ma": 4300, "note": "dim grey-white, thick steam and cloud / first ocean, dark", "origin": "approved",
+      "sky0": "#1a1c1e", "sky1": "#8e8d88", "horizon": "#14161a", "ground": "#101c22"
+    },
+    {
+      "ma": 3800, "note": "clear, dim, washed blue-white / green", "origin": "approved",
+      "sky0": "#16222c", "sky1": "#93a8b0", "horizon": "#101a20", "ground": "#123322"
+    },
+    {
+      "ma": 3200, "note": "orange haze, sustained MODELLED / green", "origin": "prototype",
+      "sky0": "#2e1907", "sky1": "#ab6a1a", "horizon": "#170f06", "ground": "#0f3a28"
+    },
+    {
+      "ma": 2700, "note": "the hazy state, held \u2014 the flicker cannot be drawn / green", "origin": "prototype",
+      "sky0": "#2b1808", "sky1": "#a4661c", "horizon": "#160f07", "ground": "#103a2a"
+    },
+    {
+      "ma": 2430, "note": "the last hazy state \u2014 the GOE clearing starts here / green", "origin": "prototype",
+      "sky0": "#2b1808", "sky1": "#a4661c", "horizon": "#160f07", "ground": "#103a2a"
+    },
+    {
+      "ma": 2220, "note": "haze gone for good, clear blue / still green", "origin": "prototype",
+      "sky0": "#0f2a44", "sky1": "#4c8dbe", "horizon": "#0c1e2e", "ground": "#12403c"
+    },
+    {
+      "ma": 1800, "note": "blue / still green \u2014 banded iron is still running", "origin": "prototype",
+      "sky0": "#0d2a45", "sky1": "#468ab8", "horizon": "#0b1f2f", "ground": "#114442"
+    },
+    {
+      "ma": 1600, "note": "blue / ocean has finished turning green \u2192 blue", "origin": "approved",
+      "sky0": "#0d2a45", "sky1": "#468ab8", "horizon": "#0b1f2f", "ground": "#14495e"
+    },
+    {
+      "ma": 735, "note": "held, pre-freeze \u2014 Snowball is a flash, not a stretch", "origin": "spec",
+      "sky0": "#0d2a45", "sky1": "#468ab8", "horizon": "#0b1f2f", "ground": "#14495e"
+    },
+    {
+      "ma": 717, "note": "Sturtian \u2014 sky deep BLUE (\u00a76 rider), the white belongs to the ice", "origin": "spec",
+      "sky0": "#0c1e34", "sky1": "#3f76a8", "horizon": "#6f8ea3", "ground": "#dfeef5"
+    },
+    {
+      "ma": 635, "note": "the ice breaks for good / Ediacaran sea", "origin": "prototype",
+      "sky0": "#0d2c3c", "sky1": "#2f8290", "horizon": "#08222a", "ground": "#0d3c3a"
+    },
+    {
+      "ma": 0, "note": "one slow ramp to daylight \u2014 solar luminosity really does rise ~30% MODELLED", "origin": "approved",
+      "sky0": "#0f3d63", "sky1": "#6fb2dc", "horizon": "#2a4d5c", "ground": "#14506b"
+    }
+  ],
+
   "finaleNote": [
     "The finale (spec \u00a79). Beat lengths are in px from RUN_END and sum to FINALE.",
     "`drainPad` is added to the 7 Ma card's overrun: the card lands at 116,425 and wants 660px of",

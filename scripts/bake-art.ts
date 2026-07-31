@@ -37,36 +37,20 @@ const OUT_DIR = join(ROOT, 'public', 'art');
 const ART_JSON = join(ROOT, 'src', 'data', 'art.json');
 
 /**
- * §11's own analogy table for the four planets — not re-derived, transcribed.
- * Chicxulub's proof failed verification (modern continents; needs a Late
- * Cretaceous palaeomap redo) — baked here for pipeline validation only, then
- * excluded from art.json. Never ships un-reviewed (§11: "non-negotiable").
+ * §11's `alt` = the analogy clause, carried from timeline.json's `analogy`
+ * field on each arrival — "the sentence the picture was drawn from" (§10),
+ * one source instead of a second copy here.
+ *
+ * NOT_VERIFIED names arrivals whose latest generation failed §11's
+ * non-negotiable reference check. Baked for pipeline validation, excluded
+ * from art.json. The reason lives on the arrival's own `negative` field in
+ * timeline.json (redo instructions), not duplicated here.
  */
-const PLANET_META: Record<string, { analogy: string; verified: boolean; note?: string }> = {
-  'earth-full-size': {
-    analogy: 'a ball of liquid rock, glowing orange-red, brighter yellow-white cracks, a few darker cooling crusts floating on it',
-    verified: true,
-  },
-  'great-oxidation-begins': {
-    analogy: 'smooth and featureless like Titan, thick orange-tan haze, faint soft banding, no continents or oceans visible',
-    verified: true,
-  },
-  'snowball-earth': {
-    analogy: 'ice pole to pole, pale blue-grey fracture lines like cracked porcelain, a few small bare rock patches near the middle',
-    verified: true,
-  },
-  chicxulub: {
-    analogy: 'land, ocean and swirling cloud, one brilliant white-hot flash and an expanding pale dust ring at a single point',
-    verified: false,
-    note: 'Proof shows modern continents, not Late Cretaceous palaeogeography (no Panama, narrow Atlantic, India at sea, epicontinental sea across N. America) — §11 requires verification against a 66 Ma palaeomap before ship. Baked for pipeline validation only.',
-  },
-};
+const NOT_VERIFIED = new Set(['chicxulub', 'tiktaalik']);
 
 interface ManifestEntry {
   /** Relative to project root. */
   file: string;
-  /** Sheet is `size` × `size` px, a 2×2 grid. */
-  size: number;
   /** Arrival ids, reading order: top-left, top-right, bottom-left, bottom-right. */
   quadrants: [string, string, string, string];
   /** True for the four planet portraits (§11): whole-disc subject, square crop, no rim trim. */
@@ -80,9 +64,16 @@ const MANIFEST: ManifestEntry[] = [
     // run validates the pipeline against real, final, already-paid-for art
     // instead of spending anything new.
     file: 'art/source/planet-sheet-01.png',
-    size: 1024,
     quadrants: ['earth-full-size', 'great-oxidation-begins', 'snowball-earth', 'chicxulub'],
     isPlanet: true,
+  },
+  {
+    // Sheet 2 — the first real paid generation, 2026-07-31, approved batch.
+    // 3 of 4 verified; Tiktaalik drew as a fully-legged salamander despite the
+    // negative and needs a redo (see its `negative` field in timeline.json).
+    file: 'art/source/sheet-02-tiktaalik-archaeopteryx-stromatolite-dimetrodon.png',
+    quadrants: ['tiktaalik', 'archaeopteryx', 'stromatolites', 'dimetrodon'],
+    isPlanet: false,
   },
 ];
 
@@ -115,7 +106,6 @@ function dwellFieldSamples(id: string): RGB[] {
 async function bakeSheetInPage(
   args: {
     dataUrl: string;
-    size: number;
     quadrants: [string, string, string, string];
     isPlanetBySubject: Record<string, boolean>;
     fieldSamplesBySubject: Record<string, [number, number, number][]>;
@@ -330,16 +320,20 @@ async function bakeSheetInPage(
   }
 
   return load(args.dataUrl).then(async (img) => {
-    const half = args.size / 2;
-    const boxes: [number, number][] = [[0, 0], [half, 0], [0, half], [half, half]];
+    // Read the sheet's own dimensions rather than trusting a passed-in size —
+    // correct for both the square proofs (1024×1024) and the rectangular
+    // production sheets (1536×1024, §14's decided size).
+    const halfW = img.naturalWidth / 2;
+    const halfH = img.naturalHeight / 2;
+    const boxes: [number, number][] = [[0, 0], [halfW, 0], [0, halfH], [halfW, halfH]];
     const results: Record<string, any> = {};
     for (let i = 0; i < 4; i++) {
       const id = args.quadrants[i]!;
       if (!id) continue;
       const q = document.createElement('canvas');
-      q.width = half;
-      q.height = half;
-      q.getContext('2d')!.drawImage(img, boxes[i]![0], boxes[i]![1], half, half, 0, 0, half, half);
+      q.width = halfW;
+      q.height = halfH;
+      q.getContext('2d')!.drawImage(img, boxes[i]![0], boxes[i]![1], halfW, halfH, 0, 0, halfW, halfH);
       const keyed = keyToAlpha(q);
       const isPlanet = args.isPlanetBySubject[id];
       const subject = isPlanet ? keyed : trim(keyed, 0.02);
@@ -381,7 +375,6 @@ async function main() {
 
       const results: Record<string, any> = await page.evaluate(bakeSheetInPage, {
         dataUrl,
-        size: entry.size,
         quadrants: entry.quadrants,
         isPlanetBySubject,
         fieldSamplesBySubject,
@@ -390,7 +383,8 @@ async function main() {
       });
 
       for (const [id, r] of Object.entries(results) as [string, any][]) {
-        const meta = PLANET_META[id];
+        const a = arrivals.find((x) => x.id === id);
+        const notVerified = NOT_VERIFIED.has(id);
         const base64 = String(r.webp).split(',')[1]!;
         const file = `${id}.webp`;
         await writeFile(join(OUT_DIR, file), Buffer.from(base64, 'base64'));
@@ -398,20 +392,20 @@ async function main() {
         console.log(
           `${id}  ${r.w}×${r.h}  contrast ${r.contrast}:1 ${r.contrast >= GATE ? '✅' : '❌ BELOW GATE'}` +
             `  halo a${r.halo.strength.toFixed(2)}${r.halo.polarity ? ' ' + r.halo.polarity : ''}` +
-            (meta && !meta.verified ? '  ⚠ NOT VERIFIED — excluded from art.json' : ''),
+            (notVerified ? '  ⚠ NOT VERIFIED — excluded from art.json' : ''),
         );
-        if (VERBOSE && meta?.note) console.log(`    ${meta.note}`);
+        if (VERBOSE && notVerified && a) console.log(`    ${a.negative}`);
 
-        if (meta && !meta.verified) continue; // baked for pipeline validation only, per §11's "non-negotiable"
+        if (notVerified) continue; // baked for pipeline validation only, per §11's "non-negotiable"
 
         art[id] = {
           file: `/art/${file}`,
           w: r.w,
           h: r.h,
-          alt: meta?.analogy ?? '',
+          alt: a?.analogy ?? '',
           halo: r.halo,
           contrast: r.contrast,
-          referenceCheckedAgainst: meta ? 'palaeoclimate/astronomy reference, §11' : null,
+          referenceCheckedAgainst: a ? 'PhyloPic / published reconstructions, §11' : null,
         };
       }
     }

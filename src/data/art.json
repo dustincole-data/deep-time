@@ -9,7 +9,7 @@
       "polarity": "dark"
     },
     "contrast": 3.36,
-    "referenceCheckedAgainst": "palaeoclimate/astronomy reference, §11"
+    "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "great-oxidation-begins": {
     "file": "/art/great-oxidation-begins.webp",
@@ -21,7 +21,7 @@
       "polarity": "dark"
     },
     "contrast": 3.51,
-    "referenceCheckedAgainst": "palaeoclimate/astronomy reference, §11"
+    "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "snowball-earth": {
     "file": "/art/snowball-earth.webp",
@@ -33,6 +33,42 @@
       "polarity": "dark"
     },
     "contrast": 4.19,
-    "referenceCheckedAgainst": "palaeoclimate/astronomy reference, §11"
+    "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
+  },
+  "archaeopteryx": {
+    "file": "/art/archaeopteryx.webp",
+    "w": 818,
+    "h": 657,
+    "alt": "a raven-sized dinosaur-like animal with sharp teeth, a long bony tail, and feathered wings",
+    "halo": {
+      "strength": 0,
+      "polarity": null
+    },
+    "contrast": 3.1,
+    "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
+  },
+  "stromatolites": {
+    "file": "/art/stromatolites.webp",
+    "w": 630,
+    "h": 582,
+    "alt": "a rounded, layered mound of banded rock, like a stack of thin stone plates or a cross-section of a cabbage",
+    "halo": {
+      "strength": 0.45,
+      "polarity": "light"
+    },
+    "contrast": 3.91,
+    "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
+  },
+  "dimetrodon": {
+    "file": "/art/dimetrodon.webp",
+    "w": 876,
+    "h": 650,
+    "alt": "a lizard-like animal with a tall sail of skin down its back, held up by long spines",
+    "halo": {
+      "strength": 0.45,
+      "polarity": "light"
+    },
+    "contrast": 3.18,
+    "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   }
 }

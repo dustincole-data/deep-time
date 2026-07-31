@@ -48,6 +48,8 @@
       "name": "Earth reaches full size",
       "line": "Accretion finishes. The whole surface is molten rock.",
       "art": "planet",
+      "analogy": "a ball of liquid rock, glowing orange-red, brighter yellow-white cracks, a few darker cooling crusts floating on it",
+      "negative": "not a rocky planet with lava rivers",
       "source": "Dalrymple 2001 — 4.54 ± 0.05 Ga"
     },
     {
@@ -154,6 +156,8 @@
       "name": "Stromatolites",
       "line": "Mats build the first structures life leaves behind. Whether these particular ones did is still argued.",
       "art": "subject",
+      "analogy": "a rounded, layered mound of banded rock, like a stack of thin stone plates or a cross-section of a cabbage",
+      "negative": "not a mushroom, not a shell, not a visible living creature — a banded rock structure",
       "source": "Dresser Fm. 3.48 Ga; Baumgartner et al. 2024"
     },
     {
@@ -270,6 +274,8 @@
       "name": "The Great Oxidation begins",
       "line": "Free oxygen floods the air and poisons most of the life that made it.",
       "art": "planet",
+      "analogy": "smooth and featureless like Titan, thick orange-tan haze, faint soft banding, no continents or oceans visible",
+      "negative": "not Jupiter — no bold stripes, no storms",
       "source": "Gumsley et al. 2017, *PNAS* — onset 2.43 Ga"
     },
     {
@@ -409,6 +415,8 @@
       "name": "Snowball Earth",
       "line": "Ice reaches the tropics. The Sturtian lasts 56 million years.",
       "art": "planet",
+      "analogy": "ice pole to pole, pale blue-grey fracture lines like cracked porcelain, a few small bare rock patches near the middle",
+      "negative": "not a modern Earth with white poles and blue oceans",
       "source": "Rooney et al. 2015, *Geology*"
     },
     {
@@ -501,6 +509,8 @@
       "name": "*Tiktaalik*",
       "line": "A fish with a neck, and wrists.",
       "art": "subject",
+      "analogy": "a large flat-headed fish covered in scales, its paired front fins thick and muscular with a webbed fin-fringe at the tips, propped like elbows and wrists but still fins, not feet",
+      "negative": "not a salamander or amphibian — no smooth skin, no toes, no claws; fish scales cover the whole body and the limbs end in fin-rays, not digits. First round (2026-07-31) drew a fully-legged salamander — redo needed with this stronger negative.",
       "source": "Daeschler et al. 2006, *Nature*"
     },
     {
@@ -521,6 +531,8 @@
       "name": "*Dimetrodon*",
       "line": "Not a dinosaur. A synapsid — our own branch, 60 million years before the first dinosaur.",
       "art": "subject",
+      "analogy": "a lizard-like animal with a tall sail of skin down its back, held up by long spines",
+      "negative": "not a dinosaur — it walks with a sprawling reptile-like gait, and it predates dinosaurs entirely",
       "source": "*Dimetrodon* 295–272 Ma"
     },
     {
@@ -564,6 +576,8 @@
       "name": "*Archaeopteryx*",
       "line": "Feathers, and the first wing that works.",
       "art": "subject",
+      "analogy": "a raven-sized dinosaur-like animal with sharp teeth, a long bony tail, and feathered wings",
+      "negative": "not a modern bird — teeth and a long bony tail, not a beak and a fan of tail feathers",
       "source": "Solnhofen ~150.9 Ma"
     },
     {
@@ -595,6 +609,8 @@
       "name": "Chicxulub",
       "line": "Everything larger than a badger dies.",
       "art": "planet",
+      "analogy": "land, ocean and swirling cloud, one brilliant white-hot flash and an expanding pale dust ring at a single point",
+      "negative": "not modern continents — Late Cretaceous palaeogeography: no Panama, a narrow Atlantic, India at sea, an epicontinental sea across North America; the flash sits at the Yucatan. First round (2026-07-31) drew modern continents — redo needed, verify against a 66 Ma palaeomap before ship.",
       "source": "Renne et al. 2013, *Science* — 66.043 ± 0.011 Ma"
     },
     {

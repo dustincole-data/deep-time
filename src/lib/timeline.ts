@@ -31,6 +31,10 @@ export interface Arrival {
   /** Set when this subject has already arrived earlier; the id it recurs from (§7). */
   recurrence: string | null;
   source: string;
+  /** The art recipe's concrete physical analogy (§11) — also the `alt` text. `undefined` until drafted. */
+  analogy?: string;
+  /** The explicit negative naming the model's default (§11). `undefined` until drafted. */
+  negative?: string;
 }
 
 export interface Withheld {
@@ -80,6 +84,8 @@ export const arrivals: Arrival[] = raw.arrivals.map((a) => ({
   art: (a.art ?? null) as ArtKind | null,
   recurrence: 'recurrence' in a ? (a.recurrence as string) : null,
   source: a.source,
+  analogy: 'analogy' in a ? (a.analogy as string) : undefined,
+  negative: 'negative' in a ? (a.negative as string) : undefined,
 }));
 
 export const withheld: Withheld[] = raw.withheld.map((w) => ({

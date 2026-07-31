@@ -42,8 +42,11 @@ Not the built site. The map ends at handoff.
 
 ## Not yet specified
 
-- **Audio** — whether the experience has sound (ambience per era, a tone at the reveal) or is silent. Not yet clear it earns its cost. **Sharpened by [04](issues/04-the-payoff-moment.md):** the finale now contains **2.6 s of deliberate silence across two beats** (the breath before the ten, and the hold after). If audio earns its cost anywhere on this site it is there, so judge it against those two beats first rather than against the run.
 - **Final spec assembly** — the shape of the handoff document itself, once the decisions above exist to write down.
+
+## Decided against
+
+- **Audio — the site is silent.** Decided 2026-07-30, no ticket needed. Two shapes were examined and both fail on the same fact: **WebAudio needs a gesture to unlock and phones are on silent, so audio is off by default and only a small minority ever hear it** — while the enabling toggle degrades the intro held frame, the one surface that must stay clean, for everyone. The justification was 04's **2.6 s of deliberate silence**, and that beat already renders as a held breath with no label and no motion; sound would sharpen something that is not broken. Three further reasons: era ambience is **invented** (nobody knows what the Hadean sounded like) and so fails the accuracy constraint the way a stand-in image does; sonifying a real quantity like day length needs an **arbitrary transpose to be audible**, which is a rescale on the one site that never rescales; and audio would be the **only decision on this map with no measurable gate**, on a project where every other ruling is asserted by script. [03](issues/03-visual-identity.md) already balanced the channels — scale carries the payoff, art carries the interest, motion carries continuity — and none of the three is short.
 
 ## Out of scope
 

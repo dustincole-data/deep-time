@@ -69,9 +69,9 @@ def err(a_img, blob):
 
 
 FORMATS = {
-    "avif 4:4:4": lambda im, q: enc(im, "AVIF", quality=q, speed=6,
+    "avif 4:4:4": lambda im, q: enc(im, "AVIF", quality=q, speed=2,
                                     subsampling="4:4:4"),
-    "avif 4:2:0": lambda im, q: enc(im, "AVIF", quality=q, speed=6),
+    "avif 4:2:0": lambda im, q: enc(im, "AVIF", quality=q, speed=2),
     "webp":       lambda im, q: enc(im, "WEBP", quality=q, method=6,
                                     alpha_quality=90),
 }
@@ -82,7 +82,7 @@ def smallest_at_bar(im):
     out = {}
     for name, fn in FORMATS.items():
         best = None
-        for q in range(35, 96, 10):
+        for q in range(30, 96, 5):
             blob = fn(im, q)
             e, ea = err(im, blob)
             if e <= RMSE_BAR:

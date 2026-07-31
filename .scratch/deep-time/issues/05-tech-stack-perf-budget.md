@@ -118,22 +118,22 @@ Cost: a subject that recurs on both a dark and a bright field ships twice. That 
 
 ### Asset budget, measured on the real art
 
-[`.scratch/prototypes/asset-budget/measure.py`](../../prototypes/asset-budget/measure.py) keys the two accepted proof sheets with the site's own alpha formula, then for each format finds the **smallest encode that holds a fixed error bar** (RGB RMSE ≤ 5.0 over visible pixels). Comparing formats at a matched nominal "quality" measures nothing.
+[`.scratch/prototypes/asset-budget/measure.py`](../../prototypes/asset-budget/measure.py) keys the two accepted proof sheets with the site's own alpha formula, then for each format finds the **smallest encode that holds a fixed error bar** (RGB RMSE ≤ 5.0 over visible pixels). Comparing formats at a matched nominal "quality" measures nothing. Both codecs are run at high effort — libavif `speed=2`, WebP `method=6` — so neither is handicapped; at libavif's default effort AVIF looks ~20% worse than it really is.
 
 | subject | intrinsic | webp | avif 4:4:4 | avif alpha error | png |
 |---|---|---:|---:|---:|---:|
-| mammoth | 369×370 | **24.7 KB** | 34.2 KB | 0.04 | 199.5 KB |
-| *Anomalocaris* | 470×297 | **36.3 KB** | 45.6 KB | 0.00 | 152.7 KB |
-| *Lepidodendron* | 198×505 | **27.6 KB** | 39.1 KB | 0.12 | 94.0 KB |
-| stromatolite | 534×413 | **37.8 KB** | 52.4 KB | 0.00 | 287.8 KB |
-| one 1024² frame (planet proxy) | 1024×1024 | 135.9 KB | **90.9 KB** | 0.11 | 1,247 KB |
+| mammoth | 369×370 | **24.7 KB** | 29.4 KB | 0.01 | 199.5 KB |
+| *Anomalocaris* | 470×297 | **36.3 KB** | 37.0 KB | 0.01 | 152.7 KB |
+| *Lepidodendron* | 198×505 | **27.6 KB** | 34.8 KB | 0.05 | 94.0 KB |
+| stromatolite | 534×413 | **30.5 KB** | 42.1 KB | 0.01 | 287.8 KB |
+| one 1024² frame (planet proxy) | 1024×1024 | 102.6 KB | **86.4 KB** | 0.07 | 1,247 KB |
 
-**Format: WebP, one format, no `<picture>`, no fallback.** It is smaller than AVIF on every cut-out at matched quality, it is the only one of the two that reproduces the **alpha channel exactly** — and alpha is the channel 08's 3:1 boundary gate is measured across — and it needs no fallback anywhere. AVIF wins only at 1024², by ~45 KB per planet; 180 KB total is not worth a second format in the pipeline.
+**Format: WebP, one format, no `<picture>`, no fallback.** It is smaller than AVIF on every cut-out at matched quality — by 2% at the worst case and 28% at the best — it is the only one of the two that reproduces the **alpha channel exactly**, and alpha is the channel 08's 3:1 boundary gate is measured across. It also needs no fallback on any browser. AVIF wins only at 1024², by ~16 KB per planet; **65 KB across the whole site is not worth a second format in the pipeline.**
 
 | | |
 |---|---|
-| **Whole art set, WebP** | **1.64 MB** transfer (36 cut-outs + 4 planets) |
-| Same set as AVIF | 1.86 MB |
+| **Whole art set, WebP** | **1.45 MB** transfer (36 cut-outs + 4 planets) |
+| Same set as AVIF | 1.60 MB |
 | **Decoded, if every asset were resident at once** | **36.5 MB** |
 
 The decoded figure is the one that matters — a phone dies on resident bitmaps, not on transfer — and at 36.5 MB **the entire art set can simply stay in memory.** There is no decode-window problem to solve.
@@ -144,11 +144,11 @@ A 2×2 sheet at 1024² yields subjects of **198–534 px on the long edge** (mea
 
 **Rule: no asset is ever drawn larger than 2× its intrinsic size in device pixels** (`maxDrawCSS = 2 × intrinsicPx / devicePixelRatio`). 2× is chosen for this style specifically — [03](03-visual-identity.md)'s recipe forbids outlines and line art, so there is no hard edge to alias. The art box is a maximum, not a target; a wide subject sits at ~76% of its column on a 2× desktop and fills it on a 1× one. On a phone the cap never binds.
 
-**Handed back to [03](03-visual-identity.md) as a recommendation, not a ruling:** generate the remaining subject sheets at **1536×1024** (or 1024×1536 for sheets of tall subjects — group by orientation), which lifts the per-subject long edge to ~700 px and stops the cap binding on desktop at all. Same generation count, same sheet-of-four style guarantee. Budget if taken: ~3.2 MB transfer, ~71 MB decoded — still inside the gates below.
+**Handed back to [03](03-visual-identity.md) as a recommendation, not a ruling:** generate the remaining subject sheets at **1536×1024** (or 1024×1536 for sheets of tall subjects — group by orientation), which lifts the per-subject long edge to ~700 px and stops the cap binding on desktop at all. Same generation count, same sheet-of-four style guarantee. Budget if taken: ~2.8 MB transfer, ~71 MB decoded — still inside the gates below.
 
 ### Loading strategy: there isn't one
 
-At 1.64 MB the whole set is smaller than one hero photograph, and the intro is a **held text frame with no images in it at all**. So:
+At 1.45 MB the whole set is smaller than one hero photograph, and the intro is a **held text frame with no images in it at all**. So:
 
 - **First paint needs zero images.** LCP is text. Nothing about the art can block the reveal.
 - After first paint, fetch **every** asset, in scroll order, at low priority. The first arrival is at 2,425 px — 4.9 s at the design speed on top of however long the intro is read.
@@ -162,7 +162,7 @@ At 1.64 MB the whole set is smaller than one hero photograph, and the intro is a
 |---|---|---|
 | **Frame, phone** | p50 ≤ 16.7 ms · p95 ≤ 20 ms · **zero frames > 50 ms** over a full autoscroll, at 390×844 / 4× CPU throttle | 16.7 / 16.8 / 0 ✅ |
 | **Frame, desktop** | p95 ≤ 16.7 ms at 1440×900, unthrottled | — |
-| **Art transfer** | ≤ 2.0 MB at current sheet size · ≤ 3.5 MB if 03 takes the bigger sheets | 1.64 MB ✅ |
+| **Art transfer** | ≤ 2.0 MB at current sheet size · ≤ 3.5 MB if 03 takes the bigger sheets | 1.45 MB ✅ |
 | **Everything else** | HTML + CSS + JS + fonts ≤ 180 KB gzipped, of which JS ≤ 30 KB | — |
 | **Peak decoded image memory** | ≤ 80 MB | 36.5 MB ✅ |
 | **JS heap** | ≤ 25 MB | 1.7 MB in the prototype ✅ |
@@ -213,7 +213,7 @@ Also verified: `scrollHeight` came back as exactly `123600`, and CSS pixels are 
 Deep_Time/
   art/source/*.png            gpt-image-1 output, committed — it cost money and
                               cannot be regenerated deterministically
-  public/art/*.webp           keyed, halo-baked, encoded. Committed: 1.6 MB, and
+  public/art/*.webp           keyed, halo-baked, encoded. Committed: 1.5 MB, and
                               a diff of the shipped bytes is worth having
   scripts/
     bake-art.ts               keys → trims → solves the halo to 3:1 → bakes it →

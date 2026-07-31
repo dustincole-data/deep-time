@@ -89,6 +89,8 @@
       "name": "Steam and acid rain",
       "line": "The air is CO₂. The rain is acid. There is nothing yet you would call land.",
       "art": "abstract",
+      "analogy": "a single pitted, etched volcanic rock, with rain streaking down it",
+      "negative": "not a landscape or a storm scene — one rock specimen",
       "source": "Zahnle et al. 2007, *Space Sci. Rev.*"
     },
     {
@@ -224,6 +226,8 @@
       "name": "Whiffs of oxygen",
       "line": "Oxygen appears in patches, hundreds of millions of years before the air changes.",
       "art": "abstract",
+      "analogy": "a cluster of small bubbles rising off a mat of green scum, like carbonation",
+      "negative": "not fire or an explosion — gas bubbles, not flame",
       "source": "Anbar et al. 2007, *Science*"
     },
     {
@@ -298,6 +302,8 @@
       "name": "The Great Oxidation ends",
       "line": "Oxygen is permanent. The haze never comes back.",
       "art": "abstract",
+      "analogy": "a rust-red rock slab seen close, with a crack of open blue sky at the top",
+      "negative": "not a full landscape — one slab, the sky a sliver behind it",
       "source": "Poulton et al. 2021, *Nature* — ~2.22 Ga"
     },
     {
@@ -370,6 +376,8 @@
       "name": "Rodinia",
       "line": "Every continent, gathered into one mass.",
       "art": "abstract",
+      "analogy": "a single joined landmass silhouette, one bold flat-colour shape with a thick confident outline, drawn like a specimen",
+      "negative": "not a map — no coastline detail, no labels, no cartographic projection, no grid",
       "source": "Li et al. 2008, *Precambrian Res.*"
     },
     {
@@ -544,6 +552,8 @@
       "name": "The Triassic–Jurassic extinction",
       "line": "The Atlantic starts to open. Half of everything dies, and the dinosaurs inherit it.",
       "art": "abstract",
+      "analogy": "a phytosaur — crocodile-like, but the nostrils sit in a raised bump between the eyes, not at the tip of the snout",
+      "negative": "not a modern crocodile — nostril position is different; not mid-Triassic livery — this is the very end of the Triassic",
       "source": "ICS T/J boundary 201.4 Ma"
     },
     {
@@ -605,6 +615,8 @@
       "name": "Antarctica freezes",
       "line": "The greenhouse world ends. The modern icehouse begins.",
       "art": "abstract",
+      "analogy": "a slab of ice calving off a dark rock cliff into the sea",
+      "negative": "not a whole ice-covered planet like Snowball Earth — one coastal cliff, one iceberg",
       "source": "Hutchinson et al. 2021, *Clim. Past*"
     },
     {

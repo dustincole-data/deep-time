@@ -1,0 +1,38 @@
+{
+  "earth-full-size": {
+    "file": "/art/earth-full-size.webp",
+    "w": 634,
+    "h": 634,
+    "alt": "a ball of liquid rock, glowing orange-red, brighter yellow-white cracks, a few darker cooling crusts floating on it",
+    "halo": {
+      "strength": 0.45,
+      "polarity": "dark"
+    },
+    "contrast": 3.36,
+    "referenceCheckedAgainst": "palaeoclimate/astronomy reference, §11"
+  },
+  "great-oxidation-begins": {
+    "file": "/art/great-oxidation-begins.webp",
+    "w": 634,
+    "h": 634,
+    "alt": "smooth and featureless like Titan, thick orange-tan haze, faint soft banding, no continents or oceans visible",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "dark"
+    },
+    "contrast": 3.51,
+    "referenceCheckedAgainst": "palaeoclimate/astronomy reference, §11"
+  },
+  "snowball-earth": {
+    "file": "/art/snowball-earth.webp",
+    "w": 634,
+    "h": 634,
+    "alt": "ice pole to pole, pale blue-grey fracture lines like cracked porcelain, a few small bare rock patches near the middle",
+    "halo": {
+      "strength": 0.45,
+      "polarity": "dark"
+    },
+    "contrast": 4.19,
+    "referenceCheckedAgainst": "palaeoclimate/astronomy reference, §11"
+  }
+}

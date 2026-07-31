@@ -42,8 +42,13 @@ import {
 } from '../lib/timeline.ts';
 import { fan, frame, hudBottomInset, place, zones, type Fan, type Placed, type Zones } from '../lib/layout.ts';
 import { fieldAt, toHex, type RGB } from '../lib/field.ts';
+import art from '../data/art.json' with { type: 'json' };
 
 const { INTRO, RUN, RUN_END, TOTAL, YEARS_PER_PX, EARTH_AGE } = CONSTANTS;
+/** Intrinsic aspect ratio per subject with baked art — frame() sizes the art box from it. */
+const ART_ASPECT: Record<string, number> = Object.fromEntries(
+  Object.entries(art).map(([id, a]) => [id, a.w / a.h]),
+);
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v);
@@ -88,11 +93,19 @@ interface Node {
   p: Placed;
   el: HTMLElement;
   tx: HTMLElement;
+  /** null for the ~90% of arrivals with no baked art yet (§14). */
+  img: HTMLImageElement | null;
   vis: number;
 }
 const nodes: Node[] = arrivals.map((a) => {
   const el = document.getElementById(`a-${a.id}`) as HTMLElement;
-  return { p: null!, el, tx: el.firstElementChild as HTMLElement, vis: -1 };
+  return {
+    p: null!,
+    el,
+    tx: el.querySelector('.tx') as HTMLElement,
+    img: el.querySelector('img.art'),
+    vis: -1,
+  };
 });
 
 const fanRowEls = [...finaleEl.querySelectorAll<HTMLElement>('[data-fan-row]')];
@@ -429,13 +442,22 @@ function draw(now: number) {
   }
 
   // 4 — transform + opacity on the arrivals inside their fade window.
-  const vis = frame(placed, sy);
+  const vis = frame(placed, sy, ART_ASPECT);
   const seen = new Set<string>();
   for (const v of vis) {
     seen.add(v.id);
     const n = nodes.find((x) => x.p.id === v.id)!;
     const gl = v.text.y - (n.p.rect.y + n.p.rect.h - n.p.glide - n.p.textH);
     n.tx.style.transform = `translate3d(0,${REDUCED ? 0 : gl}px,0)`;
+    // The art box, if this subject has baked art: frame() returns it in the
+    // same page-absolute space as the figure's own rect, so it is written
+    // relative to n.p.rect — the figure is its own containing block (§5 rule 3).
+    if (n.img && v.art) {
+      n.img.style.left = `${v.art.x - n.p.rect.x}px`;
+      n.img.style.top = `${v.art.y - n.p.rect.y}px`;
+      n.img.style.width = `${v.art.w}px`;
+      n.img.style.height = `${v.art.h}px`;
+    }
     if (n.vis !== v.opacity) {
       n.el.style.opacity = String(v.opacity);
       n.vis = v.opacity;

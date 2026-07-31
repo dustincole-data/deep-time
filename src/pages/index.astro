@@ -31,8 +31,11 @@ import {
   spokenName,
   withheld,
 } from '../lib/timeline.ts';
+import art from '../data/art.json' with { type: 'json' };
 
 const { RUN, YEARS_PER_PX, TOTAL } = CONSTANTS;
+type ArtEntry = (typeof art)[keyof typeof art];
+const artFor = (id: string): ArtEntry | undefined => (art as Record<string, ArtEntry>)[id];
 const nf = (n: number) => n.toLocaleString('en-US');
 ---
 
@@ -110,7 +113,17 @@ const nf = (n: number) => n.toLocaleString('en-US');
             </p>
           ) : (
             <figure class="ar" class:list={[a.tier]} id={`a-${a.id}`} data-y={arrivalY(a)}>
-              {/* <img> arrives with art.json — no art exists yet (§14). */}
+              {/* Only 3 of ~39 subjects have real art baked so far (§14) — most
+                  boxes render text-only until the rest is generated. */}
+              {artFor(a.id) && (
+                <img
+                  class="art"
+                  src={artFor(a.id)!.file}
+                  width={artFor(a.id)!.w}
+                  height={artFor(a.id)!.h}
+                  alt={artFor(a.id)!.alt}
+                />
+              )}
               <figcaption class="tx">
                 <i class="rule"></i>
                 <span class="d" aria-hidden="true">{a.date}</span>
@@ -230,6 +243,7 @@ const nf = (n: number) => n.toLocaleString('en-US');
   .ar .d { display: block; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.6; }
   .ar .n { display: block; font-size: 1.35rem; font-weight: 650; letter-spacing: -0.02em; margin: 0.35rem 0; }
   .ar .s { display: block; opacity: 0.75; line-height: 1.55; }
+  .ar img.art { display: block; max-width: 100%; height: auto; margin-bottom: 0.75rem; border-radius: 3px; }
   #finale { max-width: 34rem; margin: 0 auto; padding: 0 1.25rem 6rem; }
   #leaders { display: none; }
 
@@ -256,6 +270,13 @@ const nf = (n: number) => n.toLocaleString('en-US');
   }
   .js .ar .tx { width: 100%; }
   .js .ar.R .tx { text-align: right; }
+  /* Positioned independently of the .tx flex flow — main.ts writes its rect
+     every frame from frame()'s already-computed `art` box (§5 rule 3: art and
+     text share one box, but never contend for the same space). */
+  .js .ar img.art {
+    position: absolute; left: 0; top: 0; display: block;
+    object-fit: contain; pointer-events: none;
+  }
   .js .ar .rule {
     display: block; height: 1px; width: 38px; background: currentColor;
     opacity: 0.42; margin-bottom: 11px;

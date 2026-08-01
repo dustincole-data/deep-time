@@ -69,6 +69,9 @@ const FIT = Math.round(CELL * 0.84);
 const EDGE_TOLERANCE = 2;
 /** Regenerations allowed before a subject is given up on and left empty. */
 const MAX_TRIES = 3;
+/** Waits for rate limits / 5xx. Separate budget: a request that never drew
+ *  anything must not consume one of the three quality attempts above. */
+const TRANSIENT_RETRIES = 6;
 
 /**
  * §11's locked style recipe, verbatim except for the grid sentence — this file
@@ -77,7 +80,11 @@ const MAX_TRIES = 3;
  * now that subjects are generated separately.
  */
 const STYLE = [
-  'A single subject, centred, on a pure flat solid pure-black background, with generous empty black margin on all four sides and nothing cropped or touching an edge.',
+  // The margin is stated as a fraction, not as "generous". Measured
+  // 2026-08-01: an adjectival ask fails on wide subjects — T. rex ran off its
+  // own frame on three consecutive attempts — because the model fills the
+  // square. A number it can act on is granted far more often.
+  'A single subject, drawn small and complete in the middle of a pure flat solid pure-black background. Leave at least 12% of the frame empty black on every side; the subject must be entirely inside the frame with nothing cropped and nothing touching any edge.',
   'No scenery, no habitat, no ground, no shadow.',
   'Bright, colourful painted natural-history specimen illustration. Soft brushy edges, no outline and no line art of any kind — form built entirely from masses of colour.',
   'Rich saturated colour, with its own distinct colour identity rather than a shared muted tone.',
@@ -134,13 +141,34 @@ function promptFor(id: string): string {
   return `${a.name.replace(/\*/g, '')}. ${a.analogy} ${a.negative}\n\n${STYLE}`;
 }
 
+/** A 429 or 5xx — the request never produced an image, so it must not count
+ *  against a subject's quality attempts. Carries the wait the API asked for. */
+class Transient extends Error {
+  waitMs: number;
+  constructor(message: string, waitMs: number) {
+    super(message);
+    this.waitMs = waitMs;
+  }
+}
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 async function generate(key: string, prompt: string, quality: string): Promise<string> {
   const res = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ model: 'gpt-image-1', prompt, size: '1024x1024', quality, n: 1 }),
   });
-  if (!res.ok) throw new Error(`gpt-image-1 ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  if (!res.ok) {
+    const body = (await res.text()).slice(0, 300);
+    if (res.status === 429 || res.status >= 500) {
+      // "Please try again in 12s." — obey the number the API gives us rather
+      // than guessing a backoff.
+      const asked = Number(/try again in (\d+(?:\.\d+)?)s/.exec(body)?.[1]);
+      throw new Transient(`${res.status} rate limited`, (Number.isFinite(asked) ? asked : 12) * 1000 + 1000);
+    }
+    throw new Error(`gpt-image-1 ${res.status}: ${body}`);
+  }
   const data = (await res.json()) as { data?: { b64_json?: string }[] };
   const b64 = data.data?.[0]?.b64_json;
   if (!b64) throw new Error('gpt-image-1 returned no image');
@@ -282,26 +310,41 @@ const browser = await chromium.launch();
 const page = await browser.newPage();
 let parts: (Analysed | null)[];
 try {
-  parts = await Promise.all(
-    prompts.map(async (prompt, i) => {
-      const id = args.ids[i]!;
-      for (let attempt = 1; attempt <= MAX_TRIES; attempt++) {
-        try {
-          const got = await analyse(page, await generate(key, prompt, args.quality), EDGE_TOLERANCE);
-          if (got && !got.touches) {
-            console.log(`  ok   ${id}${attempt > 1 ? ` (attempt ${attempt})` : ''}`);
-            return got;
-          }
-          const why = got ? 'runs off its own frame' : 'came back empty';
-          console.warn(`  retry ${id}: ${why} (attempt ${attempt}/${MAX_TRIES})`);
-        } catch (e) {
-          console.warn(`  retry ${id}: ${(e as Error).message} (attempt ${attempt}/${MAX_TRIES})`);
+  // Sequential, not Promise.all. The org's gpt-image limit is 5 images/min,
+  // and four subjects firing at once with retries trips it — which used to
+  // burn a subject's quality attempts on requests that never drew anything.
+  parts = [];
+  for (let i = 0; i < prompts.length; i++) {
+    const id = args.ids[i]!;
+    let got: Analysed | null = null;
+    let transientBudget = TRANSIENT_RETRIES;
+
+    for (let attempt = 1; attempt <= MAX_TRIES && !got; ) {
+      try {
+        const candidate = await analyse(page, await generate(key, prompts[i]!, args.quality), EDGE_TOLERANCE);
+        if (candidate && !candidate.touches) {
+          console.log(`  ok   ${id}${attempt > 1 ? ` (attempt ${attempt})` : ''}`);
+          got = candidate;
+          break;
         }
+        console.warn(
+          `  retry ${id}: ${candidate ? 'runs off its own frame' : 'came back empty'} (attempt ${attempt}/${MAX_TRIES})`,
+        );
+        attempt++;
+      } catch (e) {
+        if (e instanceof Transient && transientBudget-- > 0) {
+          console.warn(`  wait  ${id}: ${e.message}, retrying in ${Math.round(e.waitMs / 1000)}s`);
+          await sleep(e.waitMs);
+          continue; // never counts against the quality attempts
+        }
+        console.warn(`  retry ${id}: ${(e as Error).message} (attempt ${attempt}/${MAX_TRIES})`);
+        attempt++;
       }
-      console.error(`  FAIL ${id}: no clean generation in ${MAX_TRIES} attempts — quadrant left empty`);
-      return null;
-    }),
-  );
+    }
+
+    if (!got) console.error(`  FAIL ${id}: no clean generation in ${MAX_TRIES} attempts — quadrant left empty`);
+    parts.push(got);
+  }
 
   const png = Buffer.from((await composeSheet(page, parts)).split(',')[1]!, 'base64');
   const name = `sheet-${args.sheet ?? 'draft'}-${args.ids.join('-')}.png`;

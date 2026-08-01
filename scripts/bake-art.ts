@@ -117,7 +117,7 @@ const MANIFEST: ManifestEntry[] = [
     // toed feet again and Rodinia drew modern Africa; both need a redo (see
     // their `negative` fields in timeline.json).
     file: 'art/source/sheet-04-tiktaalik-anomalocaris-rodinia-iceberg.png',
-    quadrants: ['tiktaalik', 'burgess-shale', 'rodinia', 'antarctica-freezes'],
+    quadrants: ['', 'burgess-shale', '', 'antarctica-freezes'],
     isPlanet: false,
   },
   {
@@ -125,12 +125,14 @@ const MANIFEST: ManifestEntry[] = [
     // as a modern crocodile — short broad snout, nostrils at the snout tip —
     // which is the one thing its negative named.
     file: 'art/source/sheet-05-acid-rain-whiffs-goe-phytosaur.png',
-    quadrants: [
-      'steam-and-acid-rain',
-      'whiffs-of-oxygen',
-      'great-oxidation-ends',
-      'triassic-jurassic-extinction',
-    ],
+    quadrants: ['', 'whiffs-of-oxygen', 'great-oxidation-ends', ''],
+    isPlanet: false,
+  },
+  {
+    // Sheet 6, 2026-07-31 — the redo sheet, approved batch. Supersedes
+    // sheet-04's tiktaalik and rodinia and sheet-05's phytosaur and rock.
+    file: 'art/source/sheet-06-tiktaalik-rodinia-phytosaur-acidrock.png',
+    quadrants: ['tiktaalik', 'rodinia', 'triassic-jurassic-extinction', 'steam-and-acid-rain'],
     isPlanet: false,
   },
   {

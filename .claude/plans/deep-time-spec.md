@@ -694,6 +694,9 @@ Required per subject, all three:
 1. **A concrete physical analogy** — *"like a stack of bowls"*, *"like a pinecone or crocodile skin"*, *"three flat blades, not a fish tail"*. Analogies beat adjectives every time. **This clause is also the `alt` text** ([§10](#10--accessibility)).
 2. **An explicit negative naming the model's default** — *"it is not an elephant and does not have large ears"*, *"it is not a palm tree"*, *"it is a rock, not a mushroom"*.
 3. **Verification against a real reference before it ships** ([PhyloPic](https://www.phylopic.org/), published reconstructions). Every subject ships with the reference it was checked against, recorded in `art.json`. **Non-negotiable.**
+4. **Nothing near-black anywhere inside the subject.** The prohibition stated below for the planet discs is not a planet rule — the luminance key (`α = smoothstep(0.045, 0.14, L)`) runs on *every* cut-out, so any region below L ≈ 0.14 is punched out of the artwork wherever it sits. Prompt a light-to-mid value overall and render recesses as dents a shade or two darker, never as dark holes.
+
+   **The 3:1 gate cannot catch this, and that is the point of writing it down.** Measured 2026-07-31 on the acid-rain rock, the first genuinely dark subject drawn: its pits keyed to alpha 0, `haloRings` then filled those interior holes with the light halo, and it baked as a white-speckled golf ball — at **8.67:1**. A hole full of halo is exactly what the gate is measuring *for* at the outer boundary, so a subject eaten from the inside scores as a comfortable pass. The remedy is the one this section already names: the art is revised.
 
 **Ten subjects are in the obscure class** and should be assumed to need more than one round: stromatolite · banded iron · *Grypania* · *Qingshania* · *Bangiomorpha* · Francevillian structures · the 890 Ma sponge · *Charnia* · *Anomalocaris* · *Cooksonia* · *Lepidodendron*.
 

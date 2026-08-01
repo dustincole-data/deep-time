@@ -8,7 +8,6 @@
     "Sections still to be filled by their own build steps: field keyframes (§6), solved scrims (solve-scrim.ts),",
     "finale beats (§9), copy deck (§8)."
   ],
-
   "constants": {
     "INTRO": 1600,
     "RUN": 115000,
@@ -19,16 +18,38 @@
     "EARTH_AGE": 4600000000,
     "READABILITY_FLOOR_PX": 600
   },
-
   "eras": [
-    { "label": "HADEAN", "fromMa": 4600, "toMa": 4031 },
-    { "label": "ARCHEAN", "fromMa": 4031, "toMa": 2500 },
-    { "label": "PROTEROZOIC", "fromMa": 2500, "toMa": 538.8 },
-    { "label": "PALEOZOIC", "fromMa": 538.8, "toMa": 251.902 },
-    { "label": "MESOZOIC", "fromMa": 251.902, "toMa": 66.043 },
-    { "label": "CENOZOIC", "fromMa": 66.043, "toMa": 0 }
+    {
+      "label": "HADEAN",
+      "fromMa": 4600,
+      "toMa": 4031
+    },
+    {
+      "label": "ARCHEAN",
+      "fromMa": 4031,
+      "toMa": 2500
+    },
+    {
+      "label": "PROTEROZOIC",
+      "fromMa": 2500,
+      "toMa": 538.8
+    },
+    {
+      "label": "PALEOZOIC",
+      "fromMa": 538.8,
+      "toMa": 251.902
+    },
+    {
+      "label": "MESOZOIC",
+      "fromMa": 251.902,
+      "toMa": 66.043
+    },
+    {
+      "label": "CENOZOIC",
+      "fromMa": 66.043,
+      "toMa": 0
+    }
   ],
-
   "arrivals": [
     {
       "id": "solar-system",
@@ -38,6 +59,9 @@
       "name": "The Solar System forms",
       "line": "Dust and ice collapse around a new star. Nothing older has ever been dated.",
       "art": "subject",
+      "analogy": "a fist-sized slice of stony meteorite, cut and polished flat: a dark grey matrix studded with a scatter of pale chalky-white, irregular rounded blobs a centimetre or two across",
+      "negative": "not a planet, not a swirling disc of dust and gas, not a starfield — one physical rock, cut open and held still, the oldest dated solid material in the solar system rather than an artist's impression of its birth. The matrix stays a mid-to-dark grey, never black or near-black, or the luminance key punches holes through it; the pale inclusions are chalky white-grey, dull, not glowing and not metallic.",
+      "reference": "Allende meteorite CAI specimen photographs — AMNH 4880 (amnh.org); Connelly et al. 2012, *Science*",
       "source": "Connelly et al. 2012, *Science* — CAIs 4567.30 ± 0.16 Ma"
     },
     {
@@ -61,6 +85,9 @@
       "name": "The Moon is torn out",
       "line": "A Mars-sized body strikes, at least 4.51 billion years ago. The debris becomes a Moon that hangs enormous and close.",
       "art": "subject",
+      "analogy": "a small sphere of molten rock hanging alone against black, dull orange-red overall with brighter cracks of yellow-white light breaking through its surface",
+      "negative": "not the grey, cratered Moon of today — freshly torn from Earth it is still glowing rock, the same register as the Earth-full-size portrait rather than a rocky moon. Nothing on it may be black or near-black; darker patches read as dimmer glow, never as dark holes or shadow.",
+      "reference": "giant-impact hypothesis reconstructions (NASA/SwRI simulation renders); styled to match the molten-Hadean Earth portrait already baked, §11",
       "source": "Barboni et al. 2017, *Sci. Adv.* — ≥4.51 Ga"
     },
     {
@@ -81,6 +108,9 @@
       "name": "Liquid water",
       "line": "A single zircon crystal records water at the surface.",
       "art": "subject",
+      "analogy": "one tiny gem-like crystal shown much larger than life, reddish-brown and translucent, a slender six-sided prism with pointed pyramidal ends, alone against black",
+      "negative": "not a boulder, not a cluster, not a vein in rock — a single isolated crystal, magnified the way a specimen diagram magnifies something smaller than a grain of rice. Reddish-brown to amber and translucent, never black or near-black, and never cut with flat gemstone facets — natural crystal faces only.",
+      "reference": "Jack Hills zircon grain photomicrographs — Cavosie et al. 2018 review figures; Wilde et al. 2001, *Nature*",
       "source": "Wilde et al. 2001, *Nature* — 4,404 ± 8 Ma"
     },
     {
@@ -104,6 +134,9 @@
       "name": "The oldest surviving crust",
       "line": "Nuvvuagittuq, Quebec — a scrap of the first ocean floor.",
       "art": "subject",
+      "analogy": "a hand-sized slab of grey-beige banded rock, its bands running in soft parallel waves, with a scatter of small dark purple-red garnet flecks caught in the pale bands",
+      "negative": "not dark green like an ordinary amphibolite — this rock's whole identity is that it is paler than the rock it resembles ('faux'-amphibolite). The base colour is light grey-beige, never black or near-black, and the banding is soft and wavy, not tightly folded like the Rodinia gneiss elsewhere on this page.",
+      "reference": "Nuvvuagittuq faux-amphibolite specimen photographs — sciencemall-usa.com; Flickr (jsjgeology); O'Neil et al. 2025, *Science*",
       "source": "O'Neil et al. 2025, *Science* — ≥4.16 Ga"
     },
     {
@@ -114,6 +147,9 @@
       "name": "The oldest rock we still have",
       "line": "Acasta gneiss, north-west Canada. The Hadean ends here because this is where the record starts.",
       "art": "subject",
+      "analogy": "a hand-sized slab of streaky rock, straight alternating bands of pale pinkish-grey and darker brownish-grey, with a few small red garnet flecks",
+      "negative": "not tightly folded like the later Rodinia gneiss elsewhere on this page — these bands run straighter and more evenly striped. The darker bands stay a mid brownish-grey, never black or near-black.",
+      "reference": "Acasta Gneiss specimen photographs — Prince of Wales Northern Heritage Centre; C&EN 2023 (cen.acs.org)",
       "source": "Bowring & Williams 1999; ICS boundary 4,031 Ma"
     },
     {
@@ -124,6 +160,9 @@
       "name": "The oldest sedimentary rocks",
       "line": "Isua, Greenland — mud, laid down under water, by a real ocean.",
       "art": "subject",
+      "analogy": "a hand-sized slab of fine-grained rock split along its bedding, showing dozens of thin, slightly wavy parallel layers stacked like the pages of a closed book, pale grey-green throughout",
+      "negative": "not the bold red-and-black striping of a banded iron formation — that is a different, later rock on this page. These layers are finer, closer together and all in a narrow grey-green range: the record of ordinary mud settling in water, not iron precipitating out of it. Nothing in the layers may be black or near-black.",
+      "reference": "Isua supracrustal belt metasediment specimen photographs — FossilEra; Nutman et al. 1997, *Precambrian Res.*",
       "source": "Nutman et al. 1997, *Precambrian Res.*"
     },
     {
@@ -135,6 +174,9 @@
       "name": "The first trace of life",
       "line": "Isotopically light carbon in Isua sediment. Not a fossil — a chemical shadow, and the oldest one anyone accepts.",
       "art": "subject",
+      "analogy": "the same pale grey-green layered rock as the Isua sediment beside it on this page, but with a scatter of dull dark-grey graphite specks and short streaks caught between its layers, like flecks of pencil lead in stone",
+      "negative": "not a fossil and not any visible shape of a living thing — the evidence is chemical, a carbon isotope ratio, not a body, so nothing organism-shaped may appear anywhere on the rock. The graphite specks are dull dark grey, never black or near-black, or the luminance key punches them out of the artwork. First round (2026-08-01): the rock itself matched, but it shared a sheet with Tiktaalik in the adjacent quadrant, whose snout sat hard against the sheet's vertical midline and bled a sliver of orange across it — inflating this quadrant's trimmed bounding box to 779×623 against its sibling rock's 600×501. Not a fault of this subject's own prompt; redo needs its neighbour drawn with real clearance from the boundary, not a change to this description.",
+      "reference": "Isua metasediment graphite-inclusion specimen photographs (same locality as the oldest sedimentary rocks); Rosing 1999, *Science*; Ohtomo et al. 2014",
       "source": "Rosing 1999, *Science*; Ohtomo et al. 2014"
     },
     {
@@ -145,7 +187,10 @@
       "name": "Microbial mats",
       "line": "Life is a film on the seabed, and stays that way for three billion years.",
       "art": "subject",
-      "source": "Noffke et al. 2013, *Astrobiology*"
+      "source": "Noffke et al. 2013, *Astrobiology*",
+      "analogy": "a broad, low, wrinkled sheet lying flat on sediment, like the crumpled skin on cooled paint — olive-green and brown, puckered into ridges and shallow domes a few centimetres across",
+      "negative": "not coral, not seaweed, not any branching or upright growth: a microbial mat is a flat film ON the sediment, with no stems, fronds or plant-like structure. Not a stromatolite either — no built-up column and no internal layering, those arrive later on this page. Keep it light-to-mid in value; the shadows between wrinkles are shallow dents, never near-black.",
+      "reference": "modern Shark Bay and Sippewissett microbial mat photographs; Noffke et al. 2013, *Astrobiology*"
     },
     {
       "id": "stromatolites",
@@ -168,7 +213,10 @@
       "name": "Microbes that eat sulfur",
       "line": "No oxygen, no sunlight needed — chemistry alone.",
       "art": "subject",
-      "source": "Wacey et al. 2011, *Nature Geosci.*"
+      "source": "Wacey et al. 2011, *Nature Geosci.*",
+      "analogy": "a cluster of tiny rod- and sphere-shaped cells at high magnification, translucent pale yellow-green, each scattered with bright sulfur granules inside it like mustard seeds suspended in glass",
+      "negative": "not a plant, not an animal, not anything with a body plan — these are single cells. Not chlorophyll-green leafy algae: the colour comes from sulfur, so it reads pale yellow and warm. No cell may be near-black, and the granules must stay bright.",
+      "reference": "Wacey et al. 2011, *Nature Geoscience* — Strelley Pool microfossils; modern sulfur-oxidising bacteria light micrographs"
     },
     {
       "id": "s2-impact",
@@ -178,7 +226,10 @@
       "name": "A fifty-kilometre asteroid",
       "line": "The S2 impact — 50 to 200 times the mass of the one that killed the dinosaurs. It boils the top of the ocean, and life gets better.",
       "art": "subject",
-      "source": "Drabon et al. 2024, *PNAS*"
+      "source": "Drabon et al. 2024, *PNAS*",
+      "analogy": "one irregular potato-shaped rock tumbling alone, pitted all over with shallow overlapping craters like Phobos, in warm mid-grey and tan",
+      "negative": "not a fireball, not a streaking meteor with a flame trail, and not an impact scene with Earth in frame — this is the body itself, a single cratered rock. Craters are shallow dents a shade or two darker, never black holes, or the luminance key punches them out of the artwork.",
+      "reference": "Phobos and Bennu spacecraft imagery; Drabon et al. 2024, *PNAS* — S2 impactor, 37–58 km"
     },
     {
       "id": "first-continents",
@@ -188,7 +239,10 @@
       "name": "The first continents",
       "line": "Cratons stabilise. There is now permanent dry land.",
       "art": "subject",
-      "source": "Hawkesworth et al. 2020"
+      "source": "Hawkesworth et al. 2020",
+      "analogy": "a hand-sized block of coarse pink-and-grey granite, speckled with large blocky feldspar crystals, glassy quartz and small flecks of mica — the light, buoyant rock continents are made of",
+      "negative": "not the fine dark banding of a gneiss: the oldest rock elsewhere on this page is a gneiss and these two must not read as the same specimen. Granite is coarse and speckled, never layered. Not a landscape, not an island, not a map — one hand specimen. Mica flecks are mid-grey, never black.",
+      "reference": "coarse-grained granite hand-specimen photographs; Hawkesworth et al. 2020"
     },
     {
       "id": "photosynthesis",
@@ -199,7 +253,10 @@
       "name": "Photosynthesis",
       "line": "Cyanobacteria split water and let the oxygen go. It will take 600 million years to matter.",
       "art": "subject",
-      "source": "Sánchez-Baracaldo et al. 2021, *Proc. R. Soc. B*"
+      "source": "Sánchez-Baracaldo et al. 2021, *Proc. R. Soc. B*",
+      "analogy": "a single gently curved filament of blue-green cells strung end to end like a string of beads inside a clear sheath, each cell a rounded cylinder",
+      "negative": "not a plant, not a leaf, not seaweed — a cyanobacterium is one filament of cells. Not grass-green: the colour is a distinctive blue-green. The sheath is translucent, not a dark outline, and no cell may be near-black.",
+      "reference": "modern *Oscillatoria* and *Nostoc* light micrographs; Sánchez-Baracaldo et al. 2021, *Proc. R. Soc. B*"
     },
     {
       "id": "first-ice-age",
@@ -209,7 +266,10 @@
       "name": "The first ice age",
       "line": "The Pongola glaciation. Ice at mid-latitudes, on a planet with no oxygen.",
       "art": "subject",
-      "source": "Young et al. 1998; Ojakangas et al. 2014"
+      "source": "Young et al. 1998; Ojakangas et al. 2014",
+      "analogy": "a rounded boulder of pale grey diamictite — angular pebbles of many sizes frozen into a fine matrix, like fruitcake turned to stone — with one flat face bearing straight parallel scratches where ice dragged it across bedrock",
+      "negative": "not a snowy landscape, not a glacier and not an iceberg: the evidence for the first ice age is a rock. Not a smooth beach cobble — the embedded clasts must be angular and unsorted. The scratches are shallow grooves, never black lines.",
+      "reference": "glacial diamictite and striated pavement specimen photographs; Young et al. 1998; Ojakangas et al. 2014"
     },
     {
       "id": "cyanobacteria-everywhere",
@@ -220,7 +280,10 @@
       "line": "Still no free oxygen in the air — the rock is drinking all of it.",
       "art": "subject",
       "recurrence": "photosynthesis",
-      "source": "as 3,000 Ma"
+      "source": "as 3,000 Ma",
+      "analogy": "a dense tangle of many blue-green filaments massed together into a loose floating mat, each filament a chain of rounded cells like a string of beads",
+      "negative": "the same organism as the photosynthesis subject earlier on this page, drawn as a crowd rather than one strand, and it must read as the same material. Not a plant, not seaweed, not leafy, not branching. No dark outlines and nothing near-black.",
+      "reference": "as photosynthesis — modern *Oscillatoria* and *Nostoc* light micrographs"
     },
     {
       "id": "whiffs-of-oxygen",
@@ -252,7 +315,10 @@
       "name": "Banded iron",
       "line": "Oxygen meets dissolved iron and it rusts out of the sea, in bands, for a billion years.",
       "art": "subject",
-      "source": "Bekker et al. 2010, *Econ. Geol.*"
+      "source": "Bekker et al. 2010, *Econ. Geol.*",
+      "analogy": "a cut block of banded iron formation standing on end, crossed by dozens of narrow wavy parallel bands — deep brick-red and maroon jasper alternating with silver-grey iron layers, the bands gently folded, varying in thickness, some pinching out and some swelling",
+      "negative": "not a cliff, canyon or landscape, and not an abstract stripe pattern: one hand-sized specimen with rough broken edges. Not the fine even grey-green layering of the Isua sediment elsewhere on this page — these bands are bold, red and high-contrast. The silver-grey bands are a mid-tone metallic grey, never black.",
+      "reference": "banded iron formation hand-specimen photographs (Hamersley, Marquette); Bekker et al. 2010, *Econ. Geol.*"
     },
     {
       "id": "banded-iron-still",
@@ -263,7 +329,10 @@
       "line": "Still rusting out of the sea. It has been a hundred million years.",
       "art": "subject",
       "recurrence": "banded-iron",
-      "source": "as 2,600 Ma"
+      "source": "as 2,600 Ma",
+      "analogy": "the same banded iron formation as earlier on this page, drawn as a broader, thicker slab — many more red-and-silver bands stacked across it, the layering denser and the folding tighter",
+      "negative": "the same rock as the 2,600 Ma banded iron and it must read as the same material: bold red jasper alternating with metallic silver-grey. Not a landscape and not a stripe pattern. The silver bands stay mid-tone grey, never black.",
+      "reference": "as banded-iron — Bekker et al. 2010, *Econ. Geol.*"
     },
     {
       "id": "great-oxidation-begins",
@@ -287,7 +356,10 @@
       "line": "Oxygen destroys the methane greenhouse and the planet freezes, three times over.",
       "art": "subject",
       "recurrence": "first-ice-age",
-      "source": "Young 2013 — 2.45–2.22 Ga"
+      "source": "Young 2013 — 2.45–2.22 Ga",
+      "analogy": "a single buff boulder dropped into fine layered mud, the layers directly beneath it bent and sagging under its weight — a dropstone, the signature of ice rafting",
+      "negative": "not a snowy scene, not a glacier and not an iceberg: the evidence is a rock. The bending of the layers underneath is the whole point and must be clearly visible. Not the striated boulder used for the first ice age earlier on this page — this one sits in sediment. Nothing near-black.",
+      "reference": "Gowganda Formation dropstone photographs; Young 2013"
     },
     {
       "id": "sky-is-blue",
@@ -321,7 +393,10 @@
       "name": "Francevillian structures?",
       "line": "Centimetre-scale shapes in Gabon. Possibly the oldest multicellular life; possibly not life at all.",
       "art": "subject",
-      "source": "El Albani et al. 2010, *Nature*; 2014, *PLoS ONE*"
+      "source": "El Albani et al. 2010, *Nature*; 2014, *PLoS ONE*",
+      "analogy": "several flat, lobed, coin-sized discs on a slab of buff mudstone, each with a crinkled raised rim and a smoother middle, like blobs of dried wax pressed into the rock",
+      "negative": "not a fossil animal, not a shell, and nothing with recognisable body parts — whether these are life at all is disputed, so they must read as ambiguous shapes in rock rather than as a creature. Not regular circles like coins: the outlines are irregular and lobed. Nothing near-black.",
+      "reference": "El Albani et al. 2010, *Nature*; El Albani et al. 2014, *PLoS ONE* — Francevillian B specimens"
     },
     {
       "id": "oxygen-falls-back",
@@ -342,7 +417,10 @@
       "name": "*Grypania*?",
       "line": "A coiled ribbon in Michigan iron. Big enough to see, but nothing of its cells survives.",
       "art": "subject",
-      "source": "Han & Runnegar 1992, *Science*"
+      "source": "Han & Runnegar 1992, *Science*",
+      "analogy": "a single flat ribbon coiled into a loose open spiral on a reddish slab of iron-rich rock, like a length of tape laid down in a curl — smooth-edged, uniform in width, about a centimetre across",
+      "negative": "not a shell and not an ammonite: no chambers, no ribs, no ridges. It is a smooth featureless ribbon, and nothing of its internal structure survives. Not a worm with a head or segments. The carbon film reads mid-grey against the red rock, never near-black, or the luminance key punches it out.",
+      "reference": "Han & Runnegar 1992, *Science* — *Grypania spiralis*, Negaunee Iron Formation"
     },
     {
       "id": "banded-iron-stops",
@@ -362,7 +440,10 @@
       "name": "The first complex cells",
       "line": "*Qingshania* — cells with a nucleus, stuck together on purpose.",
       "art": "subject",
-      "source": "Miao et al. 2024, *Sci. Adv.*"
+      "source": "Miao et al. 2024, *Sci. Adv.*",
+      "analogy": "a short straight filament of a few large box-shaped cells joined end to end like the carriages of a train, each cell far chunkier than a bacterium and holding one softly-defined rounded body inside it",
+      "negative": "not a plant, not a leaf and not seaweed. Not a thin bacterial thread — the whole point is that these cells are large and compartmented, each carrying a nucleus, so they must look chunky and blocky rather than hair-like. The nucleus is a soft mid-toned disc, never a black dot.",
+      "reference": "Miao et al. 2024, *Sci. Adv.* — *Qingshania magnifica*"
     },
     {
       "id": "sex",
@@ -372,7 +453,10 @@
       "name": "Sex",
       "line": "*Bangiomorpha*, a red alga. The oldest known sexual reproduction.",
       "art": "subject",
-      "source": "Gibson et al. 2018, *Geology*"
+      "source": "Gibson et al. 2018, *Geology*",
+      "analogy": "a short upright tuft of red alga: a single unbranched filament of stacked disc-shaped cells, like a narrow pile of coins, anchored at its base by a small holdfast",
+      "negative": "not a leafy frond, not kelp and not a branching plant — *Bangiomorpha* is one narrow filament of stacked cells on a holdfast. Not green: it is a red alga, so a warm pink-red. No dark outline and nothing near-black.",
+      "reference": "Gibson et al. 2018, *Geology*; modern *Bangia* micrographs — *Bangiomorpha pubescens*"
     },
     {
       "id": "rodinia",
@@ -395,7 +479,10 @@
       "name": "The first sponges?",
       "line": "Sponge-like structures in Canadian reef rock, 300 million years before any agreed animal.",
       "art": "subject",
-      "source": "Turner 2021, *Nature*"
+      "source": "Turner 2021, *Nature*",
+      "analogy": "an irregular pale lump of reef limestone with a fine network of branching tubes winding through it, like a tangle of thread or the vermicular texture inside a bath sponge, exposed on a cut face",
+      "negative": "not a modern vase- or barrel-shaped sponge sitting on a reef: what survives is a microscopic meshwork inside rock, and the identification is disputed, so this is a rock specimen with a tube network in it rather than an animal. The tubes are mid-toned, never near-black holes.",
+      "reference": "Turner 2021, *Nature* — Little Dal reef vermiform microstructure"
     },
     {
       "id": "boring-billion-ends",
@@ -427,7 +514,10 @@
       "name": "The ice retreats",
       "line": "Cap carbonate, laid down in a few thousand years on top of the ice.",
       "art": "subject",
-      "source": "Rooney et al. 2015"
+      "source": "Rooney et al. 2015",
+      "analogy": "a slab of pale cream-and-buff limestone in fine even layers, its top surface crossed by low rolling ripples, sitting sharply on a rougher darker rock beneath — the boundary between the two flat and abrupt",
+      "negative": "not an iceberg, not a glacier and not melting ice: the evidence is the rock that formed on top of what the ice left. Not the red-and-silver banding of banded iron — cap carbonate is pale, creamy and finely layered. The rock beneath stays mid-toned, never black.",
+      "reference": "Marinoan and Sturtian cap carbonate outcrop and hand-specimen photographs; Rooney et al. 2015, *Geology*"
     },
     {
       "id": "ice-breaks-for-good",
@@ -439,7 +529,10 @@
       "line": "A second freeze, the Marinoan — perhaps only four million years — and then it is over. The Ediacaran begins.",
       "art": "subject",
       "recurrence": "snowball-earth",
-      "source": "ICS base Ediacaran 635.0 Ma; Wang et al. 2025, *PNAS*"
+      "source": "ICS base Ediacaran 635.0 Ma; Wang et al. 2025, *PNAS*",
+      "analogy": "a rounded slab of glacial diamictite whose top half gives way to smooth even meltwater-laid bedding — jumbled angular pebbles below, quiet flat layers above, with a clean line between them",
+      "negative": "not a landscape, not an ice sheet and not a thaw scene: one rock specimen recording the transition. It must read as the same family of glacial rock as the earlier ice subjects on this page. Nothing near-black between the clasts.",
+      "reference": "Marinoan diamictite–cap carbonate contact specimens; ICS base Ediacaran 635.0 Ma; Wang et al. 2025, *PNAS*"
     },
     {
       "id": "charnia",
@@ -461,7 +554,10 @@
       "name": "The Cambrian begins",
       "line": "Shells, eyes, guts, predators, and the first things burrowing through mud on purpose.",
       "art": "subject",
-      "source": "ICS 2023 — 538.8 ± 0.6 Ma"
+      "source": "ICS 2023 — 538.8 ± 0.6 Ma",
+      "analogy": "a trilobite seen from directly above: a flat oval shield divided lengthwise into three lobes, a broad crescent head bearing two crescent eyes, a jointed thorax of repeated segments, and a small tail plate",
+      "negative": "not a woodlouse, not a horseshoe crab and not a beetle — the three lengthwise lobes and the crescent head shield are the defining shapes and must be unmistakable. No insect antennae. Keep it a warm mid-toned brown-orange, never near-black.",
+      "reference": "*Olenellus* and *Paradoxides* specimen photographs; ICS 2023 — 538.8 ± 0.6 Ma"
     },
     {
       "id": "burgess-shale",
@@ -483,7 +579,10 @@
       "name": "Plants reach land",
       "line": "Spores, nothing you could call a plant yet. Land has been bare for four billion years.",
       "art": "subject",
-      "source": "Rubinstein et al. 2010, *New Phytol.*"
+      "source": "Rubinstein et al. 2010, *New Phytol.*",
+      "analogy": "a cluster of four spores fused into one tetrahedral group — a cryptospore tetrad — each spore a small rounded ball with a finely pebbled surface, the four packed together like soap bubbles",
+      "negative": "not a plant, not a leaf, not a stem and not moss: at this date there is nothing anyone would call a plant, only spores. Not a single sphere — the diagnostic is the bonded group of four. Keep them warm translucent amber, never near-black.",
+      "reference": "Rubinstein et al. 2010, *New Phytol.* — Ordovician cryptospore tetrads"
     },
     {
       "id": "late-ordovician-extinction",
@@ -493,7 +592,10 @@
       "name": "The Late Ordovician extinction",
       "line": "Ice, then anoxia. About 85% of species go.",
       "art": "subject",
-      "source": "Harper et al. 2014"
+      "source": "Harper et al. 2014",
+      "analogy": "several graptolite fossils fanning out from one point on a pale grey shale slab — each a narrow straight strip edged with fine regular teeth, like the blade of a hacksaw flattened into the rock",
+      "negative": "not a plant, not a fern frond and not a feather: graptolites are straight or gently curved toothed strips preserved as a flattened film. The film must read as a mid-tone silvery grey against a lighter slab, never black, or the luminance key punches it out of the artwork.",
+      "reference": "*Dicellograptus* and *Climacograptus* specimen photographs; Harper et al. 2014"
     },
     {
       "id": "cooksonia",
@@ -515,8 +617,9 @@
       "name": "*Tiktaalik*",
       "line": "A fish with a neck, and wrists.",
       "art": "subject",
-      "analogy": "a fish with a broad flat crocodile-shaped head, both eyes set on top of the skull looking upward, and a short neck between head and shoulder, its scaly body propped on two thick lobed front fins that end in a fan of stiff fin-rays",
-      "negative": "not a salamander, newt, lizard, amphibian or frog, and not an ordinary round-bodied fish either. Both halves matter at once. The head is flat and wide like a crocodile's, never rounded like a goldfish's, with the eyes on TOP of the skull, and a neck separates head from shoulder so the head could turn. Every limb ends in a flat fan of fin-rays with a smooth unbroken edge — no toes, no webbing, no separate fingers, no claws, nothing hand-shaped or foot-shaped anywhere on the animal. Four rounds (2026-07-31) each held one half and lost the other: legs and no fish, then a fish with no neck, then the neck back and webbed toed feet, then a standing frog. Negating the tetrapod has never worked and the last round was the worst. UNTRIED: drop the words neck, wrist, propped and limb entirely — they are what summon the tetrapod — and anchor to the familiar RIGHT thing instead, a coelacanth lying flat, with a flatter wider head.",
+      "analogy": "a coelacanth lying flat and horizontal, as if resting on a stream bed: the same heavy scales, the same three-lobed tail, and a pair of thick, fleshy-based front fins ending in a fan of stiff fin-rays — but with a much flatter, much wider head, almost crocodile-flat, and both eyes set on top of it, looking straight up",
+      "negative": "not standing, not walking, not upright on four legs, and not a salamander, newt, lizard, amphibian or frog. The whole animal lies flat and horizontal in the water, exactly like the coelacanth it is drawn from — the head is the one place it departs from an ordinary coelacanth, wider and flatter, with the eyes on the very top looking up rather than out to the sides. Every fin ends in a smooth unbroken fan of fin-rays — no toes, no fingers, no claws, nothing hand-shaped or foot-shaped anywhere on the animal. Four rounds (2026-07-31) each held one half of the animal and lost the other: an upright walking version with no fish left in it, then a fish missing the join between head and shoulders, then that join back but with toed feet, then a fully standing frog. Naming the tetrapod parts it must not have made it worse each round. Round five (2026-08-01), coelacanth-anchored and clear of neck/wrist/propped/limb: failed a third way — a small round-bodied orange reef fish, side-set eyes, no flattening to the head at all, nothing coelacanth-shaped beyond a vaguely lobed fin. Naming the coelacanth was not enough; the head's actual shape needs a second, independent anchor next round — e.g. a hammerhead shark's flattened head-plane, or a duck-billed platypus's flat broad snout, held next to the coelacanth's body and tail so the departure is anchored on both ends instead of asserted once.",
+      "reference": "Tiktaalik roseae holotype photographs and reconstructions — Daeschler et al. 2006, *Nature*; Field Museum; coelacanth (*Latimeria*) reference photographs, NOAA Fisheries / Smithsonian Ocean",
       "source": "Daeschler et al. 2006, *Nature*"
     },
     {
@@ -551,7 +654,10 @@
       "name": "The Great Dying",
       "line": "Siberian basalt cooks the ocean. 81% of marine species die, in about 60,000 years — one and a half pixels.",
       "art": "subject",
-      "source": "Burgess et al. 2014, *PNAS*"
+      "source": "Burgess et al. 2014, *PNAS*",
+      "analogy": "a thick slab of flood-basalt crust broken open, its top a ropy wrinkled skin like cooled porridge, with a narrow orange glow showing only in the deep cracks between the crusted plates",
+      "negative": "not a volcano with a cone, not an eruption scene and not a landscape — the Siberian Traps were floods of lava across flat ground, not a mountain. One slab. The crust stays a mid-toned grey-brown, never near-black, and the glow is confined to narrow cracks.",
+      "reference": "pāhoehoe basalt crust photographs; Siberian Traps flood basalt specimens; Burgess et al. 2014, *PNAS*"
     },
     {
       "id": "dinosaurs-and-mammals",
@@ -562,7 +668,10 @@
       "name": "The first dinosaurs, and the first mammals",
       "line": "Both lines appear inside the same eight million years. At this scale, the same moment.",
       "art": "subject",
-      "source": "Ischigualasto 231.4 ± 0.3 Ma; Santa Maria ~233 Ma"
+      "source": "Ischigualasto 231.4 ± 0.3 Ma; Santa Maria ~233 Ma",
+      "analogy": "two small animals side by side at the same scale, overlapping slightly so they read as one group: a slender bipedal dinosaur on long hind legs with its tail held level behind it, and beside it a shrew-sized furry mammal on four legs with a long pointed snout",
+      "negative": "not a large dinosaur and not a modern mouse — both are small and early. The dinosaur is lightly built and bipedal, never a bulky quadruped, and its tail is held level and never drags. The mammal is furry with a pointed snout, not a round-eared rodent. Neither may be near-black.",
+      "reference": "*Eoraptor* and *Herrerasaurus* reconstructions (Ischigualasto); *Morganucodon* reconstructions"
     },
     {
       "id": "triassic-jurassic-extinction",
@@ -597,7 +706,10 @@
       "name": "The first flowers",
       "line": "*Archaefructus*: no petals yet, but a flower — the oldest anyone can date. Before this, nothing was in bloom.",
       "art": "subject",
-      "source": "Sun et al. 2002, *Science*"
+      "source": "Sun et al. 2002, *Science*",
+      "analogy": "a slender aquatic stem with finely divided feathery leaves, carrying along its upper length a row of small paired seed pods and bare stamens attached directly to the stem, with no petals anywhere",
+      "negative": "not a modern flower: no petals, no sepals, no bloom and no blossom shape of any kind. *Archaefructus* is a thin water plant whose reproductive parts sit bare along the stem. Not a lily, not a magnolia, not a daisy. Nothing near-black.",
+      "reference": "Sun et al. 2002, *Science* — *Archaefructus sinensis* holotype"
     },
     {
       "id": "tyrannosaurus-rex",
@@ -607,7 +719,10 @@
       "name": "*Tyrannosaurus rex*",
       "line": "The last and largest of the tyrannosaurs, gone within two million years of the asteroid.",
       "art": "subject",
-      "source": "Fowler 2017, *PLOS ONE* — Hell Creek Fm. and equivalents, 68–66 Ma"
+      "source": "Fowler 2017, *PLOS ONE* — Hell Creek Fm. and equivalents, 68–66 Ma",
+      "analogy": "a huge two-legged predator held horizontal like a see-saw balanced over its hips — spine level, a long heavy tail carried straight out behind as a counterweight, a short deep S-curved neck, and an enormous blunt boxy head of thick conical teeth; tiny forelimbs held to the chest with exactly two clawed fingers, and thick bird-like hind legs with three forward-facing toes",
+      "negative": "not upright like a kangaroo, and the tail never drags on the ground — that reconstruction is a century out of date. Exactly two fingers on each hand, not three. No fur and no coat of feathers. Not green, not a lizard and not roaring. Keep it light-to-mid in value throughout.",
+      "reference": "*Tyrannosaurus rex* skeletal mounts AMNH 5027 and FMNH PR2081; modern horizontal-posture reconstructions"
     },
     {
       "id": "chicxulub",
@@ -629,7 +744,10 @@
       "name": "The first true primates",
       "line": "*Teilhardina* — not the primate-like mammals that came before it, but the first crown primate. It appears on three continents within 25,000 years, during a sudden burst of global heat.",
       "art": "subject",
-      "source": "Smith, Rose & Gingerich 2006, *PNAS* — Teilhardina, PETM onset ~56 Ma"
+      "source": "Smith, Rose & Gingerich 2006, *PNAS* — Teilhardina, PETM onset ~56 Ma",
+      "analogy": "a small squirrel-sized animal gripping a branch, its hands and feet wrapped right around it, with large forward-facing eyes, short soft fur and a long slender tail held out for balance",
+      "negative": "not a monkey and not a ring-tailed lemur: an early primate is small, generalised and squirrel-like. Not a rodent either — the giveaway is grasping hands with real fingers curled round the branch, and eyes facing forward rather than out to the sides. Nothing near-black.",
+      "reference": "*Teilhardina* and *Carpolestes* reconstructions; Bloch & Boyer 2002, *Science*"
     },
     {
       "id": "antarctica-freezes",
@@ -652,12 +770,13 @@
       "name": "The human line splits from the chimpanzees",
       "line": "Everything you would call human happens after this point — the next 175 pixels.",
       "art": "subject",
-      "source": "*Sahelanthropus* 7.2–6.8 Ma; genetic 6.5–9.3 Ma"
+      "source": "*Sahelanthropus* 7.2–6.8 Ma; genetic 6.5–9.3 Ma",
+      "analogy": "a single ape skull in three-quarter view: a low rounded braincase, a heavy continuous brow ridge above the eyes, a short flat face and a broad palate of small worn teeth",
+      "negative": "not a modern human skull with a high domed forehead, and not a modern chimpanzee — this is the common ancestor's grade, so the braincase stays low and the brow heavy. No flesh, no hair and no ape-man portrait. The eye sockets must be shallow mid-toned recesses, never near-black, or the luminance key punches holes straight through the skull.",
+      "reference": "*Sahelanthropus tchadensis* cranium TM 266-01-060-1; Brunet et al. 2002, *Nature*"
     }
   ],
-
   "withheldNote": "Held back from the scroll entirely, delivered in the finale fan. Label + date only. No line, no art, ever. Fan rows keep the point date (§8) — which is why `Fire, kept` shows `~800 ka` rather than the card notation `≥ 800 ka` it would carry if it had a card.",
-
   "withheld": [
     {
       "id": "ardipithecus",
@@ -731,83 +850,146 @@
       "source": null
     }
   ],
-
   "fieldNote": [
-    "The field keyframes (spec \u00a76). Colour is a DATA CHANNEL: the background is the era's actual",
+    "The field keyframes (spec §6). Colour is a DATA CHANNEL: the background is the era's actual",
     "sky and ocean colour, so it is a scientific claim and cannot drift into a decorative rainbow.",
-    "Every transition takes its TRUE duration in pixels \u2014 no arbitrary easing, no announced cuts \u2014",
+    "Every transition takes its TRUE duration in pixels — no arbitrary easing, no announced cuts —",
     "so the drift RATE is itself a data channel. Pixel positions are derived from `ma`, never stored.",
     "`origin` records where each value came from: `prototype` = the cadence prototype's measured table;",
-    "`spec` = forced by a \u00a76 rider; `approved` = authored here from §6's words and signed off by Dustin 2026-07-31."
+    "`spec` = forced by a §6 rider; `approved` = authored here from §6's words and signed off by Dustin 2026-07-31."
   ],
-
   "field": [
     {
-      "ma": 4600, "note": "black, molten glow / molten rock", "origin": "prototype",
-      "sky0": "#180402", "sky1": "#7d1a06", "horizon": "#100201", "ground": "#1c0503"
+      "ma": 4600,
+      "note": "black, molten glow / molten rock",
+      "origin": "prototype",
+      "sky0": "#180402",
+      "sky1": "#7d1a06",
+      "horizon": "#100201",
+      "ground": "#1c0503"
     },
     {
-      "ma": 4300, "note": "dim grey-white, thick steam and cloud / first ocean, dark", "origin": "approved",
-      "sky0": "#1a1c1e", "sky1": "#8e8d88", "horizon": "#14161a", "ground": "#101c22"
+      "ma": 4300,
+      "note": "dim grey-white, thick steam and cloud / first ocean, dark",
+      "origin": "approved",
+      "sky0": "#1a1c1e",
+      "sky1": "#8e8d88",
+      "horizon": "#14161a",
+      "ground": "#101c22"
     },
     {
-      "ma": 3800, "note": "clear, dim, washed blue-white / green", "origin": "approved",
-      "sky0": "#16222c", "sky1": "#93a8b0", "horizon": "#101a20", "ground": "#123322"
+      "ma": 3800,
+      "note": "clear, dim, washed blue-white / green",
+      "origin": "approved",
+      "sky0": "#16222c",
+      "sky1": "#93a8b0",
+      "horizon": "#101a20",
+      "ground": "#123322"
     },
     {
-      "ma": 3200, "note": "orange haze, sustained MODELLED / green", "origin": "prototype",
-      "sky0": "#2e1907", "sky1": "#ab6a1a", "horizon": "#170f06", "ground": "#0f3a28"
+      "ma": 3200,
+      "note": "orange haze, sustained MODELLED / green",
+      "origin": "prototype",
+      "sky0": "#2e1907",
+      "sky1": "#ab6a1a",
+      "horizon": "#170f06",
+      "ground": "#0f3a28"
     },
     {
-      "ma": 2700, "note": "the hazy state, held \u2014 the flicker cannot be drawn / green", "origin": "prototype",
-      "sky0": "#2b1808", "sky1": "#a4661c", "horizon": "#160f07", "ground": "#103a2a"
+      "ma": 2700,
+      "note": "the hazy state, held — the flicker cannot be drawn / green",
+      "origin": "prototype",
+      "sky0": "#2b1808",
+      "sky1": "#a4661c",
+      "horizon": "#160f07",
+      "ground": "#103a2a"
     },
     {
-      "ma": 2430, "note": "the last hazy state \u2014 the GOE clearing starts here / green", "origin": "prototype",
-      "sky0": "#2b1808", "sky1": "#a4661c", "horizon": "#160f07", "ground": "#103a2a"
+      "ma": 2430,
+      "note": "the last hazy state — the GOE clearing starts here / green",
+      "origin": "prototype",
+      "sky0": "#2b1808",
+      "sky1": "#a4661c",
+      "horizon": "#160f07",
+      "ground": "#103a2a"
     },
     {
-      "ma": 2220, "note": "haze gone for good, clear blue / still green", "origin": "prototype",
-      "sky0": "#0f2a44", "sky1": "#4c8dbe", "horizon": "#0c1e2e", "ground": "#12403c"
+      "ma": 2220,
+      "note": "haze gone for good, clear blue / still green",
+      "origin": "prototype",
+      "sky0": "#0f2a44",
+      "sky1": "#4c8dbe",
+      "horizon": "#0c1e2e",
+      "ground": "#12403c"
     },
     {
-      "ma": 1800, "note": "blue / still green \u2014 banded iron is still running", "origin": "prototype",
-      "sky0": "#0d2a45", "sky1": "#468ab8", "horizon": "#0b1f2f", "ground": "#114442"
+      "ma": 1800,
+      "note": "blue / still green — banded iron is still running",
+      "origin": "prototype",
+      "sky0": "#0d2a45",
+      "sky1": "#468ab8",
+      "horizon": "#0b1f2f",
+      "ground": "#114442"
     },
     {
-      "ma": 1600, "note": "blue / ocean has finished turning green \u2192 blue", "origin": "approved",
-      "sky0": "#0d2a45", "sky1": "#468ab8", "horizon": "#0b1f2f", "ground": "#14495e"
+      "ma": 1600,
+      "note": "blue / ocean has finished turning green → blue",
+      "origin": "approved",
+      "sky0": "#0d2a45",
+      "sky1": "#468ab8",
+      "horizon": "#0b1f2f",
+      "ground": "#14495e"
     },
     {
-      "ma": 735, "note": "held, pre-freeze \u2014 Snowball is a flash, not a stretch", "origin": "spec",
-      "sky0": "#0d2a45", "sky1": "#468ab8", "horizon": "#0b1f2f", "ground": "#14495e"
+      "ma": 735,
+      "note": "held, pre-freeze — Snowball is a flash, not a stretch",
+      "origin": "spec",
+      "sky0": "#0d2a45",
+      "sky1": "#468ab8",
+      "horizon": "#0b1f2f",
+      "ground": "#14495e"
     },
     {
-      "ma": 717, "note": "Sturtian \u2014 sky deep BLUE (\u00a76 rider), the white belongs to the ice", "origin": "spec",
-      "sky0": "#0c1e34", "sky1": "#3f76a8", "horizon": "#6f8ea3", "ground": "#dfeef5"
+      "ma": 717,
+      "note": "Sturtian — sky deep BLUE (§6 rider), the white belongs to the ice",
+      "origin": "spec",
+      "sky0": "#0c1e34",
+      "sky1": "#3f76a8",
+      "horizon": "#6f8ea3",
+      "ground": "#dfeef5"
     },
     {
-      "ma": 635, "note": "the ice breaks for good / Ediacaran sea", "origin": "prototype",
-      "sky0": "#0d2c3c", "sky1": "#2f8290", "horizon": "#08222a", "ground": "#0d3c3a"
+      "ma": 635,
+      "note": "the ice breaks for good / Ediacaran sea",
+      "origin": "prototype",
+      "sky0": "#0d2c3c",
+      "sky1": "#2f8290",
+      "horizon": "#08222a",
+      "ground": "#0d3c3a"
     },
     {
-      "ma": 0, "note": "one slow ramp to daylight \u2014 solar luminosity really does rise ~30% MODELLED", "origin": "approved",
-      "sky0": "#0f3d63", "sky1": "#6fb2dc", "horizon": "#2a4d5c", "ground": "#14506b"
+      "ma": 0,
+      "note": "one slow ramp to daylight — solar luminosity really does rise ~30% MODELLED",
+      "origin": "approved",
+      "sky0": "#0f3d63",
+      "sky1": "#6fb2dc",
+      "horizon": "#2a4d5c",
+      "ground": "#14506b"
     }
   ],
-
   "finaleNote": [
-    "The finale (spec \u00a79). Beat lengths are in px from RUN_END and sum to FINALE.",
+    "The finale (spec §9). Beat lengths are in px from RUN_END and sum to FINALE.",
     "`drainPad` is added to the 7 Ma card's overrun: the card lands at 116,425 and wants 660px of",
-    "dwell, so it releases 485px into the finale and the drain runs 485 + 40 = 525px (\u00a79 staging 1).",
-    "Two beats are deliberately empty. \u00a715: cutting either one will be proposed and must be refused.",
-    "The copy is verbatim from \u00a78 and every number in it is recomputed from `constants` by the",
-    "tests \u2014 two of them were wrong in an earlier prototype.",
-    "copy.epilogue CUT 2026-07-31: its claim (T. rex and the first primates could not fit) is",
-    "false now that both are real arrivals (Dustin's call). \u00a79 beat 7 'left holding' (275px, the",
-    "last thing the visitor sees) is open \u2014 STOP AND ASK, do not invent replacement copy."
+    "dwell, so it releases 485px into the finale and the drain runs 485 + 40 = 525px (§9 staging 1).",
+    "Two beats are deliberately empty. §15: cutting either one will be proposed and must be refused.",
+    "The copy is verbatim from §8 and every number in it is recomputed from `constants` by the",
+    "tests — two of them were wrong in an earlier prototype.",
+    "copy.epilogue CUT 2026-07-31: its claim (T. rex and the first primates could not fit) went",
+    "false once both became real arrivals (Dustin's call). RESOLVED 2026-08-01, Dustin's call:",
+    "flip the story instead of dropping it — both stayed by breaking the 600px floor (§7) on",
+    "purpose, at 49px and 251px from Chicxulub. Numbers recomputed from `constants` by the tests,",
+    "same as the rest of this copy."
   ],
-
   "finale": {
     "beats": {
       "drainPad": 40,
@@ -822,8 +1004,8 @@
     "copy": {
       "seamCaption": "never drawn on the page you just scrolled.",
       "closing": "The last ten happened in the final 110 of 115,000 pixels. Everything humans have farmed, written, built or remembered is the last three tenths of one pixel.",
-      "epilogue": "",
-      "again": "\u2191 again"
+      "epilogue": "Two things on this page came within a rule of being cut. *Tyrannosaurus rex* sits 49 pixels from the asteroid; the first primates sit 251 — both closer than the 600-pixel floor allows anywhere else on this page, and both stayed anyway.",
+      "again": "↑ again"
     }
   }
 }

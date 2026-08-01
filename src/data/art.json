@@ -106,5 +106,53 @@
     },
     "contrast": 5.26,
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
+  },
+  "burgess-shale": {
+    "file": "/art/burgess-shale.webp",
+    "w": 817,
+    "h": 514,
+    "alt": "a flattened, segmented swimmer with rows of side fins like a shrimp, two large stalked eyes, two long spiny grasping arms held out in front like a pair of curved combs, and underneath the head a small circular ring of overlapping plates, like a camera aperture, as its mouth",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "light"
+    },
+    "contrast": 4.93,
+    "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
+  },
+  "antarctica-freezes": {
+    "file": "/art/antarctica-freezes.webp",
+    "w": 847,
+    "h": 567,
+    "alt": "a slab of ice calving off a dark rock cliff into the sea",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "dark"
+    },
+    "contrast": 6.19,
+    "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
+  },
+  "whiffs-of-oxygen": {
+    "file": "/art/whiffs-of-oxygen.webp",
+    "w": 683,
+    "h": 548,
+    "alt": "a cluster of small bubbles rising off a mat of green scum, like carbonation",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "dark"
+    },
+    "contrast": 4.38,
+    "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
+  },
+  "great-oxidation-ends": {
+    "file": "/art/great-oxidation-ends.webp",
+    "w": 680,
+    "h": 596,
+    "alt": "a rust-red rock slab seen close, with a crack of open blue sky at the top",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "light"
+    },
+    "contrast": 6.16,
+    "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   }
 }

@@ -51,13 +51,32 @@ const ART_JSON = join(ROOT, 'src', 'data', 'art.json');
  * from art.json. The reason lives on the arrival's own `negative` field in
  * timeline.json (redo instructions), not duplicated here.
  */
-const NOT_VERIFIED = new Set(['chicxulub', 'tiktaalik', 'burgess-shale']);
+const NOT_VERIFIED = new Set([
+  'chicxulub',
+  'tiktaalik',
+  'rodinia',
+  'triassic-jurassic-extinction',
+  // Passes the 3:1 gate at 8.67:1 and still cannot ship: §11 says a near-black
+  // region is punched out of the artwork by the luminance key, and states it
+  // of the planet discs. It is true of EVERY cut-out. The acid-rain rock was
+  // the first dark subject drawn, its pits keyed to alpha 0, and `haloRings`
+  // then filled those interior holes with the light halo — it bakes as a
+  // white-speckled golf ball. The gate cannot see this, because a hole full of
+  // halo is exactly what the gate is measuring for at the OUTER boundary. The
+  // remedy is §11's: the art is revised, lighter, with no black in it.
+  'steam-and-acid-rain',
+]);
 
 interface ManifestEntry {
   /** Relative to project root. */
   file: string;
-  /** Arrival ids, reading order: top-left, top-right, bottom-left, bottom-right. */
-  quadrants: [string, string, string, string];
+  /**
+   * Arrival ids. Four ids = a 2×2 sheet, reading order (top-left, top-right,
+   * bottom-left, bottom-right). One id = the whole image is that subject,
+   * which is how the planet singles arrive (§11: a planet is one 1024×1024
+   * generation, not a quadrant of a sheet). An empty string skips a quadrant.
+   */
+  quadrants: string[];
   /** True for the four planet portraits (§11): whole-disc subject, square crop, no rim trim. */
   isPlanet: boolean;
 }
@@ -68,8 +87,11 @@ const MANIFEST: ManifestEntry[] = [
     // usable as-is; promoted from .scratch/art-proof/ into art/source/. This
     // run validates the pipeline against real, final, already-paid-for art
     // instead of spending anything new.
+    // Chicxulub's quadrant is dropped: §11 requires Late Cretaceous
+    // palaeogeography and this proof drew the modern world, so it is redone as
+    // a single below rather than re-cut from here.
     file: 'art/source/planet-sheet-01.png',
-    quadrants: ['earth-full-size', 'great-oxidation-begins', 'snowball-earth', 'chicxulub'],
+    quadrants: ['earth-full-size', 'great-oxidation-begins', 'snowball-earth', ''],
     isPlanet: true,
   },
   {
@@ -77,7 +99,7 @@ const MANIFEST: ManifestEntry[] = [
     // 3 of 4 verified; Tiktaalik drew as a fully-legged salamander despite the
     // negative and needs a redo (see its `negative` field in timeline.json).
     file: 'art/source/sheet-02-tiktaalik-archaeopteryx-stromatolite-dimetrodon.png',
-    quadrants: ['tiktaalik', 'archaeopteryx', 'stromatolites', 'dimetrodon'],
+    quadrants: ['', 'archaeopteryx', 'stromatolites', 'dimetrodon'],
     isPlanet: false,
   },
   {
@@ -85,8 +107,38 @@ const MANIFEST: ManifestEntry[] = [
     // lobster pincers and a jawed mouth despite the negative — needs a redo
     // (see burgess-shale's `negative` field in timeline.json).
     file: 'art/source/sheet-03-anomalocaris-charnia-cooksonia-dragonfly.png',
-    quadrants: ['burgess-shale', 'charnia', 'cooksonia', 'coal-forests'],
+    quadrants: ['', 'charnia', 'cooksonia', 'coal-forests'],
     isPlanet: false,
+  },
+  {
+    // Sheet 4, 2026-07-31, approved batch. Anomalocaris redrawn here and it
+    // verified — the pincers and jaws the first round drew are gone — so this
+    // sheet supersedes sheet-03's quadrant for burgess-shale. Tiktaalik drew
+    // toed feet again and Rodinia drew modern Africa; both need a redo (see
+    // their `negative` fields in timeline.json).
+    file: 'art/source/sheet-04-tiktaalik-anomalocaris-rodinia-iceberg.png',
+    quadrants: ['tiktaalik', 'burgess-shale', 'rodinia', 'antarctica-freezes'],
+    isPlanet: false,
+  },
+  {
+    // Sheet 5, 2026-07-31, approved batch. 3 of 4 verified; the phytosaur drew
+    // as a modern crocodile — short broad snout, nostrils at the snout tip —
+    // which is the one thing its negative named.
+    file: 'art/source/sheet-05-acid-rain-whiffs-goe-phytosaur.png',
+    quadrants: [
+      'steam-and-acid-rain',
+      'whiffs-of-oxygen',
+      'great-oxidation-ends',
+      'triassic-jurassic-extinction',
+    ],
+    isPlanet: false,
+  },
+  {
+    // Chicxulub, 2026-07-31 — a planet single, not a sheet quadrant. Second
+    // round, and it drew the modern world again. Excluded.
+    file: 'art/source/planet-chicxulub.png',
+    quadrants: ['chicxulub'],
+    isPlanet: true,
   },
 ];
 
@@ -132,7 +184,7 @@ function dwellFieldSamples(id: string): RGB[] {
 async function bakeSheetInPage(
   args: {
     dataUrl: string;
-    quadrants: [string, string, string, string];
+    quadrants: string[];
     isPlanetBySubject: Record<string, boolean>;
     fieldSamplesBySubject: Record<string, [number, number, number][]>;
     strength: number;
@@ -398,18 +450,23 @@ async function bakeSheetInPage(
   return load(args.dataUrl).then(async (img) => {
     // Read the sheet's own dimensions rather than trusting a passed-in size —
     // correct for both the square proofs (1024×1024) and the rectangular
-    // production sheets (1536×1024, §14's decided size).
-    const halfW = img.naturalWidth / 2;
-    const halfH = img.naturalHeight / 2;
-    const boxes: [number, number][] = [[0, 0], [halfW, 0], [0, halfH], [halfW, halfH]];
+    // production sheets (1536×1024, §14's decided size). A one-id entry is a
+    // single subject filling the whole image (the planet singles), so its one
+    // "quadrant" is the full frame.
+    const single = args.quadrants.length === 1;
+    const cw = single ? img.naturalWidth : img.naturalWidth / 2;
+    const ch = single ? img.naturalHeight : img.naturalHeight / 2;
+    const boxes: [number, number][] = single
+      ? [[0, 0]]
+      : [[0, 0], [cw, 0], [0, ch], [cw, ch]];
     const results: Record<string, any> = {};
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < boxes.length; i++) {
       const id = args.quadrants[i]!;
       if (!id) continue;
       const q = document.createElement('canvas');
-      q.width = halfW;
-      q.height = halfH;
-      q.getContext('2d')!.drawImage(img, boxes[i]![0], boxes[i]![1], halfW, halfH, 0, 0, halfW, halfH);
+      q.width = cw;
+      q.height = ch;
+      q.getContext('2d')!.drawImage(img, boxes[i]![0], boxes[i]![1], cw, ch, 0, 0, cw, ch);
       const keyed = keyToAlpha(q);
       const isPlanet = args.isPlanetBySubject[id];
       const subject = isPlanet ? keyed : trim(keyed, 0.02);

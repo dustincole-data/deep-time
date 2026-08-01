@@ -5,10 +5,10 @@
     "h": 634,
     "alt": "a ball of liquid rock, glowing orange-red, brighter yellow-white cracks, a few darker cooling crusts floating on it",
     "halo": {
-      "strength": 0.45,
+      "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 3.42,
+    "contrast": 3.89,
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "great-oxidation-begins": {
@@ -17,10 +17,10 @@
     "h": 634,
     "alt": "smooth and featureless like Titan, thick orange-tan haze, faint soft banding, no continents or oceans visible",
     "halo": {
-      "strength": 0.45,
+      "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 3.03,
+    "contrast": 3.56,
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "snowball-earth": {
@@ -29,10 +29,10 @@
     "h": 634,
     "alt": "ice pole to pole, pale blue-grey fracture lines like cracked porcelain, a few small bare rock patches near the middle",
     "halo": {
-      "strength": 0.45,
+      "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 4.32,
+    "contrast": 5.1,
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "archaeopteryx": {
@@ -41,10 +41,10 @@
     "h": 657,
     "alt": "a raven-sized dinosaur-like animal with sharp teeth, a long bony tail, and feathered wings",
     "halo": {
-      "strength": 0,
-      "polarity": null
+      "strength": 0.62,
+      "polarity": "light"
     },
-    "contrast": 3.1,
+    "contrast": 6.8,
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "stromatolites": {
@@ -53,10 +53,10 @@
     "h": 582,
     "alt": "a rounded, layered mound of banded rock, like a stack of thin stone plates or a cross-section of a cabbage",
     "halo": {
-      "strength": 0.45,
+      "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 3.95,
+    "contrast": 4.49,
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "dimetrodon": {
@@ -65,10 +65,10 @@
     "h": 650,
     "alt": "a lizard-like animal with a tall sail of skin down its back, held up by long spines",
     "halo": {
-      "strength": 0.45,
+      "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 3.83,
+    "contrast": 4.45,
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "charnia": {
@@ -77,10 +77,10 @@
     "h": 599,
     "alt": "a frond like a fern or chestnut leaf, branching ridges repeating as smaller copies of themselves down its length, rooted to the seabed by a small disc",
     "halo": {
-      "strength": 0.45,
+      "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 4.71,
+    "contrast": 5.71,
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "cooksonia": {
@@ -89,10 +89,10 @@
     "h": 590,
     "alt": "a few centimetres of forking, leafless green stems, splitting into two even branches again and again, with small rounded capsules at the branch tips",
     "halo": {
-      "strength": 0.45,
+      "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 3.05,
+    "contrast": 3.44,
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "coal-forests": {
@@ -101,10 +101,10 @@
     "h": 628,
     "alt": "a giant dragonfly, long segmented body, two pairs of long net-veined wings held flat to the sides",
     "halo": {
-      "strength": 0.45,
+      "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 3.96,
+    "contrast": 5.26,
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   }
 }

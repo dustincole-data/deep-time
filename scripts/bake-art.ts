@@ -4,12 +4,14 @@
  *
  * Transcribed from `.scratch/prototypes/legibility/index.html`, the instrument
  * that measured this — the luminance key (`smoothstep(0.045, 0.14, L)`), the
- * servo halo's spread-then-falloff ring (spread 4.5% @ blur 2%, then 8.5% @
- * blur 5.5%, §11), and the ladder search `[0.25, 0.45, 0.62, 0.78, 0.92]` ×
- * [dark, light] are all the prototype's own numbers, not re-derived here.
- * One thing is deliberately NOT transcribed: the prototype spread the ring by
- * scaling the silhouette about its centre, which only dilates a compact
- * subject. See `haloRings()` — the radii and blurs are still the prototype's.
+ * servo halo's spread-then-falloff ring and its `[0.25, 0.45, 0.62, 0.78,
+ * 0.92]` strength ladder are the prototype's own numbers, not re-derived here.
+ *
+ * Two things are deliberately NOT transcribed, both dated 2026-07-31 and both
+ * documented where they happen: the prototype spread the ring by scaling the
+ * silhouette about its centre, which only dilates a compact subject
+ * (`haloRings`), and it aimed the servo per subject, which made the halo a
+ * cloud on one subject and absent on the next (`solveHalo`, `RINGS`).
  *
  * Runs inside a real Chromium canvas via Playwright, same reason
  * gate-browser.ts does: byte-identical to what a real browser's canvas
@@ -90,7 +92,20 @@ const MANIFEST: ManifestEntry[] = [
 
 const DESKTOP = { w: 1440, h: 900 };
 const GATE = 3;
-const LADDER = [0.25, 0.45, 0.62, 0.78, 0.92];
+/**
+ * One strength for every subject (see `solveHalo`). 0.62 is the smallest rung
+ * of §11's ladder at which all twelve baked subjects clear 3:1 on the tight
+ * ring below — worst case 3.44:1, on Cooksonia.
+ */
+const STRENGTH = 0.62;
+/**
+ * Ring geometry: [spread, blur] per ring, as a fraction of the subject's long
+ * edge. §11 measured 4.5%/8.5% — which is a ~50 px cloud on a 600 px subject,
+ * roughly twelve times wider than the 4 px band the gate actually measures.
+ * The width bought nothing and read as a sticker glow, so the rings are pulled
+ * in to hug the edge; swept 2026-07-31, every subject still clears 3:1.
+ */
+const RINGS: [number, number][] = [[0.008, 0.003], [0.016, 0.008]];
 
 /** §10: sample the field across the arrival's real dwell window, not at a point. */
 function dwellFieldSamples(id: string): RGB[] {
@@ -120,8 +135,9 @@ async function bakeSheetInPage(
     quadrants: [string, string, string, string];
     isPlanetBySubject: Record<string, boolean>;
     fieldSamplesBySubject: Record<string, [number, number, number][]>;
-    ladder: number[];
+    strength: number;
     gate: number;
+    rings: [number, number][];
   },
 ) {
   const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v);
@@ -254,7 +270,7 @@ async function bakeSheetInPage(
     const pad = padOf(src);
     const sil = silhouette(src, dark ? 'rgb(6,10,15)' : 'rgb(255,248,235)');
     const K = 24;
-    return ([[0.045, 0.02], [0.085, 0.055]] as const).map(([p, b]) => {
+    return args.rings.map(([p, b]) => {
       const union = document.createElement('canvas');
       union.width = src.width + pad * 2;
       union.height = src.height + pad * 2;
@@ -334,24 +350,31 @@ async function bakeSheetInPage(
     return ratio(inSum / inN, outSum / outN);
   }
 
-  // The servo: smallest strength that clears GATE against the WORST sampled
-  // field colour; never accept worse than no halo at all (§11).
-  function solveHalo(src: HTMLCanvasElement, fields: [number, number, number][], gate: number, ladder: number[]) {
+  /**
+   * The halo, as ONE treatment for the whole set.
+   *
+   * §11 aimed the servo at the smallest strength each subject needed, which is
+   * the right rule for a gate and the wrong one for a page: it gave
+   * Archaeopteryx no halo at all and Cooksonia a cloud, and a treatment that
+   * is absent on one subject and loud on the next reads as a mistake rather
+   * than a system. Every subject now gets the same tight ring at the same
+   * strength. Only the POLARITY is still measured — a subject darker than its
+   * field needs a light lift and a lighter one needs a dark lift, and §11
+   * already found that polarity flips where intuition says it should not.
+   *
+   * The gate does not move: the returned ratio is still the worst case across
+   * the arrival's whole dwell, and a subject below 3:1 is still excluded and
+   * its art revised.
+   */
+  function solveHalo(src: HTMLCanvasElement, fields: [number, number, number][], strength: number) {
     // Each polarity's rings depend only on the subject, so they are built once
-    // and reused across every rung of the ladder and every sampled field.
+    // and reused across every sampled field.
     const ringsFor = [true, false].map((d) => haloRings(src, d));
-    const worstOf = (strength: number, dark: boolean | null) =>
-      Math.min(...fields.map((f) => measureAgainstField(src, dark === null ? null : ringsFor[dark ? 0 : 1]!, f, strength)));
-    let best = { r: worstOf(0, null), strength: 0, dark: null as boolean | null };
-    if (best.r >= gate) return best;
-    for (const a of ladder) {
-      for (const dark of [true, false]) {
-        const r = worstOf(a, dark);
-        if (r > best.r) best = { r, strength: a, dark };
-        if (r >= gate) return { r, strength: a, dark };
-      }
-    }
-    return best;
+    const worstOf = (dark: boolean) =>
+      Math.min(...fields.map((f) => measureAgainstField(src, ringsFor[dark ? 0 : 1]!, f, strength)));
+    const dark = worstOf(true);
+    const light = worstOf(false);
+    return dark >= light ? { r: dark, strength, dark: true } : { r: light, strength, dark: false };
   }
 
   function bakeHalo(src: HTMLCanvasElement, strength: number, dark: boolean | null): HTMLCanvasElement {
@@ -392,7 +415,7 @@ async function bakeSheetInPage(
       const subject = isPlanet ? keyed : trim(keyed, 0.02);
       const rim = rimLum(subject);
       const fields = args.fieldSamplesBySubject[id] ?? [[20, 20, 25]];
-      const solved = solveHalo(subject, fields, args.gate, args.ladder);
+      const solved = solveHalo(subject, fields, args.strength);
       const baked = bakeHalo(subject, solved.strength, solved.dark);
       const webp = baked.toDataURL('image/webp', 0.92);
       results[id] = {
@@ -431,8 +454,9 @@ async function main() {
         quadrants: entry.quadrants,
         isPlanetBySubject,
         fieldSamplesBySubject,
-        ladder: LADDER,
+        strength: STRENGTH,
         gate: GATE,
+        rings: RINGS,
       });
 
       for (const [id, r] of Object.entries(results) as [string, any][]) {
@@ -440,7 +464,9 @@ async function main() {
         const notVerified = NOT_VERIFIED.has(id);
         // §11: "If no strength on the ladder reaches 3:1, the build fails and
         // the art is revised" — a failed gate excludes it exactly like a
-        // failed reference check, not a softer outcome.
+        // failed reference check, not a softer outcome. With one fixed
+        // strength that now means the ART is what gets revised, which is the
+        // outcome §11 named anyway.
         const failedGate = r.contrast < GATE;
         const base64 = String(r.webp).split(',')[1]!;
         const file = `${id}.webp`;

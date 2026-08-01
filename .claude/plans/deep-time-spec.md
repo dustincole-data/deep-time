@@ -744,21 +744,29 @@ Chicxulub               114949     1474      804         0     600
 | field lightness ceiling | 3.03–3.08 | no better than the servo alone — **dropped**, and the daylight arc survives intact |
 | **the servo halo** | **3.02:1** | passes everywhere, max strength `a0.78` |
 
-**The servo halo** is a *silhouette* of the subject — not a copy of its art — blurred outward as a spread-then-falloff ring, at a strength and polarity **chosen by measurement, never by a rule about the art**:
+**The servo halo** is a *silhouette* of the subject — not a copy of its art — dilated outward as a spread-then-falloff ring, at a polarity **chosen by measurement, never by a rule about the art**:
 
 ```
-for strength in [0.25, 0.45, 0.62, 0.78, 0.92]:
-    for polarity in [dark rgb(6,10,15), light rgb(255,248,235)]:
-        render; measure the boundary
-        keep the first that reaches 3:1     # never accept worse than no halo
-ring geometry: spread 4.5% of subject size @ blur 2%, then 8.5% @ blur 5.5%
+strength 0.62, on every subject, always
+for polarity in [dark rgb(6,10,15), light rgb(255,248,235)]:
+    render; measure the boundary; keep the better
+ring geometry: spread 0.8% of subject size @ blur 0.3%, then 1.6% @ blur 0.8%
 ```
+
+**Revised 2026-07-31, on Dustin's call, after the first twelve subjects were seen on the real field.** Two things were wrong, and they were the same thing twice:
+
+- **Per-subject strength made the halo look like a mistake.** Aiming the servo at the smallest strength *each* subject needs is right for a gate and wrong for a page: Archaeopteryx got no halo and Cooksonia got a cloud, and a treatment that is absent on one subject and loud on the next reads as an accident rather than a system. One strength, on everything. **Only the polarity still varies**, because it must.
+- **The ring was ~12× wider than the thing it is measured against.** The gate reads a **4 px band** at the boundary; 8.5% of a 600 px subject is a ~50 px glow. The width bought no contrast and cost the register — it read as a sticker glow. Pulled in to hug the edge.
+
+Swept across all twelve baked subjects at four geometries × three strengths. The chosen pair is the tightest ring at which every subject still clears the gate: **worst case 3.44:1** (Cooksonia), median 4.8:1 — a wider margin than the per-subject servo ever produced, on a fifth of the visible halo.
+
+**A "spread" must be a real dilation, not a scale.** The prototype grew the ring by drawing the silhouette scaled up about its own centre. That is a dilation only for a compact subject: on a thin branching silhouette the copy slides radially outward instead of thickening, leaving the measured band bare on the inner side of every stem. Cooksonia — bare forking stems, rim luminance 0.27 against a sky of 0.25, so the halo had to do *all* of the work — measured 2.77:1 at the top of the old ladder and failed the gate for that reason alone. Dilating properly (the silhouette unioned at 24 offsets around the ring radius, blurred once) fixed it without touching the art.
 
 **The halo is baked into the shipped asset, not drawn at runtime.** Measured: `ctx.filter = 'blur()'` re-blurs from scratch every frame and cost **9.7 fps for one draw** (46.6 vs 56.3), 54 of 187 frames over 20 ms — and it was worse than no halo in every pair measured. Baking makes runtime cost zero and makes the halo resolution-independent by construction. Cost: a subject recurring on both a dark and a bright field ships twice — at most five extra files.
 
-**Two consequences worth carrying:** the halo is **usually zero** (across the dark Precambrian nearly every subject clears the gate unaided), and **polarity flips where intuition says it should not** — the mammoth takes a *light* halo on the Snowball field and a *dark* one on the hazy field. An earlier hand-authored rule keyed to the field made six of twenty cases *worse* than no halo.
+**One consequence worth carrying: polarity flips where intuition says it should not** — the mammoth takes a *light* halo on the Snowball field and a *dark* one on the hazy field. An earlier hand-authored rule keyed to the field made six of twenty cases *worse* than no halo. (The other consequence recorded here — that the halo is *usually zero* — was true of the per-subject servo and is what the 2026-07-31 revision removed.)
 
-**If no strength on the ladder reaches 3:1, the build fails and the art is revised.**
+**If the fixed strength does not reach 3:1, the build fails and the art is revised.** With one strength for the whole set that is now the only remedy, which is the outcome this line always named.
 
 ### Type
 

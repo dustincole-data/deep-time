@@ -51,21 +51,7 @@ const ART_JSON = join(ROOT, 'src', 'data', 'art.json');
  * from art.json. The reason lives on the arrival's own `negative` field in
  * timeline.json (redo instructions), not duplicated here.
  */
-const NOT_VERIFIED = new Set([
-  'chicxulub',
-  'tiktaalik',
-  'rodinia',
-  'triassic-jurassic-extinction',
-  // Passes the 3:1 gate at 8.67:1 and still cannot ship: §11 says a near-black
-  // region is punched out of the artwork by the luminance key, and states it
-  // of the planet discs. It is true of EVERY cut-out. The acid-rain rock was
-  // the first dark subject drawn, its pits keyed to alpha 0, and `haloRings`
-  // then filled those interior holes with the light halo — it bakes as a
-  // white-speckled golf ball. The gate cannot see this, because a hole full of
-  // halo is exactly what the gate is measuring for at the OUTER boundary. The
-  // remedy is §11's: the art is revised, lighter, with no black in it.
-  'steam-and-acid-rain',
-]);
+const NOT_VERIFIED = new Set(['tiktaalik']);
 
 interface ManifestEntry {
   /** Relative to project root. */
@@ -129,15 +115,26 @@ const MANIFEST: ManifestEntry[] = [
     isPlanet: false,
   },
   {
-    // Sheet 6, 2026-07-31 — the redo sheet, approved batch. Supersedes
-    // sheet-04's tiktaalik and rodinia and sheet-05's phytosaur and rock.
-    file: 'art/source/sheet-06-tiktaalik-rodinia-phytosaur-acidrock.png',
+    // Sheet 7, 2026-07-31, approved batch — the second redo of these four.
+    // (Sheet 6 is not listed: every one of its quadrants was superseded here,
+    // so it contributes nothing. It is in the history, not in the build.)
+    //
+    // Rodinia arrives here as a specimen of folded gneiss. Prompted as a
+    // landmass silhouette it drew the modern African continent twice, and a
+    // negative naming Africa did not stop it — so the subject became the rock
+    // that continental collision makes (the Grenville orogeny, ~1.1–0.9 Ga, is
+    // Rodinia's assembly) rather than the shape of the supercontinent.
+    file: 'art/source/sheet-07-tiktaalik-gneiss-phytosaur-acidrock.png',
     quadrants: ['tiktaalik', 'rodinia', 'triassic-jurassic-extinction', 'steam-and-acid-rain'],
     isPlanet: false,
   },
   {
-    // Chicxulub, 2026-07-31 — a planet single, not a sheet quadrant. Second
-    // round, and it drew the modern world again. Excluded.
+    // Chicxulub, 2026-07-31 — a planet single, not a sheet quadrant, and the
+    // third round. Prompted for Late Cretaceous palaeogeography it drew the
+    // modern world every time, so the disc is now veiled by the event itself:
+    // cloud and dust over most of it, no identifiable coastline, nothing to be
+    // wrong about. §11's own note is that three of the four planets already
+    // hide their geography behind the state depicted; this makes it four.
     file: 'art/source/planet-chicxulub.png',
     quadrants: ['chicxulub'],
     isPlanet: true,

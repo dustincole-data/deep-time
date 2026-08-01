@@ -91,8 +91,8 @@
       "name": "Steam and acid rain",
       "line": "The air is CO₂. The rain is acid. There is nothing yet you would call land.",
       "art": "abstract",
-      "analogy": "a single pitted, etched volcanic rock in mid-toned warm grey and rust, its pits shown as shallow dents a shade or two darker than the surface, with pale rain streaking down it",
-      "negative": "not a landscape or a storm scene — one rock specimen. Nothing anywhere on the rock may be black or near-black: the pits are mid-grey dents, not dark holes, and the rock overall is a light-to-mid value. First round (2026-07-31) drew a near-black rock with black pits; the pipeline's luminance key punched every pit out of the artwork and the halo filled the holes, so it baked as a white-speckled golf ball — redo needed, lighter, with no black.",
+      "analogy": "a single pitted, etched volcanic rock in mid-toned warm grey and rust, its pits shown as shallow dents a shade or two darker than the surface, with pale streaks of rain running down its face",
+      "negative": "not a landscape or a storm scene — one rock specimen and nothing else in its quarter of the picture, no loose fragments or stray marks floating near it. Nothing anywhere on the rock may be black or near-black: the pits are mid-grey dents, not dark holes, and the rock overall is a light-to-mid value. The rain is drawn as pale streaks ON the rock's face, running down it. Two rounds (2026-07-31): the first was near-black and the key punched every pit out of the artwork; the second keyed correctly but lost the rain and left a stray orange fragment floating above the rock.",
       "source": "Zahnle et al. 2007, *Space Sci. Rev.*"
     },
     {
@@ -382,8 +382,8 @@
       "name": "Rodinia",
       "line": "Every continent, gathered into one mass.",
       "art": "abstract",
-      "analogy": "a single joined supercontinent as one flat silhouette — a broad rounded central mass with three or four thick blunt lobes off it and one deep bay cut into one side, its edge simple and irregular, drawn like a specimen",
-      "negative": "not a map — no coastline detail, no labels, no cartographic projection, no grid. And not any modern continent: it must not be Africa or resemble Africa, and must not resemble South America, Australia, India or any present-day landmass. This is Rodinia, one supercontinent that no longer exists, so its outline is unfamiliar. First round (2026-07-31) drew the modern African continent with Madagascar — redo needed with this stronger negative.",
+      "analogy": "a specimen of folded gneiss — a banded rock whose pink, grey and pale mineral stripes are bent into tight parallel folds, as if the layers had been squeezed from both sides",
+      "negative": "not a map, not a landmass, not a continent and not a globe — one rock specimen seen close. The bands are smooth continuous folded stripes, not cracks and not loose brushstrokes. Nothing anywhere on it may be black or near-black. Two rounds (2026-07-31) drew the modern African continent, with Madagascar, when this milestone was prompted as a landmass silhouette — a negative naming Africa did not stop it. The subject is therefore the rock that continental collision makes (the Grenville orogeny, ~1.1–0.9 Ga, is Rodinia's assembly) rather than the shape of the supercontinent.",
       "source": "Li et al. 2008, *Precambrian Res.*"
     },
     {
@@ -515,8 +515,8 @@
       "name": "*Tiktaalik*",
       "line": "A fish with a neck, and wrists.",
       "art": "subject",
-      "analogy": "a large flat-headed fish covered in scales, propped up on two thick muscular front fins that end in a rounded fan of stiff fin-rays like a coelacanth's fin, the body tapering back into a scaly fish tail",
-      "negative": "not a salamander, newt, lizard or amphibian. It has no legs, no feet, no toes, no claws and no digits anywhere on its body. Each front limb ends in a flat rounded fan of fin-rays — a fin, not a hand. There are no hind legs at all: behind the front fins the body tapers straight into a scaly fish tail with a tail fin. Two rounds (2026-07-31) drew a four-legged animal standing on toed feet — redo needed with this stronger negative.",
+      "analogy": "a fish with a broad flat crocodile-shaped head, both eyes set on top of the skull looking upward, and a short neck between head and shoulder, its scaly body propped on two thick lobed front fins that end in a fan of stiff fin-rays",
+      "negative": "not a salamander, newt, lizard or amphibian, and not an ordinary round-bodied fish either. It has no legs, no feet, no toes and no digits — each front limb ends in a fan of fin-rays, a fin, not a hand. The head is flat and wide like a crocodile's, not rounded like a goldfish's, and the eyes sit on TOP of it rather than on the sides. Head and shoulder are separated by a neck, so the head could turn — that is the whole point of the animal. Two rounds (2026-07-31) drew a legged salamander, then a generic round-headed lobe-finned fish with lateral eyes and no neck — redo needed leading with the head, not the limbs.",
       "source": "Daeschler et al. 2006, *Nature*"
     },
     {
@@ -572,8 +572,8 @@
       "name": "The Triassic–Jurassic extinction",
       "line": "The Atlantic starts to open. Half of everything dies, and the dinosaurs inherit it.",
       "art": "abstract",
-      "analogy": "a phytosaur — long and low like a gharial, with a long narrow tube-shaped snout full of small teeth, and a raised volcano-like mound on top of the skull between the eyes with the nostrils opening on top of that mound",
-      "negative": "not a modern crocodile or alligator. The tip of the snout is solid and smooth with no nostril openings on it at all — the nostrils sit far back, up on a raised mound directly in front of the eyes. The snout is long, narrow and tube-like, not short and broad. First round (2026-07-31) drew a short-snouted crocodile with its nostrils at the snout tip — redo needed with this stronger negative.",
+      "analogy": "a phytosaur — long and low like a gharial, with a long narrow tube-shaped snout full of small teeth, a raised volcano-like mound on top of the skull just in front of the eyes with the nostrils opening on top of it, four short legs and a long heavy tail",
+      "negative": "not a modern crocodile or alligator. The tip of the snout is solid and smooth with no nostril openings on it at all — the nostrils sit far back, up on a raised mound directly in front of the eyes. The snout is long, narrow and tube-like, not short and broad. The whole animal from snout tip to tail tip sits well inside its own quarter of the picture with clear empty space all around it. Two rounds (2026-07-31) drew a short-snouted crocodile with nostrils at the snout tip, then a tailless one that ran off the edge of its frame and baked cropped — redo needed.",
       "source": "ICS T/J boundary 201.4 Ma"
     },
     {
@@ -617,8 +617,8 @@
       "name": "Chicxulub",
       "line": "Everything larger than a badger dies.",
       "art": "planet",
-      "analogy": "land, ocean and swirling cloud, one brilliant white-hot flash and an expanding pale dust ring at a single point",
-      "negative": "not the modern world. The geography is Late Cretaceous and must be drawn as it was 66 million years ago: North America is split from top to bottom by a broad shallow sea, so it reads as two long north-south islands with water between them; no land joins North America to South America — open ocean separates them, with no Central America and no Panama; the Atlantic is a narrow strip, not a wide ocean; Europe is a scatter of small islands, not a continent; India is a large island alone in the ocean, not attached to Asia. The white-hot flash sits on the low coastal land at the southern tip of North America, beside that seaway. Two rounds (2026-07-31) drew the modern world — redo needed, verify against a 66 Ma palaeomap before ship.",
+      "analogy": "the whole Earth as a disc, most of it under heavy swirling white and grey-brown storm cloud and dust, one brilliant white-hot flash and an expanding pale ring spreading from a single point, with only broken fragments of green land and blue ocean showing through the gaps",
+      "negative": "not a clean blue-and-green globe with recognisable continents — cloud and dust cover most of the disc and the coastlines are broken up and mostly hidden, so no continent is identifiable and no modern shape can be read off it. No night side, no crescent, no dark limb, and nothing anywhere on the disc may be black or near-black. Three rounds (2026-07-31) drew the modern world whenever the palaeogeography was prompted explicitly, however forcefully it was forbidden, so the geography is now veiled by the event itself rather than drawn — which is what the other three planet portraits already do (§11).",
       "source": "Renne et al. 2013, *Science* — 66.043 ± 0.011 Ma"
     },
     {

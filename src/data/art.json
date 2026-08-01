@@ -154,5 +154,53 @@
     },
     "contrast": 6.16,
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
+  },
+  "rodinia": {
+    "file": "/art/rodinia.webp",
+    "w": 736,
+    "h": 571,
+    "alt": "a specimen of folded gneiss — a banded rock whose pink, grey and pale mineral stripes are bent into tight parallel folds, as if the layers had been squeezed from both sides",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "dark"
+    },
+    "contrast": 4.34,
+    "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
+  },
+  "triassic-jurassic-extinction": {
+    "file": "/art/triassic-jurassic-extinction.webp",
+    "w": 868,
+    "h": 546,
+    "alt": "a phytosaur — long and low like a gharial, with a long narrow tube-shaped snout full of small teeth, a raised volcano-like mound on top of the skull just in front of the eyes with the nostrils opening on top of it, four short legs and a long heavy tail",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "light"
+    },
+    "contrast": 4.17,
+    "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
+  },
+  "steam-and-acid-rain": {
+    "file": "/art/steam-and-acid-rain.webp",
+    "w": 711,
+    "h": 613,
+    "alt": "a single pitted, etched volcanic rock in mid-toned warm grey and rust, its pits shown as shallow dents a shade or two darker than the surface, with pale streaks of rain running down its face",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "light"
+    },
+    "contrast": 5.51,
+    "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
+  },
+  "chicxulub": {
+    "file": "/art/chicxulub.webp",
+    "w": 1270,
+    "h": 1270,
+    "alt": "the whole Earth as a disc, most of it under heavy swirling white and grey-brown storm cloud and dust, one brilliant white-hot flash and an expanding pale ring spreading from a single point, with only broken fragments of green land and blue ocean showing through the gaps",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "light"
+    },
+    "contrast": 5.1,
+    "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   }
 }

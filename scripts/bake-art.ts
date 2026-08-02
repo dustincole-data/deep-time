@@ -219,8 +219,10 @@ const MANIFEST: ManifestEntry[] = [
     // Tiktaalik, round seven and the first one that verified — drawn from
     // directly overhead so the flat wide head and the eyes on top of it are
     // forced by the viewpoint rather than asked for. See NOT_VERIFIED above.
+    // plants-reach-land is dropped here and redone on sheet 19 — this round
+    // read as fruit, which is what a shaded sphere always reads as.
     file: 'art/source/sheet-15-ice-breaks-for-good-plants-reach-land-late-ordovician-extinction-tiktaalik.png',
-    quadrants: ['ice-breaks-for-good', 'plants-reach-land', 'late-ordovician-extinction', 'tiktaalik'],
+    quadrants: ['ice-breaks-for-good', '', 'late-ordovician-extinction', 'tiktaalik'],
     isPlanet: false,
   },
   {
@@ -246,6 +248,36 @@ const MANIFEST: ManifestEntry[] = [
     // rock face with two findable ends.
     file: 'art/source/sheet-18-grypania.png',
     quadrants: ['grypania', '', '', ''],
+    isPlanet: false,
+  },
+  // ---------------------------------------------------------------------
+  // Sheets 19–20, 2026-08-01 — three subjects redone after the interior-hole
+  // sweep. §11 point 4's failure is invisible to the 3:1 boundary gate: a
+  // near-black region inside a subject keys to alpha 0, `haloRings` fills the
+  // hole with light, and the boundary still measures a comfortable pass.
+  // Archaeopteryx was shipping with 2.1% of its own area punched out at
+  // 4.45:1, and the phytosaur 2.4% at 4.17:1. Neither analogy predated §11
+  // point 4, so neither carried a near-black guard — and Archaeopteryx had no
+  // colour clause at all, which is why it was orange like the phytosaur
+  // 1,285 px away. Both now carry the guard, a de-conflicted colour and the
+  // `reference` field §11 point 3 requires.
+  {
+    // Archaeopteryx is now iridescent blue-green rather than a second orange;
+    // the phytosaur's quadrant here is dropped for sheet 20 (see below).
+    file: 'art/source/sheet-19-archaeopteryx-triassic-jurassic-extinction-plants-reach-land.png',
+    quadrants: ['archaeopteryx', '', 'plants-reach-land', ''],
+    isPlanet: false,
+  },
+  {
+    // The phytosaur, round four. Three rounds drew a gharial — and a gharial
+    // carries its nostril on the snout TIP, which is the one feature that
+    // makes this the wrong animal. Naming "no nostrils at the tip" failed
+    // every time, exactly as "not three fingers" and "not a spiral" did, so
+    // this round removes the word gharial from the description entirely and
+    // states the real thing positively: a raised dome between the eyes with
+    // the nostrils on its summit, and a snout ending like a spoon handle.
+    file: 'art/source/sheet-20-triassic-jurassic-extinction.png',
+    quadrants: ['triassic-jurassic-extinction', '', '', ''],
     isPlanet: false,
   },
   {

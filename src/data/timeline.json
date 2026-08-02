@@ -580,8 +580,8 @@
       "line": "Spores, nothing you could call a plant yet. Land has been bare for four billion years.",
       "art": "subject",
       "source": "Rubinstein et al. 2010, *New Phytol.*",
-      "analogy": "exactly four microscopic spores fused into one tetrahedral group — a cryptospore tetrad seen down a microscope — each spore a small glassy ball of translucent honey-amber, all four pressed together into one compact clover-shaped clump with the seams between them showing, their surfaces finely stippled like frosted glass",
-      "negative": "not a plant, not a leaf, not a stem and not moss: at this date there is nothing anyone would call a plant, only spores. Not oranges, tangerines, citrus or fruit of any kind, which is the default for a cluster of round objects — a low proof of this subject (2026-08-01) came back as three oranges, so the surface is glassy and translucent like frosted glass, never opaque dimpled peel. Exactly four, never three, and they are bonded into one body rather than resting against each other. Not a single sphere — the diagnostic is the bonded group of four. Keep them warm translucent amber, never near-black.",
+      "analogy": "a flat microscope slide view of a cryptospore tetrad in transmitted light: four thin-walled circles overlapping in a clover, drawn flat with no volume and no roundness at all, their walls a fine darker amber line that thickens where the four press together, their interiors a pale washed translucent amber you can see straight through, the whole group finely stippled like frosted glass",
+      "negative": "not a plant, not a leaf, not a stem and not moss: at this date there is nothing anyone would call a plant, only spores. Not oranges, tangerines, citrus or fruit of any kind, which is the default for a cluster of round objects — a low proof of this subject (2026-08-01) came back as three oranges, so the surface is glassy and translucent like frosted glass, never opaque dimpled peel. Exactly four, never three, and they are bonded into one body rather than resting against each other. Not a single sphere — the diagnostic is the bonded group of four. Three rounds (2026-08-01) all drew solid opaque orange balls, because spherical shading is what makes a cluster of round objects read as fruit: so there is NO volume shading, NO gloss, NO specular highlight and NO cast shading of any kind here. This is a flat two-dimensional graphic of a translucent thing seen with light coming through it from behind, closer to a stained-glass roundel than to a painted sphere. Keep it warm translucent amber, never near-black.",
       "reference": "Rubinstein et al. 2010, *New Phytol.* — Ordovician cryptospore tetrads"
     },
     {
@@ -681,9 +681,10 @@
       "name": "The Triassic–Jurassic extinction",
       "line": "The Atlantic starts to open. Half of everything dies, and the dinosaurs inherit it.",
       "art": "abstract",
-      "analogy": "a phytosaur — long and low like a gharial, with a long narrow tube-shaped snout full of small teeth, a raised volcano-like mound on top of the skull just in front of the eyes with the nostrils opening on top of it, four short legs and a long heavy tail",
-      "negative": "not a modern crocodile or alligator. The tip of the snout is solid and smooth with no nostril openings on it at all — the nostrils sit far back, up on a raised mound directly in front of the eyes. The snout is long, narrow and tube-like, not short and broad. The whole animal from snout tip to tail tip sits well inside its own quarter of the picture with clear empty space all around it. Two rounds (2026-07-31) drew a short-snouted crocodile with nostrils at the snout tip, then a tailless one that ran off the edge of its frame and baked cropped — redo needed.",
-      "source": "ICS T/J boundary 201.4 Ma"
+      "analogy": "a phytosaur — a long low four-legged reptile whose snout is drawn out into a slender straight rod lined with small teeth, ending in a smooth solid rounded tip like the blunt end of a wooden spoon handle; set on top of the skull, directly between and just in front of the eyes, is a raised dome like a small volcano, and the two nostril openings sit on the summit of that dome, far back from the snout; four short legs, a long heavy tail, and a warm sandy bronze hide with soft darker bronze banding along the back; the eye is a small amber bead",
+      "negative": "not a modern crocodile, alligator or gharial, and the word gharial is deliberately not used in the description above because three rounds that did use it (2026-07-31, 2026-08-01) all drew one: a gharial carries its nostril at the very tip of its snout, which is the single feature that would make this animal the wrong animal. There is nothing whatsoever on the snout tip — no hole, no dot, no opening, no dark mark — and the only openings on the head sit on top of the raised dome back between the eyes. The eye is never a solid black dot, or the luminance key punches it out of the artwork. The snout is long and slender, not short and broad. The whole animal from snout tip to tail tip sits well inside its own quarter of the picture with clear empty space all around it. An earlier round drew a tailless animal that ran off its frame and baked cropped. The round that shipped failed a further way: nothing near-black was ever asked for, and 2.4% of its own area keyed out into interior holes that the halo then filled with light, while the 3:1 boundary gate scored it a comfortable 4.17:1. Keep the whole animal light-to-mid in value, and render the shadow under the jaw, between the legs and along the tail as a shade or two darker than the bronze, never as a dark hollow.",
+      "source": "ICS T/J boundary 201.4 Ma",
+      "reference": "Phytosaur skull and skeletal reconstructions — *Smilosuchus*, *Rutiodon*; Stocker & Butler 2013, *Geol. Soc. Lond. Spec. Publ.* 379"
     },
     {
       "id": "archaeopteryx",
@@ -693,9 +694,10 @@
       "name": "*Archaeopteryx*",
       "line": "Feathers, and the first wing that works.",
       "art": "subject",
-      "analogy": "a raven-sized dinosaur-like animal with sharp teeth, a long bony tail, and feathered wings",
-      "negative": "not a modern bird — teeth and a long bony tail, not a beak and a fan of tail feathers",
-      "source": "Solnhofen ~150.9 Ma"
+      "analogy": "a raven-sized dinosaur-like animal with sharp teeth in its jaws, a long bony tail trailing straight out behind with feathers running down either side of it, and broad rounded feathered wings — its plumage a deep iridescent blue-green shot with violet, like the sheen on a magpie's wing, with pale cream bars across the flight feathers",
+      "negative": "not a modern bird — teeth and a long bony tail, not a beak and a fan of tail feathers. Nothing near-black anywhere on it: the fossil melanosome evidence points to dark plumage, but the luminance key punches any region below about 14% lightness straight out of the artwork and the halo then fills the hole with light, so the iridescence is carried light-to-mid in value and the deepest darks go no further than a mid blue-green. The 2026-07-31 round shipped with 2.1% of its own area punched into interior holes for exactly this reason, and the 3:1 boundary gate scored it a comfortable 4.45:1 while it happened.",
+      "source": "Solnhofen ~150.9 Ma",
+      "reference": "*Archaeopteryx lithographica* Berlin specimen HMN MB.Av.101 and the Thermopolis specimen; Carney et al. 2012, *Nat. Commun.* — melanosome evidence for dark plumage"
     },
     {
       "id": "first-flowers",

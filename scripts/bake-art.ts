@@ -51,7 +51,22 @@ const ART_JSON = join(ROOT, 'src', 'data', 'art.json');
  * from art.json. The reason lives on the arrival's own `negative` field in
  * timeline.json (redo instructions), not duplicated here.
  */
-const NOT_VERIFIED = new Set(['tiktaalik']);
+const NOT_VERIFIED = new Set<string>([
+  // Empty as of 2026-08-01: all 51 subjects have passed §11 point 3. The set
+  // stays because it is the gate — a subject that fails a future reference
+  // check is named here and drops out of art.json without touching the bake.
+  //
+  // The two entries it used to hold are both resolved. Tiktaalik failed six
+  // rounds asking for a flattened head in a SIDE view and got an ordinary fish
+  // head every time; round seven changed the viewpoint instead of the
+  // adjectives — seen from directly overhead the flat plate is the only
+  // surface facing the viewer, so both eyes have nowhere to sit but on top of
+  // it and the diagnostic is forced by the framing rather than requested.
+  // `first-trace-of-life` was never its own failure: it was the neighbour of
+  // sheet 9's Tiktaalik, whose snout bled across the quadrant midline and
+  // inflated this subject's alpha bounding box. Both are redrawn on sheets 15
+  // and 11, generated one subject per image, so that bleed cannot recur.
+]);
 
 interface ManifestEntry {
   /** Relative to project root. */
@@ -124,8 +139,113 @@ const MANIFEST: ManifestEntry[] = [
     // negative naming Africa did not stop it — so the subject became the rock
     // that continental collision makes (the Grenville orogeny, ~1.1–0.9 Ga, is
     // Rodinia's assembly) rather than the shape of the supercontinent.
+    // Tiktaalik's quadrant is dropped: superseded by sheet 15's round seven.
     file: 'art/source/sheet-07-tiktaalik-gneiss-phytosaur-acidrock.png',
-    quadrants: ['tiktaalik', 'rodinia', 'triassic-jurassic-extinction', 'steam-and-acid-rain'],
+    quadrants: ['', 'rodinia', 'triassic-jurassic-extinction', 'steam-and-acid-rain'],
+    isPlanet: false,
+  },
+  {
+    // Sheet 8, 2026-08-01, approved batch. All four verified against real
+    // specimen photographs: an Allende-type CAI slice, a freshly-formed
+    // molten Moon (styled to match the Earth-full-size portrait), a Jack
+    // Hills zircon, and Nuvvuagittuq faux-amphibolite.
+    file: 'art/source/sheet-08-solarsystem-moon-water-crust.png',
+    quadrants: ['solar-system', 'moon-torn-out', 'liquid-water', 'oldest-surviving-crust'],
+    isPlanet: false,
+  },
+  {
+    // Sheet 9, 2026-08-01, approved batch. 3 of 4 verified — Acasta gneiss,
+    // the Isua metasediment and its graphite-bearing sibling all matched
+    // their reference photographs. Tiktaalik's fifth round (coelacanth
+    // framing, §11) failed a new way: not a walking tetrapod this time, but
+    // a generic small round-bodied reef fish with no flattened head and
+    // side-set eyes — see its `negative` field in timeline.json for the
+    // round-6 note.
+    // Both lower quadrants are dropped: Tiktaalik is superseded by sheet 15,
+    // and `first-trace-of-life` by sheet 11 — its bounding box here was
+    // inflated by Tiktaalik's bleed across the midline, not by its own art.
+    file: 'art/source/sheet-09-acastagneiss-isuased-isuagraphite-tiktaalik.png',
+    quadrants: ['oldest-rock', 'oldest-sedimentary-rocks', '', ''],
+    isPlanet: false,
+  },
+  // ---------------------------------------------------------------------
+  // Sheets 10–18, 2026-08-01 — the last 28 subjects, and the first batch
+  // generated after §11's "each subject its own distinct colour identity"
+  // was written back into every remaining `analogy` as an explicit dominant
+  // colour. Generating one subject per image had silently dropped that
+  // clause's only enforcement mechanism: the model can only differentiate
+  // four subjects it sees at once, and sheet 10's first attempt came back
+  // uniformly red-orange, 1-for-4. The colours are now de-conflicted in the
+  // data, checked against the measured hues of the 23 already-shipped
+  // subjects (20 of which sat between hue 0° and 50°).
+  //
+  // Each sheet was proofed at --quality low, the prompts corrected against
+  // that proof, and only then run at --quality medium. The proof round paid
+  // for itself on every sheet — it caught a diamictite drawn as a smooth blue
+  // planet, a cyanobacteria mat drawn as a ball of yarn, a cryptospore tetrad
+  // drawn as three oranges, and an ape skull whose near-black eye sockets the
+  // luminance key would have punched straight through (§11 point 4).
+  {
+    // T. rex is dropped here and redone on sheet 17: this round drew three
+    // clawed fingers instead of two and a small shallow head on a long neck —
+    // a generic mid-sized theropod. Naming "not three fingers" failed twice,
+    // so the redo states the hand as a positive shape instead.
+    file: 'art/source/sheet-10-banded-iron-cambrian-begins-tyrannosaurus-rex-great-dying.png',
+    quadrants: ['banded-iron', 'cambrian-begins', '', 'great-dying'],
+    isPlanet: false,
+  },
+  {
+    file: 'art/source/sheet-11-first-trace-of-life-microbial-mats-sulfur-microbes-s2-impact.png',
+    quadrants: ['first-trace-of-life', 'microbial-mats', 'sulfur-microbes', 's2-impact'],
+    isPlanet: false,
+  },
+  {
+    file: 'art/source/sheet-12-first-continents-photosynthesis-first-ice-age-cyanobacteria-everywhere.png',
+    quadrants: ['first-continents', 'photosynthesis', 'first-ice-age', 'cyanobacteria-everywhere'],
+    isPlanet: false,
+  },
+  {
+    // Grypania is dropped here and redone on sheet 18 — see that entry.
+    file: 'art/source/sheet-13-banded-iron-still-huronian-glaciation-francevillian-structures-grypania.png',
+    quadrants: ['banded-iron-still', 'huronian-glaciation', 'francevillian-structures', ''],
+    isPlanet: false,
+  },
+  {
+    file: 'art/source/sheet-14-first-complex-cells-sex-first-sponges-ice-retreats.png',
+    quadrants: ['first-complex-cells', 'sex', 'first-sponges', 'ice-retreats'],
+    isPlanet: false,
+  },
+  {
+    // Tiktaalik, round seven and the first one that verified — drawn from
+    // directly overhead so the flat wide head and the eyes on top of it are
+    // forced by the viewpoint rather than asked for. See NOT_VERIFIED above.
+    file: 'art/source/sheet-15-ice-breaks-for-good-plants-reach-land-late-ordovician-extinction-tiktaalik.png',
+    quadrants: ['ice-breaks-for-good', 'plants-reach-land', 'late-ordovician-extinction', 'tiktaalik'],
+    isPlanet: false,
+  },
+  {
+    file: 'art/source/sheet-16-dinosaurs-and-mammals-first-flowers-first-primates-human-chimp-split.png',
+    quadrants: ['dinosaurs-and-mammals', 'first-flowers', 'first-primates', 'human-chimp-split'],
+    isPlanet: false,
+  },
+  {
+    // T. rex, round two: the hand is now stated as a two-pronged pincer
+    // rather than as "not three fingers", and the skull is pinned to the
+    // length of the thigh rather than called enormous. Both landed.
+    // Grypania's quadrant is dropped — that round drew a polished metal
+    // washer resting on the rock; sheet 18 is the one that verified.
+    file: 'art/source/sheet-17-tyrannosaurus-rex-grypania.png',
+    quadrants: ['tyrannosaurus-rex', '', '', ''],
+    isPlanet: false,
+  },
+  {
+    // Grypania, round four. Rounds one and two drew a tight ammonite spiral;
+    // dropping the words spiral, coil and curl and asking for a ring fixed
+    // the morphology but produced a machined washer lying on a pebble, so
+    // this round adds that it is a flat carbonaceous stain flush with the
+    // rock face with two findable ends.
+    file: 'art/source/sheet-18-grypania.png',
+    quadrants: ['grypania', '', '', ''],
     isPlanet: false,
   },
   {
@@ -538,6 +658,17 @@ async function main() {
 
         if (notVerified || failedGate) continue; // §11: never ship un-reviewed or below-gate art
 
+        // §11: "Every subject ships with the reference it was checked against,
+        // recorded in art.json." Was a hardcoded constant for every subject —
+        // fixed 2026-08-01 to read the arrival's own `reference` field
+        // (timeline.json, alongside `analogy`/`negative`). The generic string
+        // remains the fallback for subjects baked before this fix, whose actual
+        // checked-against reference was never recorded and cannot be
+        // reconstructed after the fact; every subject drafted from here on
+        // must carry its own `reference`.
+        if (a && !a.reference) {
+          console.warn(`  ⚠ ${id} has no \`reference\` field — art.json falls back to the generic §11 pointer`);
+        }
         art[id] = {
           file: `/art/${file}`,
           w: r.w,
@@ -545,7 +676,7 @@ async function main() {
           alt: a?.analogy ?? '',
           halo: r.halo,
           contrast: r.contrast,
-          referenceCheckedAgainst: a ? 'PhyloPic / published reconstructions, §11' : null,
+          referenceCheckedAgainst: a ? (a.reference ?? 'PhyloPic / published reconstructions, §11') : null,
         };
       }
     }

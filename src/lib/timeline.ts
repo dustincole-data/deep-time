@@ -35,6 +35,8 @@ export interface Arrival {
   analogy?: string;
   /** The explicit negative naming the model's default (§11). `undefined` until drafted. */
   negative?: string;
+  /** The real reference this subject's art was checked against (§11, §13) — recorded into art.json's `referenceCheckedAgainst` at bake time. `undefined` until drafted. */
+  reference?: string;
 }
 
 export interface Withheld {
@@ -86,6 +88,7 @@ export const arrivals: Arrival[] = raw.arrivals.map((a) => ({
   source: a.source,
   analogy: 'analogy' in a ? (a.analogy as string) : undefined,
   negative: 'negative' in a ? (a.negative as string) : undefined,
+  reference: 'reference' in a ? (a.reference as string) : undefined,
 }));
 
 export const withheld: Withheld[] = raw.withheld.map((w) => ({

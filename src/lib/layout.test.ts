@@ -329,6 +329,12 @@ describe('enlarged text (§10, rulings A/B/C)', () => {
     // for Dustin, not silently patched. Scoped to exactly the one combination
     // it affects: every other viewport, and 100% text everywhere, still gates
     // strictly.
+    //
+    // RESOLVED 2026-08-01, Dustin's call: accept it, ship documented. No
+    // architecture change (the 2-column desktop lock stays; no further row
+    // collapse is added). This carve-out is the permanent shape of the fix,
+    // not a placeholder — revisit only if this combination turns out to
+    // matter more than expected.
     const KNOWN_GAP_VP = { w: 1440, h: 900 };
     for (const vp of GATE_VIEWPORTS) {
       const isKnownGap = vp.w === KNOWN_GAP_VP.w && vp.h === KNOWN_GAP_VP.h;

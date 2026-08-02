@@ -174,7 +174,7 @@
       "name": "The first trace of life",
       "line": "Isotopically light carbon in Isua sediment. Not a fossil — a chemical shadow, and the oldest one anyone accepts.",
       "art": "subject",
-      "analogy": "the same pale grey-green layered rock as the Isua sediment beside it on this page, but with a scatter of dull dark-grey graphite specks and short streaks caught between its layers, like flecks of pencil lead in stone",
+      "analogy": "the same pale grey-green layered rock as the Isua sediment beside it on this page — a cool sage grey-green overall, with no warm buff or brown in it — scattered with dull mid-grey graphite flecks — short angular slivers and smears lying along the layering, like pencil lead rubbed into stone, never round bubbles or holes",
       "negative": "not a fossil and not any visible shape of a living thing — the evidence is chemical, a carbon isotope ratio, not a body, so nothing organism-shaped may appear anywhere on the rock. The graphite specks are dull dark grey, never black or near-black, or the luminance key punches them out of the artwork. First round (2026-08-01): the rock itself matched, but it shared a sheet with Tiktaalik in the adjacent quadrant, whose snout sat hard against the sheet's vertical midline and bled a sliver of orange across it — inflating this quadrant's trimmed bounding box to 779×623 against its sibling rock's 600×501. Not a fault of this subject's own prompt; redo needs its neighbour drawn with real clearance from the boundary, not a change to this description.",
       "reference": "Isua metasediment graphite-inclusion specimen photographs (same locality as the oldest sedimentary rocks); Rosing 1999, *Science*; Ohtomo et al. 2014",
       "source": "Rosing 1999, *Science*; Ohtomo et al. 2014"
@@ -188,7 +188,7 @@
       "line": "Life is a film on the seabed, and stays that way for three billion years.",
       "art": "subject",
       "source": "Noffke et al. 2013, *Astrobiology*",
-      "analogy": "a broad, low, wrinkled sheet lying flat on sediment, like the crumpled skin on cooled paint — olive-green and brown, puckered into ridges and shallow domes a few centimetres across",
+      "analogy": "a broad, low, wrinkled sheet lying flat on sediment, like the crumpled skin on cooled paint — a deep olive-green overall, its margins flushed dull pink-purple where the sulfur-bacteria layer beneath shows through, puckered into ridges and shallow domes a few centimetres across",
       "negative": "not coral, not seaweed, not any branching or upright growth: a microbial mat is a flat film ON the sediment, with no stems, fronds or plant-like structure. Not a stromatolite either — no built-up column and no internal layering, those arrive later on this page. Keep it light-to-mid in value; the shadows between wrinkles are shallow dents, never near-black.",
       "reference": "modern Shark Bay and Sippewissett microbial mat photographs; Noffke et al. 2013, *Astrobiology*"
     },
@@ -214,7 +214,7 @@
       "line": "No oxygen, no sunlight needed — chemistry alone.",
       "art": "subject",
       "source": "Wacey et al. 2011, *Nature Geosci.*",
-      "analogy": "a cluster of tiny rod- and sphere-shaped cells at high magnification, translucent pale yellow-green, each scattered with bright sulfur granules inside it like mustard seeds suspended in glass",
+      "analogy": "a cluster of tiny rod- and sphere-shaped cells at high magnification, translucent pale yellow-green, each scattered with vivid lemon-yellow sulfur granules inside it like mustard seeds suspended in glass — the whole cluster reads as a bright clean lemon-yellow",
       "negative": "not a plant, not an animal, not anything with a body plan — these are single cells. Not chlorophyll-green leafy algae: the colour comes from sulfur, so it reads pale yellow and warm. No cell may be near-black, and the granules must stay bright.",
       "reference": "Wacey et al. 2011, *Nature Geoscience* — Strelley Pool microfossils; modern sulfur-oxidising bacteria light micrographs"
     },
@@ -227,8 +227,8 @@
       "line": "The S2 impact — 50 to 200 times the mass of the one that killed the dinosaurs. It boils the top of the ocean, and life gets better.",
       "art": "subject",
       "source": "Drabon et al. 2024, *PNAS*",
-      "analogy": "one irregular potato-shaped rock tumbling alone, pitted all over with shallow overlapping craters like Phobos, in warm mid-grey and tan",
-      "negative": "not a fireball, not a streaking meteor with a flame trail, and not an impact scene with Earth in frame — this is the body itself, a single cratered rock. Craters are shallow dents a shade or two darker, never black holes, or the luminance key punches them out of the artwork.",
+      "analogy": "one irregular rock tumbling alone, clearly longer than it is wide like a potato or a peanut rather than a ball, pitted all over with shallow overlapping craters like Phobos, a cool neutral blue-grey throughout with no warm brown or tan in it",
+      "negative": "not a fireball, not a streaking meteor with a flame trail, and not an impact scene with Earth in frame — this is the body itself, a single cratered rock. Not a warm sandstone-tan asteroid, which is the default: a stony body photographs a cool neutral grey, like Phobos and Bennu. Craters are shallow dents a shade or two darker, never black holes, or the luminance key punches them out of the artwork.",
       "reference": "Phobos and Bennu spacecraft imagery; Drabon et al. 2024, *PNAS* — S2 impactor, 37–58 km"
     },
     {
@@ -240,7 +240,7 @@
       "line": "Cratons stabilise. There is now permanent dry land.",
       "art": "subject",
       "source": "Hawkesworth et al. 2020",
-      "analogy": "a hand-sized block of coarse pink-and-grey granite, speckled with large blocky feldspar crystals, glassy quartz and small flecks of mica — the light, buoyant rock continents are made of",
+      "analogy": "a hand-sized block of coarse granite, dominantly a warm salmon-pink from its large blocky feldspar crystals — angular interlocking grains of clearly different sizes, jammed against one another rather than evenly-spaced round dots — set with glassy grey quartz and small pale mica flecks; the light, buoyant rock continents are made of",
       "negative": "not the fine dark banding of a gneiss: the oldest rock elsewhere on this page is a gneiss and these two must not read as the same specimen. Granite is coarse and speckled, never layered. Not a landscape, not an island, not a map — one hand specimen. Mica flecks are mid-grey, never black.",
       "reference": "coarse-grained granite hand-specimen photographs; Hawkesworth et al. 2020"
     },
@@ -254,7 +254,7 @@
       "line": "Cyanobacteria split water and let the oxygen go. It will take 600 million years to matter.",
       "art": "subject",
       "source": "Sánchez-Baracaldo et al. 2021, *Proc. R. Soc. B*",
-      "analogy": "a single gently curved filament of blue-green cells strung end to end like a string of beads inside a clear sheath, each cell a rounded cylinder",
+      "analogy": "a single gently curved filament of cells strung end to end like a string of beads inside a clear sheath, each cell a rounded cylinder, the whole filament a strong blue-green teal",
       "negative": "not a plant, not a leaf, not seaweed — a cyanobacterium is one filament of cells. Not grass-green: the colour is a distinctive blue-green. The sheath is translucent, not a dark outline, and no cell may be near-black.",
       "reference": "modern *Oscillatoria* and *Nostoc* light micrographs; Sánchez-Baracaldo et al. 2021, *Proc. R. Soc. B*"
     },
@@ -267,8 +267,8 @@
       "line": "The Pongola glaciation. Ice at mid-latitudes, on a planet with no oxygen.",
       "art": "subject",
       "source": "Young et al. 1998; Ojakangas et al. 2014",
-      "analogy": "a rounded boulder of pale grey diamictite — angular pebbles of many sizes frozen into a fine matrix, like fruitcake turned to stone — with one flat face bearing straight parallel scratches where ice dragged it across bedrock",
-      "negative": "not a snowy landscape, not a glacier and not an iceberg: the evidence for the first ice age is a rock. Not a smooth beach cobble — the embedded clasts must be angular and unsorted. The scratches are shallow grooves, never black lines.",
+      "analogy": "a broken block of diamictite the colour of wet slate — sharp-cornered pebbles of many different sizes jammed at all angles into a fine stony matrix, like fruitcake turned to stone — with one flat face bearing straight parallel scratches where ice dragged it across bedrock; the whole rock a cold blue-grey with no warm brown in it",
+      "negative": "not a snowy landscape, not a glacier and not an iceberg: the evidence for the first ice age is a rock. Not a ball, not a sphere and not a smooth beach cobble — it is an angular broken lump with flat fractured faces and sharp corners, and the embedded clasts are angular and unsorted, never round spots. It must not read as a planet or a moon seen from space; three planet portraits elsewhere on this page own that shape. The scratches are shallow grooves, never black lines.",
       "reference": "glacial diamictite and striated pavement specimen photographs; Young et al. 1998; Ojakangas et al. 2014"
     },
     {
@@ -281,8 +281,8 @@
       "art": "subject",
       "recurrence": "photosynthesis",
       "source": "as 3,000 Ma",
-      "analogy": "a dense tangle of many blue-green filaments massed together into a loose floating mat, each filament a chain of rounded cells like a string of beads",
-      "negative": "the same organism as the photosynthesis subject earlier on this page, drawn as a crowd rather than one strand, and it must read as the same material. Not a plant, not seaweed, not leafy, not branching. No dark outlines and nothing near-black.",
+      "analogy": "a loose drifting raft of many filaments lying across one another in a flat open layer, each filament plainly made of rounded cells stacked end to end like a string of beads with the separate cells clearly visible, the whole raft a deep blue-green teal — the same colour and the same beaded strands as the single filament earlier on this page",
+      "negative": "the same organism as the photosynthesis subject earlier on this page, drawn as a crowd rather than one strand, and it must read as the same material. Not a ball of yarn, wool, string or knitted thread, which is the default for a tangle: the filaments are never smooth cords, every one is visibly a row of separate round cells. Not a tight sphere or a bundle — the raft is flat and loosely spread, with filaments crossing over each other and free ends drifting out. Not a plant, not seaweed, not leafy, not branching. No dark outlines and nothing near-black.",
       "reference": "as photosynthesis — modern *Oscillatoria* and *Nostoc* light micrographs"
     },
     {
@@ -316,7 +316,7 @@
       "line": "Oxygen meets dissolved iron and it rusts out of the sea, in bands, for a billion years.",
       "art": "subject",
       "source": "Bekker et al. 2010, *Econ. Geol.*",
-      "analogy": "a cut block of banded iron formation standing on end, crossed by dozens of narrow wavy parallel bands — deep brick-red and maroon jasper alternating with silver-grey iron layers, the bands gently folded, varying in thickness, some pinching out and some swelling",
+      "analogy": "a cut block of banded iron formation standing on end, crossed by dozens of narrow wavy parallel bands — deep brick-red and maroon jasper alternating with silver-grey iron layers, the bands gently folded, varying in thickness, some pinching out and some swelling; the dominant colour is a deep brick-red",
       "negative": "not a cliff, canyon or landscape, and not an abstract stripe pattern: one hand-sized specimen with rough broken edges. Not the fine even grey-green layering of the Isua sediment elsewhere on this page — these bands are bold, red and high-contrast. The silver-grey bands are a mid-tone metallic grey, never black.",
       "reference": "banded iron formation hand-specimen photographs (Hamersley, Marquette); Bekker et al. 2010, *Econ. Geol.*"
     },
@@ -330,8 +330,8 @@
       "art": "subject",
       "recurrence": "banded-iron",
       "source": "as 2,600 Ma",
-      "analogy": "the same banded iron formation as earlier on this page, drawn as a broader, thicker slab — many more red-and-silver bands stacked across it, the layering denser and the folding tighter",
-      "negative": "the same rock as the 2,600 Ma banded iron and it must read as the same material: bold red jasper alternating with metallic silver-grey. Not a landscape and not a stripe pattern. The silver bands stay mid-tone grey, never black.",
+      "analogy": "the same banded iron formation as earlier on this page, drawn as a broader, thicker slab — many more red-and-silver bands stacked across it, the layering denser and the folding tighter; the dominant colour is again a deep brick-red",
+      "negative": "the same rock as the 2,600 Ma banded iron and it must read as the same material: deep brick-red jasper alternating with metallic silver-grey. Not a bright scarlet or fire-red — the red is dark and earthy. The silver bands are a neutral metallic grey, never blue or blue-grey and never black. Not a landscape and not a stripe pattern.",
       "reference": "as banded-iron — Bekker et al. 2010, *Econ. Geol.*"
     },
     {
@@ -357,8 +357,8 @@
       "art": "subject",
       "recurrence": "first-ice-age",
       "source": "Young 2013 — 2.45–2.22 Ga",
-      "analogy": "a single buff boulder dropped into fine layered mud, the layers directly beneath it bent and sagging under its weight — a dropstone, the signature of ice rafting",
-      "negative": "not a snowy scene, not a glacier and not an iceberg: the evidence is a rock. The bending of the layers underneath is the whole point and must be clearly visible. Not the striated boulder used for the first ice age earlier on this page — this one sits in sediment. Nothing near-black.",
+      "analogy": "a single dark slate-grey boulder half-buried in fine layered pale grey-green mud, punched down into it so the layers directly beneath are pushed into a deep U-shaped sag under its weight while the layers above drape up and over it — a dropstone, the signature of ice rafting; the dominant colour is a cool grey-green, with no warm buff or orange anywhere in it",
+      "negative": "not a snowy scene, not a glacier and not an iceberg: the evidence is a rock. The boulder is embedded in the mud, never resting on top of a flat slab like an ornament on a plinth, and the layers beneath it must visibly bend down into a bowl around it — that deformation is the whole point of the specimen and the only thing that proves the stone fell. Gently wavy ripples are not enough. Not the striated boulder used for the first ice age earlier on this page — this one sits in sediment. Nothing near-black.",
       "reference": "Gowganda Formation dropstone photographs; Young 2013"
     },
     {
@@ -394,7 +394,7 @@
       "line": "Centimetre-scale shapes in Gabon. Possibly the oldest multicellular life; possibly not life at all.",
       "art": "subject",
       "source": "El Albani et al. 2010, *Nature*; 2014, *PLoS ONE*",
-      "analogy": "several flat, lobed, coin-sized discs on a slab of buff mudstone, each with a crinkled raised rim and a smoother middle, like blobs of dried wax pressed into the rock",
+      "analogy": "several flat, lobed, coin-sized discs on a slab of cool slate-grey mudstone with a faint violet cast, each disc a pale pyritic cream with a wrinkled, crumpled raised rim and a smoother middle, its outline irregular and lobed like a blob of dried wax pressed into the rock; the dominant colour is a cool violet-grey, never buff or brown",
       "negative": "not a fossil animal, not a shell, and nothing with recognisable body parts — whether these are life at all is disputed, so they must read as ambiguous shapes in rock rather than as a creature. Not regular circles like coins: the outlines are irregular and lobed. Nothing near-black.",
       "reference": "El Albani et al. 2010, *Nature*; El Albani et al. 2014, *PLoS ONE* — Francevillian B specimens"
     },
@@ -418,8 +418,8 @@
       "line": "A coiled ribbon in Michigan iron. Big enough to see, but nothing of its cells survives.",
       "art": "subject",
       "source": "Han & Runnegar 1992, *Science*",
-      "analogy": "a single flat ribbon coiled into a loose open spiral on a reddish slab of iron-rich rock, like a length of tape laid down in a curl — smooth-edged, uniform in width, about a centimetre across",
-      "negative": "not a shell and not an ammonite: no chambers, no ribs, no ridges. It is a smooth featureless ribbon, and nothing of its internal structure survives. Not a worm with a head or segments. The carbon film reads mid-grey against the red rock, never near-black, or the luminance key punches it out.",
+      "analogy": "a single flat ribbon lying on an unbanded slab of dark rust-red iron-rich rock as one large open ring, like a rubber band or a loop of tape dropped flat on a table — a wide empty circle of bare rock in the middle of the loop, one end of the ribbon visibly stopping short and lapping past the other so it reads as a length of ribbon rather than a closed circle, the loop slightly uneven the way a dropped band lies rather than a perfect machined circle, the ribbon exactly the same width from one end to the other — a flat matte pewter-grey film pressed into the face of the rock and flush with it, stained into the stone rather than sitting on it",
+      "negative": "not a shell and not an ammonite: no chambers, no ribs, no ridges. It is not a spiral at all and the word does not apply: it does not wind inward, it has no centre and it makes no second or third turn. It is ONE ring with a large hole of bare rock in the middle. Two rounds (2026-08-01) both drew a tight spiral wound inward like a snail, a nautilus or a carved petroglyph — the second did so even while being told not to, so the redo dropped the words spiral, coil and curl entirely and asked for a ring, which worked. Round three then over-corrected into a perfectly circular raised metal washer or gasket lying on top of a pebble: it is not a manufactured object, not polished, not metallic, not three-dimensional and not separable from the rock — it is a flat carbonaceous stain in the rock face, level with the surface, and its two ends must be findable. The ribbon never tapers or narrows; it is the same width the whole way. It is a smooth featureless ribbon, and nothing of its internal structure survives. Not a worm with a head or segments. Not the striped red-and-silver block of banded iron elsewhere on this page — this slab is a plain unbanded rust-red with no layering. The carbon film reads mid-grey against the red rock, never near-black, or the luminance key punches it out.",
       "reference": "Han & Runnegar 1992, *Science* — *Grypania spiralis*, Negaunee Iron Formation"
     },
     {
@@ -441,8 +441,8 @@
       "line": "*Qingshania* — cells with a nucleus, stuck together on purpose.",
       "art": "subject",
       "source": "Miao et al. 2024, *Sci. Adv.*",
-      "analogy": "a short straight filament of a few large box-shaped cells joined end to end like the carriages of a train, each cell far chunkier than a bacterium and holding one softly-defined rounded body inside it",
-      "negative": "not a plant, not a leaf and not seaweed. Not a thin bacterial thread — the whole point is that these cells are large and compartmented, each carrying a nucleus, so they must look chunky and blocky rather than hair-like. The nucleus is a soft mid-toned disc, never a black dot.",
+      "analogy": "a short straight filament of seven or eight large box-shaped cells joined end to end like the carriages of a train, each cell a translucent fresh grass-green and far chunkier than a bacterium, holding one softly-defined rounded body inside it",
+      "negative": "not a plant, not a leaf and not seaweed. Not the blue-green of the cyanobacteria earlier on this page — this is a clear grass-green. Not a thin bacterial thread — the whole point is that these cells are large and compartmented, each carrying a nucleus, so they must look chunky and blocky rather than hair-like. The nucleus is a soft mid-toned disc, never a black dot.",
       "reference": "Miao et al. 2024, *Sci. Adv.* — *Qingshania magnifica*"
     },
     {
@@ -454,8 +454,8 @@
       "line": "*Bangiomorpha*, a red alga. The oldest known sexual reproduction.",
       "art": "subject",
       "source": "Gibson et al. 2018, *Geology*",
-      "analogy": "a short upright tuft of red alga: a single unbranched filament of stacked disc-shaped cells, like a narrow pile of coins, anchored at its base by a small holdfast",
-      "negative": "not a leafy frond, not kelp and not a branching plant — *Bangiomorpha* is one narrow filament of stacked cells on a holdfast. Not green: it is a red alga, so a warm pink-red. No dark outline and nothing near-black.",
+      "analogy": "a short upright tuft of red alga in a deep saturated wine-red, almost purple: a single unbranched filament of stacked disc-shaped cells, like a narrow pile of coins, anchored at its base by a small holdfast",
+      "negative": "not a leafy frond, not kelp and not a branching plant — *Bangiomorpha* is one narrow filament of stacked cells on a holdfast. Not green: it is a red alga, and its colour is a deep saturated wine-red verging on purple, not a pale or washed pink. No dark outline and nothing near-black.",
       "reference": "Gibson et al. 2018, *Geology*; modern *Bangia* micrographs — *Bangiomorpha pubescens*"
     },
     {
@@ -480,8 +480,8 @@
       "line": "Sponge-like structures in Canadian reef rock, 300 million years before any agreed animal.",
       "art": "subject",
       "source": "Turner 2021, *Nature*",
-      "analogy": "an irregular pale lump of reef limestone with a fine network of branching tubes winding through it, like a tangle of thread or the vermicular texture inside a bath sponge, exposed on a cut face",
-      "negative": "not a modern vase- or barrel-shaped sponge sitting on a reef: what survives is a microscopic meshwork inside rock, and the identification is disputed, so this is a rock specimen with a tube network in it rather than an animal. The tubes are mid-toned, never near-black holes.",
+      "analogy": "a lump of warm honey-cream reef limestone sliced open on one flat cut face, and that whole cut face filled edge to edge with a dense fine mesh of hundreds of thin rust-orange worm-like tubes, tangled and winding at every angle and far too many to count — the vermicular texture inside a bath sponge, or a plate of tangled thread",
+      "negative": "not a modern vase- or barrel-shaped sponge sitting on a reef: what survives is a microscopic meshwork inside rock, and the identification is disputed, so this is a rock specimen with a tube network in it rather than an animal. Not one bold branching tree or a few thick piped lines drawn on the outside of a pebble, which is the default: the tubes are fine, numerous and crowded, and they are the exposed interior of the rock rather than a pattern on its skin. The tubes are mid-toned, never near-black holes.",
       "reference": "Turner 2021, *Nature* — Little Dal reef vermiform microstructure"
     },
     {
@@ -515,7 +515,7 @@
       "line": "Cap carbonate, laid down in a few thousand years on top of the ice.",
       "art": "subject",
       "source": "Rooney et al. 2015",
-      "analogy": "a slab of pale cream-and-buff limestone in fine even layers, its top surface crossed by low rolling ripples, sitting sharply on a rougher darker rock beneath — the boundary between the two flat and abrupt",
+      "analogy": "a slab of cool pale grey-cream limestone with a faint blue cast, in fine even layers, its top surface crossed by low rounded parallel ripples like ripples in wet sand, never a zigzag or chevron pattern, sitting sharply on a rougher darker rock beneath — the boundary between the two flat and abrupt; the dominant colour is a cool pale grey-cream, never a warm buff or honey",
       "negative": "not an iceberg, not a glacier and not melting ice: the evidence is the rock that formed on top of what the ice left. Not the red-and-silver banding of banded iron — cap carbonate is pale, creamy and finely layered. The rock beneath stays mid-toned, never black.",
       "reference": "Marinoan and Sturtian cap carbonate outcrop and hand-specimen photographs; Rooney et al. 2015, *Geology*"
     },
@@ -530,7 +530,7 @@
       "art": "subject",
       "recurrence": "snowball-earth",
       "source": "ICS base Ediacaran 635.0 Ma; Wang et al. 2025, *PNAS*",
-      "analogy": "a rounded slab of glacial diamictite whose top half gives way to smooth even meltwater-laid bedding — jumbled angular pebbles below, quiet flat layers above, with a clean line between them",
+      "analogy": "a broken block of dark slate blue-grey glacial diamictite whose top half gives way to smooth even meltwater-laid bedding in pale ice-blue — jumbled sharp-cornered pebbles of all sizes jammed in at every angle below, quiet flat layers above, with a clean line between them",
       "negative": "not a landscape, not an ice sheet and not a thaw scene: one rock specimen recording the transition. It must read as the same family of glacial rock as the earlier ice subjects on this page. Nothing near-black between the clasts.",
       "reference": "Marinoan diamictite–cap carbonate contact specimens; ICS base Ediacaran 635.0 Ma; Wang et al. 2025, *PNAS*"
     },
@@ -555,8 +555,8 @@
       "line": "Shells, eyes, guts, predators, and the first things burrowing through mud on purpose.",
       "art": "subject",
       "source": "ICS 2023 — 538.8 ± 0.6 Ma",
-      "analogy": "a trilobite seen from directly above: a flat oval shield divided lengthwise into three lobes, a broad crescent head bearing two crescent eyes, a jointed thorax of repeated segments, and a small tail plate",
-      "negative": "not a woodlouse, not a horseshoe crab and not a beetle — the three lengthwise lobes and the crescent head shield are the defining shapes and must be unmistakable. No insect antennae. Keep it a warm mid-toned brown-orange, never near-black.",
+      "analogy": "a trilobite seen from directly above: a flat oval shield divided lengthwise into three lobes, a broad crescent head with a raised ridge running down its middle and one crescent eye on the cheek either side of that ridge, a jointed thorax of repeated segments, and a small tail plate, the whole shield a deep violet-blue with pale cream margins along its rim",
+      "negative": "not a woodlouse, not a horseshoe crab and not a beetle — the three lengthwise lobes and the crescent head shield are the defining shapes and must be unmistakable. No insect antennae. The dominant colour is a deep violet-blue with pale cream margins — never brown, orange or rust, which is the default, and never near-black.",
       "reference": "*Olenellus* and *Paradoxides* specimen photographs; ICS 2023 — 538.8 ± 0.6 Ma"
     },
     {
@@ -580,8 +580,8 @@
       "line": "Spores, nothing you could call a plant yet. Land has been bare for four billion years.",
       "art": "subject",
       "source": "Rubinstein et al. 2010, *New Phytol.*",
-      "analogy": "a cluster of four spores fused into one tetrahedral group — a cryptospore tetrad — each spore a small rounded ball with a finely pebbled surface, the four packed together like soap bubbles",
-      "negative": "not a plant, not a leaf, not a stem and not moss: at this date there is nothing anyone would call a plant, only spores. Not a single sphere — the diagnostic is the bonded group of four. Keep them warm translucent amber, never near-black.",
+      "analogy": "exactly four microscopic spores fused into one tetrahedral group — a cryptospore tetrad seen down a microscope — each spore a small glassy ball of translucent honey-amber, all four pressed together into one compact clover-shaped clump with the seams between them showing, their surfaces finely stippled like frosted glass",
+      "negative": "not a plant, not a leaf, not a stem and not moss: at this date there is nothing anyone would call a plant, only spores. Not oranges, tangerines, citrus or fruit of any kind, which is the default for a cluster of round objects — a low proof of this subject (2026-08-01) came back as three oranges, so the surface is glassy and translucent like frosted glass, never opaque dimpled peel. Exactly four, never three, and they are bonded into one body rather than resting against each other. Not a single sphere — the diagnostic is the bonded group of four. Keep them warm translucent amber, never near-black.",
       "reference": "Rubinstein et al. 2010, *New Phytol.* — Ordovician cryptospore tetrads"
     },
     {
@@ -593,7 +593,7 @@
       "line": "Ice, then anoxia. About 85% of species go.",
       "art": "subject",
       "source": "Harper et al. 2014",
-      "analogy": "several graptolite fossils fanning out from one point on a pale grey shale slab — each a narrow straight strip edged with fine regular teeth, like the blade of a hacksaw flattened into the rock",
+      "analogy": "several graptolite fossils fanning out from one point on a neutral pale grey shale slab with no warm or brown cast — each a narrow straight strip edged with fine regular teeth, like the blade of a hacksaw flattened into the rock, the fossil film a silvery mid-grey against the paler slab",
       "negative": "not a plant, not a fern frond and not a feather: graptolites are straight or gently curved toothed strips preserved as a flattened film. The film must read as a mid-tone silvery grey against a lighter slab, never black, or the luminance key punches it out of the artwork.",
       "reference": "*Dicellograptus* and *Climacograptus* specimen photographs; Harper et al. 2014"
     },
@@ -617,8 +617,8 @@
       "name": "*Tiktaalik*",
       "line": "A fish with a neck, and wrists.",
       "art": "subject",
-      "analogy": "a coelacanth lying flat and horizontal, as if resting on a stream bed: the same heavy scales, the same three-lobed tail, and a pair of thick, fleshy-based front fins ending in a fan of stiff fin-rays — but with a much flatter, much wider head, almost crocodile-flat, and both eyes set on top of it, looking straight up",
-      "negative": "not standing, not walking, not upright on four legs, and not a salamander, newt, lizard, amphibian or frog. The whole animal lies flat and horizontal in the water, exactly like the coelacanth it is drawn from — the head is the one place it departs from an ordinary coelacanth, wider and flatter, with the eyes on the very top looking up rather than out to the sides. Every fin ends in a smooth unbroken fan of fin-rays — no toes, no fingers, no claws, nothing hand-shaped or foot-shaped anywhere on the animal. Four rounds (2026-07-31) each held one half of the animal and lost the other: an upright walking version with no fish left in it, then a fish missing the join between head and shoulders, then that join back but with toed feet, then a fully standing frog. Naming the tetrapod parts it must not have made it worse each round. Round five (2026-08-01), coelacanth-anchored and clear of neck/wrist/propped/limb: failed a third way — a small round-bodied orange reef fish, side-set eyes, no flattening to the head at all, nothing coelacanth-shaped beyond a vaguely lobed fin. Naming the coelacanth was not enough; the head's actual shape needs a second, independent anchor next round — e.g. a hammerhead shark's flattened head-plane, or a duck-billed platypus's flat broad snout, held next to the coelacanth's body and tail so the departure is anchored on both ends instead of asserted once.",
+      "analogy": "a coelacanth seen from directly overhead, lying flat on a stream bed and looked straight down upon from above: the same heavy scales, the same broad three-lobed tail, the same deep steel-blue mottled with pale blue-white flecks, and a pair of thick fleshy-based front fins spread out to either side, each ending in a fan of stiff fin-rays — and at the front, instead of an ordinary fish head, a broad flat spade much wider than the body, with both eyes sitting up on the flat top surface of it near the middle, looking straight up out of the picture at the viewer",
+      "negative": "not standing, not walking, not upright on four legs, and not a salamander, newt, lizard, amphibian or frog. The whole animal lies flat and horizontal in the water, exactly like the coelacanth it is drawn from — the head is the one place it departs from an ordinary coelacanth, wider and flatter, with the eyes on the very top looking up rather than out to the sides. Every fin ends in a smooth unbroken fan of fin-rays — no toes, no fingers, no claws, nothing hand-shaped or foot-shaped anywhere on the animal. Four rounds (2026-07-31) each held one half of the animal and lost the other: an upright walking version with no fish left in it, then a fish missing the join between head and shoulders, then that join back but with toed feet, then a fully standing frog. Naming the tetrapod parts it must not have made it worse each round. Round five (2026-08-01), coelacanth-anchored and clear of neck/wrist/propped/limb: failed a third way — a small round-bodied orange reef fish, side-set eyes, no flattening to the head at all, nothing coelacanth-shaped beyond a vaguely lobed fin. Naming the coelacanth was not enough; the head's actual shape needs a second, independent anchor next round — e.g. a hammerhead shark's flattened head-plane, or a duck-billed platypus's flat broad snout, held next to the coelacanth's body and tail so the departure is anchored on both ends instead of asserted once. Round six (2026-08-01) took that anchor and the steel-blue colour landed, but the head came back barely flattened with the eyes still set on the sides — six rounds have now asked for a flattened head in a SIDE view and six have drawn an ordinary fish head. Round seven changes the viewpoint instead of the adjectives: seen from directly overhead, the flat plate is the only surface facing the viewer and both eyes have nowhere to sit but on top of it, so the diagnostic is forced by the framing rather than requested. The head is a smooth rounded spade, never a hammerhead's T-bar with side lobes and never eyes on stalks. The whole animal stays a coelacanth's deep steel-blue mottled with pale blue-white, never the orange of round five's reef fish.",
       "reference": "Tiktaalik roseae holotype photographs and reconstructions — Daeschler et al. 2006, *Nature*; Field Museum; coelacanth (*Latimeria*) reference photographs, NOAA Fisheries / Smithsonian Ocean",
       "source": "Daeschler et al. 2006, *Nature*"
     },
@@ -655,8 +655,8 @@
       "line": "Siberian basalt cooks the ocean. 81% of marine species die, in about 60,000 years — one and a half pixels.",
       "art": "subject",
       "source": "Burgess et al. 2014, *PNAS*",
-      "analogy": "a thick slab of flood-basalt crust broken open, its top a ropy wrinkled skin like cooled porridge, with a narrow orange glow showing only in the deep cracks between the crusted plates",
-      "negative": "not a volcano with a cone, not an eruption scene and not a landscape — the Siberian Traps were floods of lava across flat ground, not a mountain. One slab. The crust stays a mid-toned grey-brown, never near-black, and the glow is confined to narrow cracks.",
+      "analogy": "a thick slab of flood-basalt crust broken open, its top a ropy wrinkled skin in a cool pewter-grey, buckled into coils and folds like thick rope laid side by side or the skin on cooled porridge, with a narrow orange glow showing only in the deep cracks between the crusted plates",
+      "negative": "not a volcano with a cone, not an eruption scene and not a landscape — the Siberian Traps were floods of lava across flat ground, not a mountain. One slab. The crust stays a cool mid-toned pewter grey with no brown in it, never near-black, and the glow is confined to narrow cracks.",
       "reference": "pāhoehoe basalt crust photographs; Siberian Traps flood basalt specimens; Burgess et al. 2014, *PNAS*"
     },
     {
@@ -669,8 +669,8 @@
       "line": "Both lines appear inside the same eight million years. At this scale, the same moment.",
       "art": "subject",
       "source": "Ischigualasto 231.4 ± 0.3 Ma; Santa Maria ~233 Ma",
-      "analogy": "two small animals side by side at the same scale, overlapping slightly so they read as one group: a slender bipedal dinosaur on long hind legs with its tail held level behind it, and beside it a shrew-sized furry mammal on four legs with a long pointed snout",
-      "negative": "not a large dinosaur and not a modern mouse — both are small and early. The dinosaur is lightly built and bipedal, never a bulky quadruped, and its tail is held level and never drags. The mammal is furry with a pointed snout, not a round-eared rodent. Neither may be near-black.",
+      "analogy": "two small animals side by side at the same scale, overlapping slightly so they read as one group: a slender bipedal dinosaur in muted sage-olive green with a cream underside, on long hind legs with its tail held level behind it, and beside it a shrew-sized furry mammal in warm sandy cream, on four legs with a long pointed snout",
+      "negative": "not a large dinosaur and not a modern mouse — both are small and early. The dinosaur is lightly built and bipedal, never a bulky quadruped, and its tail is held level and never drags. The mammal is furry with a long pointed snout and small low ears, not a round-eared rodent. Neither is brown or rust — the pair's dominant colour is the dinosaur's sage-olive green — and neither may be near-black.",
       "reference": "*Eoraptor* and *Herrerasaurus* reconstructions (Ischigualasto); *Morganucodon* reconstructions"
     },
     {
@@ -707,7 +707,7 @@
       "line": "*Archaefructus*: no petals yet, but a flower — the oldest anyone can date. Before this, nothing was in bloom.",
       "art": "subject",
       "source": "Sun et al. 2002, *Science*",
-      "analogy": "a slender aquatic stem with finely divided feathery leaves, carrying along its upper length a row of small paired seed pods and bare stamens attached directly to the stem, with no petals anywhere",
+      "analogy": "a slender aquatic stem in bright fresh yellow-green with finely divided feathery leaves, carrying along its upper length a row of small paired seed pods and bare stamens attached directly to the stem, with no petals anywhere",
       "negative": "not a modern flower: no petals, no sepals, no bloom and no blossom shape of any kind. *Archaefructus* is a thin water plant whose reproductive parts sit bare along the stem. Not a lily, not a magnolia, not a daisy. Nothing near-black.",
       "reference": "Sun et al. 2002, *Science* — *Archaefructus sinensis* holotype"
     },
@@ -720,8 +720,8 @@
       "line": "The last and largest of the tyrannosaurs, gone within two million years of the asteroid.",
       "art": "subject",
       "source": "Fowler 2017, *PLOS ONE* — Hell Creek Fm. and equivalents, 68–66 Ma",
-      "analogy": "a huge two-legged predator held horizontal like a see-saw balanced over its hips — spine level, a long heavy tail carried straight out behind as a counterweight, a short deep S-curved neck, and an enormous blunt boxy head of thick conical teeth; tiny forelimbs held to the chest with exactly two clawed fingers, and thick bird-like hind legs with three forward-facing toes",
-      "negative": "not upright like a kangaroo, and the tail never drags on the ground — that reconstruction is a century out of date. Exactly two fingers on each hand, not three. No fur and no coat of feathers. Not green, not a lizard and not roaring. Keep it light-to-mid in value throughout.",
+      "analogy": "a huge two-legged predator held horizontal like a see-saw balanced over its hips — spine level, a long tail carried straight out behind as a counterweight — thick and deep where it leaves the hips, tapering only gradually, never a thin whip — and a short deep S-curved neck carrying a massive blunt boxy head as long as the animal's own thigh, as deep from skull-top to jaw as a bathtub is deep, broad across the snout, its jaws slightly parted on thick conical teeth; the forelimbs are tiny and held to the chest, each ending in a simple two-pronged pincer like a pair of tongs, and the hind legs are thick and bird-like with three forward-facing toes; the animal is a muted slate-grey with dark rust-red banding down its back and flanks and a pale cream underside",
+      "negative": "not upright like a kangaroo, and the tail never drags on the ground — that reconstruction is a century out of date. Exactly two fingers on each hand, not three. No fur and no coat of feathers. Not green, not a lizard and not roaring. Not a tan or sandy-brown desert dinosaur, which is the default and which would collide with the dust-veiled Chicxulub disc arriving forty-nine pixels later: the dominant colour is a muted slate-grey. Keep it light-to-mid in value throughout. Round one (2026-08-01) got the horizontal posture, the level tail and the colour right, and failed on the two facts that make it a tyrannosaurid rather than a generic mid-sized theropod: three clawed fingers on each hand instead of two, and a small shallow head on a long shallow neck. Naming 'exactly two fingers, not three' did not work in either the low proof or the final — the same way naming Tiktaalik's missing tetrapod parts did not work. Round two states the hand as a positive shape instead (a two-pronged pincer, like tongs) and pins the skull's size to the thigh rather than calling it 'enormous'.",
       "reference": "*Tyrannosaurus rex* skeletal mounts AMNH 5027 and FMNH PR2081; modern horizontal-posture reconstructions"
     },
     {
@@ -745,8 +745,8 @@
       "line": "*Teilhardina* — not the primate-like mammals that came before it, but the first crown primate. It appears on three continents within 25,000 years, during a sudden burst of global heat.",
       "art": "subject",
       "source": "Smith, Rose & Gingerich 2006, *PNAS* — Teilhardina, PETM onset ~56 Ma",
-      "analogy": "a small squirrel-sized animal gripping a branch, its hands and feet wrapped right around it, with large forward-facing eyes, short soft fur and a long slender tail held out for balance",
-      "negative": "not a monkey and not a ring-tailed lemur: an early primate is small, generalised and squirrel-like. Not a rodent either — the giveaway is grasping hands with real fingers curled round the branch, and eyes facing forward rather than out to the sides. Nothing near-black.",
+      "analogy": "a small squirrel-sized animal gripping a branch, its hands and feet wrapped right around it, with a narrow pointed furry muzzle like a squirrel's, a small rounded head, large forward-facing eyes, short soft fur in a warm chestnut-red with a cream belly, and a long slender tail held out for balance",
+      "negative": "not a monkey, not a marmoset, not a tamarin and not a ring-tailed lemur, which is the default and which a low proof of this subject drew (2026-08-01): it has no flat monkey face, no bare or brightly-coloured facial skin, no pale rings around the eyes and no large round side-set ears. An early primate is small, generalised and squirrel-like, and its face comes to a soft furry point. Not a rodent either — the giveaway is grasping hands with real fingers curled round the branch, and eyes facing forward rather than out to the sides. The chestnut is warm and muted, not a hot saturated orange. Nothing near-black.",
       "reference": "*Teilhardina* and *Carpolestes* reconstructions; Bloch & Boyer 2002, *Science*"
     },
     {
@@ -771,8 +771,8 @@
       "line": "Everything you would call human happens after this point — the next 175 pixels.",
       "art": "subject",
       "source": "*Sahelanthropus* 7.2–6.8 Ma; genetic 6.5–9.3 Ma",
-      "analogy": "a single ape skull in three-quarter view: a low rounded braincase, a heavy continuous brow ridge above the eyes, a short flat face and a broad palate of small worn teeth",
-      "negative": "not a modern human skull with a high domed forehead, and not a modern chimpanzee — this is the common ancestor's grade, so the braincase stays low and the brow heavy. No flesh, no hair and no ape-man portrait. The eye sockets must be shallow mid-toned recesses, never near-black, or the luminance key punches holes straight through the skull.",
+      "analogy": "a single ape skull in three-quarter view, warm ivory bone-cream throughout: a low rounded braincase, a heavy continuous brow ridge above the eyes, a short flat face and a broad palate of small worn teeth",
+      "negative": "not a modern human skull with a high domed forehead, and not a modern chimpanzee — this is the common ancestor's grade, so the braincase stays low and the brow heavy. No flesh, no hair and no ape-man portrait. The eye sockets, the nose opening and the gaps between the teeth are filled with a soft pale shadow only a shade or two darker than the surrounding bone — never dark hollows, never brown or black openings, and never a glimpse of empty space behind them. A low proof (2026-08-01) drew the orbits as near-black holes, which the luminance key punches straight out of the artwork and the halo then fills with light, so this is the one thing on this subject that must not be got wrong.",
       "reference": "*Sahelanthropus tchadensis* cranium TM 266-01-060-1; Brunet et al. 2002, *Nature*"
     }
   ],

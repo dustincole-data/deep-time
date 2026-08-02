@@ -47,6 +47,11 @@ export interface Withheld {
   date: string;
   name: string;
   source: string | null;
+  /* §7 revised 2026-08-02 — the ten carry art now, so they carry §11's three
+     required clauses like every other subject. `analogy` is also the alt. */
+  analogy?: string;
+  negative?: string;
+  reference?: string;
 }
 
 export interface Era {
@@ -98,6 +103,9 @@ export const withheld: Withheld[] = raw.withheld.map((w) => ({
   date: w.date,
   name: w.name,
   source: w.source ?? null,
+  analogy: 'analogy' in w ? (w.analogy as string) : undefined,
+  negative: 'negative' in w ? (w.negative as string) : undefined,
+  reference: 'reference' in w ? (w.reference as string) : undefined,
 }));
 
 const clamp = (v: number, lo: number, hi: number) => (v < lo ? lo : v > hi ? hi : v);

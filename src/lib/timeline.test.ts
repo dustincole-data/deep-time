@@ -224,7 +224,10 @@ describe('the withheld ten (§7)', () => {
     expect(pxFromNow(withheld.find((w) => w.id === 'farming')!)).toBe(0.3);
   });
 
-  it('is chronological and never carries a line or art', () => {
+  it('is chronological and never carries a line', () => {
+    // §7 revised 2026-08-02: the ten DO carry art now, for the finale stamp.
+    // The line ruling is untouched — the cram has no room for one, and the ten
+    // are meant to arrive as a mass rather than be read one at a time.
     for (let i = 0; i < withheld.length - 1; i++) {
       expect(withheld[i]!.yearsAgo).toBeGreaterThan(withheld[i + 1]!.yearsAgo);
     }
@@ -232,7 +235,15 @@ describe('the withheld ten (§7)', () => {
       expect(w.date.length).toBeGreaterThan(0);
       expect(w.name.length).toBeGreaterThan(0);
       expect('line' in w).toBe(false);
-      expect('art' in w).toBe(false);
+    }
+  });
+
+  it('carries §11 three clauses, like every other subject', () => {
+    // `analogy` is also the alt text (§10), so a missing one is missing copy,
+    // not just a missing prompt — which is why it is asserted rather than assumed.
+    for (const w of withheld) {
+      expect([w.id, (w.analogy ?? '').length > 0]).toEqual([w.id, true]);
+      expect([w.id, (w.negative ?? '').length > 0]).toEqual([w.id, true]);
     }
   });
 });

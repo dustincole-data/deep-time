@@ -497,6 +497,79 @@ describe('the finale (§9)', () => {
   });
 });
 
+describe('the stamp — the whole human era, crammed (§9)', () => {
+  it('is ten cells, chronological, in the same order as the ten rows', () => {
+    for (const vp of GATE_VIEWPORTS) {
+      const f = fan(zones(vp));
+      expect([vp.w, f.stamp.shown]).toEqual([vp.w, true]);
+      expect(f.stamp.cells.map((c) => c.id)).toEqual(withheld.map((w) => w.id));
+    }
+  });
+
+  it('tiles edge-to-edge — the jam is the zero gutter, never an overlap', () => {
+    // This is the whole reason the cram was taken over the pile (§15): the
+    // site's last screen still obeys the rule it made a ship gate.
+    for (const vp of GATE_VIEWPORTS) {
+      const { cells, box, cell } = fan(zones(vp)).stamp;
+      for (const c of cells) expect([vp.w, c.id, contains(box, c.rect)]).toEqual([vp.w, c.id, true]);
+      for (let i = 0; i < cells.length; i++) {
+        for (let j = i + 1; j < cells.length; j++) {
+          expect([vp.w, cells[i]!.id, cells[j]!.id, intersects(cells[i]!.rect, cells[j]!.rect)])
+            .toEqual([vp.w, cells[i]!.id, cells[j]!.id, false]);
+        }
+      }
+      // Tiled, not merely non-overlapping: the ten cells account for the block
+      // exactly, so there is no gap anywhere inside it.
+      const area = cells.reduce((s, c) => s + c.rect.w * c.rect.h, 0);
+      expect(area).toBeCloseTo(box.w * box.h, 6);
+      expect(box.w).toBeCloseTo(cell * 5, 6);
+      expect(box.h).toBeCloseTo(cell * 2, 6);
+    }
+  });
+
+  it('is never wider than one fan row is long', () => {
+    // §9's claim in the one number that can be checked: the whole human era is
+    // smaller than a single label. It is also what stops the block growing into
+    // a poster on a wide monitor — past a point, width buys the free column.
+    for (const vp of [...GATE_VIEWPORTS, { w: 2560, h: 1440 }]) {
+      const f = fan(zones(vp));
+      expect([vp.w, f.stamp.box.w <= f.widestRow + 1e-6]).toEqual([vp.w, true]);
+    }
+  });
+
+  it('brackets to the bar last pixel — the one with no tick', () => {
+    for (const vp of GATE_VIEWPORTS) {
+      const f = fan(zones(vp));
+      expect(f.stamp.bracket).toHaveLength(2);
+      for (const b of f.stamp.bracket) {
+        expect([vp.w, b.x2]).toEqual([vp.w, f.bar.x - 2]);
+        // The bar's last pixel is where the ten rows already converge.
+        expect(b.y2).toBeCloseTo(f.rows[39]!.leader.y2, 6);
+      }
+    }
+  });
+
+  it('drops out entirely at 200% text, rather than shrinking to a smudge', () => {
+    // §10: text costs art, never legibility. The closing block doubles and takes
+    // the room the stamp was solved into, so the stamp goes — and leaves nothing
+    // behind for the runtime to place.
+    for (const vp of GATE_VIEWPORTS) {
+      const s = fan(zones({ ...vp, textScale: 2 })).stamp;
+      expect([vp.w, s.shown]).toEqual([vp.w, false]);
+      expect([vp.w, s.cells.length, s.bracket.length, s.box.w, s.box.h]).toEqual([vp.w, 0, 0, 0, 0]);
+    }
+  });
+
+  it('shares the screen with the fan only where there is a free column', () => {
+    // Same ruling the closing block takes, and it must resolve the same way:
+    // a phone has no free column, so there the two are sequential.
+    for (const vp of GATE_VIEWPORTS) {
+      const f = fan(zones(vp));
+      expect([vp.w, f.stamp.placement]).toEqual([vp.w, f.closingPlacement]);
+    }
+  });
+});
+
 describe('the copy spends the constants, exactly (§8, §13)', () => {
   // "A true-scale site cannot round its own punchline." Two of these numbers were
   // wrong in an earlier prototype; nothing should be able to drift again.

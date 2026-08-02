@@ -884,10 +884,52 @@ export interface FanRow extends FanRowData {
   leader: { x1: number; y1: number; x2: number; y2: number };
 }
 
+/**
+ * THE STAMP (§9) — the whole human era, crammed.
+ *
+ * Ten pictures tiled edge-to-edge with NO gutter. The jam is bought with the
+ * zero gap and the small cell, never with overlap: each subject is contained
+ * inside its own cell, so §5 survives this screen verbatim and the collision
+ * gate needs no finale exemption. (The overlapping pile was the alternative and
+ * was rejected on exactly that cost — §15.)
+ */
+export interface StampCell {
+  id: string;
+  /** 0-9, chronological — cell 0 is Ardipithecus, cell 9 the industrial revolution. */
+  i: number;
+  rect: Rect;
+}
+
+export interface Stamp {
+  /**
+   * False when the solved cell falls under `STAMP_CELL_MIN` — at 200% text the
+   * closing block takes the room the block was solved into. Text costs art (§10),
+   * so the block goes and the ten rows carry the ending on their own. When false,
+   * `box` has no area and `cells` / `bracket` are empty.
+   */
+  shown: boolean;
+  /** The whole block. The cells tile it exactly. */
+  box: Rect;
+  cell: number;
+  /** What the cell solved to before the floor was applied — what the gate reports. */
+  solvedCell: number;
+  cells: StampCell[];
+  /** Two hairlines from the block's right corners to the bar's last pixel, closing to a point. */
+  bracket: { x1: number; y1: number; x2: number; y2: number }[];
+  /**
+   * `beside` — it shares the screen with the fan, in the free column (desktop).
+   * `after` — the phone has no free column, so it takes the screen the fan gives
+   * up (§9 staging rule 4). Same ruling that already places the closing block.
+   */
+  placement: 'beside' | 'after';
+}
+
 export interface Fan {
   /** The true-scale bar. Inside the reserved scale zone, and the same rect the run draws. */
   bar: Rect;
   rows: FanRow[];
+  /** The withheld ten, crammed (§9). */
+  stamp: Stamp;
   /** The gap the withheld ten sit below — what you scrolled past, and what was withheld. */
   seamY: number;
   seamCaption: Rect;
@@ -951,6 +993,21 @@ const ROW_PAD_LEFT = 7;
 const CLOSING_CLEARANCE = 34;
 /** Below this much free column, "beside" is not available at this width (§9). */
 const CLOSING_BESIDE_MIN = 190;
+/** The stamp is 5 × 2 (§9). Ten cells, chronological, reading order. */
+const STAMP_COLS = 5;
+const STAMP_ROWS = 2;
+/**
+ * Below this, the stamp is not drawn at all.
+ *
+ * §10 already rules on exactly this case — "text at 200% costs art, never
+ * legibility" — and the stamp is art. At 200% text the closing block doubles in
+ * height and takes the room the block was solved into, so the block goes, the
+ * same way an arrival's picture goes below `ART_MIN_H` and the same way ruling A
+ * drops the description line. A ten-picture jam at 12 px a cell is not a smaller
+ * version of the argument, it is a smudge; the ten rows above it still carry
+ * every name and date, which is the half §8 calls load-bearing.
+ */
+export const STAMP_CELL_MIN = 28;
 
 /** `.fd` — the date, then `.fn` — the name. One row, right-anchored. */
 function fanRowWidth(r: FanRowData, fs: number): number {
@@ -1035,12 +1092,89 @@ export function fan(z: Zones): Fan {
     1.8 * againSpec.size +
     blockH(plain(c.again), againSpec, closeW);
 
+  const closing: Rect = { x: closeLeft, y: h - closeBottom - closeH, w: closeW, h: closeH };
+
+  /* THE STAMP (§9 staging rules 3 and 4) — a solved rect, not a chosen one.
+     It hangs off the same 'beside' / 'after' ruling the closing block already
+     takes, because it is the same question asked twice: is there a free column
+     at this width, or does the fan have to give the screen up?
+
+       beside (desktop) — the stamp sits in the free column, right-anchored to
+         the column's right edge, which is exactly where the fan's widest row
+         stops being in the way.
+       after  (phone)   — the free column is 3 px, so there is no such place.
+         The stamp takes the fan's own column instead, and the fan is gone by
+         then: it fades at the end of `the ten` and the stamp holds alone.
+
+     Its bottom is CLOSING_CLEARANCE above the closing block at BOTH placements,
+     so the two never share space even though they never share a beat either.
+     Geometry that is true regardless of time is what keeps the gate honest —
+     the sweep reads rects, not beats.
+
+     THE CELL IS CAPPED BY THE FAN'S OWN WIDEST ROW. §9's claim is that the
+     whole human era is "smaller than one fan row is long", so that is the
+     number the cap is made of rather than a taste. It also means the stamp
+     cannot quietly grow into a poster on a wide monitor: past a point, extra
+     width buys the free column, not the block. */
+  const stampPlacement: 'beside' | 'after' = closingPlacement;
+  const stampRight = stampPlacement === 'beside' ? rowRight - widestRow - CLOSING_CLEARANCE : rowRight;
+  const stampBottom = closing.y - CLOSING_CLEARANCE;
+  const solvedCell = Math.max(
+    0,
+    Math.min(
+      (stampRight - closeLeft) / STAMP_COLS,
+      (stampBottom - rowTop) / STAMP_ROWS,
+      widestRow / STAMP_COLS,
+    ),
+  );
+  const stampShown = solvedCell >= STAMP_CELL_MIN;
+  const cell = stampShown ? solvedCell : 0;
+  const stampBox: Rect = {
+    x: stampRight - cell * STAMP_COLS,
+    y: stampBottom - cell * STAMP_ROWS,
+    w: cell * STAMP_COLS,
+    h: cell * STAMP_ROWS,
+  };
+  const stamp: Stamp = {
+    shown: stampShown,
+    box: stampBox,
+    cell,
+    solvedCell,
+    // Chronological, reading order — the same order as the ten rows above it,
+    // so a visitor can tie a row to a cell without being told to (§9 rule 2).
+    cells: !stampShown ? [] : fanRows
+      .filter((r) => r.ten)
+      .map((r, i) => ({
+        id: r.id,
+        i,
+        rect: {
+          x: stampBox.x + (i % STAMP_COLS) * cell,
+          y: stampBox.y + Math.floor(i / STAMP_COLS) * cell,
+          w: cell,
+          h: cell,
+        },
+      })),
+    // The bracket closes to the bar's last pixel — the one the ten land on, and
+    // the one with no tick. It states the relationship geometrically instead of
+    // in words, which is the same move the leader lines already make.
+    bracket: !stampShown
+      ? []
+      : [stampBox.y, stampBox.y + stampBox.h].map((y1) => ({
+          x1: stampBox.x + stampBox.w,
+          y1,
+          x2: bar.x - 2,
+          y2: barBot,
+        })),
+    placement: stampPlacement,
+  };
+
   return {
     bar,
     rows,
+    stamp,
     seamY,
     seamCaption,
-    closing: { x: closeLeft, y: h - closeBottom - closeH, w: closeW, h: closeH },
+    closing,
     freeColumn,
     closingPlacement,
     widestRow,

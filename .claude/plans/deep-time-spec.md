@@ -296,20 +296,30 @@ Named, and left empty on purpose. It holds four real arrivals; the single hole r
 
 ### The withheld ten
 
-Held back from the scroll entirely, delivered in the finale fan. **Label + date only. No line, no art, ever.** Everything here is inside the last 175 px.
+Held back from the scroll entirely, delivered in the finale. **Label + date + art. No line, and never a tick.** Everything here is inside the last 175 px.
 
-| date shown | px from now | Name | Source |
-|---|---:|---|---|
-| `4.4 Ma` | 110 | *Ardipithecus* walks upright | White et al. 2009, *Science* |
-| `3.3 Ma` | 83 | The first stone tools | Harmand et al. 2015, *Nature* — Lomekwi 3 |
-| `2.8 Ma` | 70 | The first *Homo* | Villmoare et al. 2015, *Science* |
-| `1.9 Ma` | 48 | *Homo erectus* | Antón 2003 |
-| ⚠ `≥ 800 ka` | 20 | Fire, kept | Goren-Inbar et al. 2004, *Science* |
-| `300 ka` | 7.5 | *Homo sapiens* | Hublin et al. 2017, *Nature* |
-| `51.2 ka` | 1.3 | The oldest known picture | Oktaviana et al. 2024, *Nature* |
-| `12 ka` | 0.3 | Farming | Fertile Crescent |
-| `5.4 ka` | 0.14 | Writing | cuneiform, ~3400 BC |
-| `250 yr` | 0.006 | The industrial revolution | — |
+**Revised 2026-08-02, on Dustin's call.** This section used to read *"Label + date only. No line, no art, ever."* That rule was written when the ending was the bar being read, and ten labels were enough to be read *with* it. The ending is now the ten **crammed on screen as pictures** ([§9](#9--the-finale)), and the reason is a correction of what the old rule got wrong: ten *names* are ten abstractions, and an abstraction cannot be crowded. **A face can.** *Fire*, *writing*, *farming*, *the industrial revolution* are the four things a general audience actually means by "us", and delivering them as text is delivering the least of them. The withholding is untouched — **none of the ten is ever drawn during the scroll**, which is the part that was load-bearing, and the part that makes the cram land.
+
+The three things this does **not** change, because they are the scale contract: the ten keep their true dates, they keep their position on the bar's last pixel, and **they still have no tick**. A tick means *passed*. They never were.
+
+**No line, still.** §8's ruling holds unchanged — a line is enrichment, the cram has no room for one, and the ten are meant to arrive as a mass rather than be read one at a time.
+
+**The hominins are drawn as faces and figures, not as fossils** (Dustin's call, 2026-08-02). A drawer of specimens reads as a museum; the cram has to read as *people*, or "the whole human era" is an argument about bones. The cost is honest and is stated where it belongs — each of the four is a published reconstruction rather than a specimen, and §11's verification clause takes reconstructions on exactly those terms. gpt-image-1's default for "early human" is a hunched shaggy cave-man, so every one of the four carries that as its explicit negative.
+
+| date shown | px from now | Name | art | Source |
+|---|---:|---|---|---|
+| `4.4 Ma` | 110 | *Ardipithecus* walks upright | subject | White et al. 2009, *Science* |
+| `3.3 Ma` | 83 | The first stone tools | subject | Harmand et al. 2015, *Nature* — Lomekwi 3 |
+| `2.8 Ma` | 70 | The first *Homo* | subject | Villmoare et al. 2015, *Science* |
+| `1.9 Ma` | 48 | *Homo erectus* | subject | Antón 2003 |
+| ⚠ `≥ 800 ka` | 20 | Fire, kept | subject | Goren-Inbar et al. 2004, *Science* |
+| `300 ka` | 7.5 | *Homo sapiens* | subject | Hublin et al. 2017, *Nature* |
+| `51.2 ka` | 1.3 | The oldest known picture | subject | Oktaviana et al. 2024, *Nature* |
+| `12 ka` | 0.3 | Farming | subject | Fertile Crescent |
+| `5.4 ka` | 0.14 | Writing | subject | cuneiform, ~3400 BC |
+| `250 yr` | 0.006 | The industrial revolution | subject | — |
+
+Each of the ten carries `analogy` and `negative` in `timeline.json` like every other subject, and the `alt` is the analogy verbatim ([§10](#10--accessibility)) — so the ten cost zero new copy and are gated by the same build assertions as the 51 that came before them.
 
 ### The 600 px floor is what edits this page
 
@@ -440,11 +450,38 @@ Then `↑ again`, and nothing else. This turns **the scale's edit of the page** 
 
 ## 9 — The finale
 
-**The finale is the true-scale bar being read.** The bar persists — it is **the same object, unbroken, from 4.60 Ga to the last frame** — and the fan's thirty targets are the same thirty ticks the visitor has been lighting for four minutes. The reveal is not a new screen; it is the instrument you have been ignoring, finally read.
+**The finale is the whole human era, crammed into one small block of pictures.** The bar is what measures it, and the fan is what leads you there — but the thing the visitor is left looking at is *us*, jammed.
 
-**The withheld ten land on the bar's last pixel, which has no tick** — because a tick means *passed*, and they never were. **That absence is the payoff, drawn.**
+**Revised 2026-08-02, on Dustin's call: "end with a bang — jam the human images on screen so the whole human era reads as nothing."** This section used to make the payoff *the bar being read*. That was right about the instrument and wrong about the hit. Reading an instrument is a comprehension; the site's last move should be a recognition. Ten labels converging on a point is a diagram of smallness. **Ten pictures crushed into a block the size of a postage stamp is smallness itself** — and the pictures are of fire, of writing, of a face, so the visitor is not being told that humans are small, they are looking at everything they mean by "us" and finding it fits in a stamp.
 
-*(An earlier prototype faded the bar out and drew a separate lookalike rail for the fan. That throws away the only thing that makes the ending mean anything. Do not reintroduce it.)*
+**What survives the revision, because it is the argument and not the staging:**
+
+- **The bar persists — the same object, unbroken, from 4.60 Ga to the last frame.** It is not faded, not replaced, not doubled. *(An earlier prototype faded the bar out and drew a separate lookalike rail for the fan. Do not reintroduce it — [§15](#15--settled-do-not-relitigate) still forbids it.)*
+- **The fan's thirty targets are the same thirty ticks the visitor has been lighting for four minutes.** The cascade is untouched.
+- **The withheld ten land on the bar's last pixel, which has no tick** — because a tick means *passed*, and they never were. That absence is still drawn; it is now drawn *underneath a picture of what never passed*, which is the same fact with a face on it.
+- **Every number is unchanged.** Same dates, same positions, same closing line. The scale contract is not touched by this revision at any point.
+
+### The stamp
+
+The ten pictures land in one rect — **the stamp** — and the form of it was chosen against the obvious alternative:
+
+| | |
+|---|---|
+| **The pile** — ten pictures heaped on one point, overlapping | **Rejected.** It is the more violent image, and it costs the one constraint Dustin stated verbatim and made a ship gate: *"stuff can't overlap."* A finale carve-out to §5 would mean the site's own last screen is the one place its rule does not hold, and every future reader of the gate would have to be told why the exemption is not a leak |
+| **The cram** — ten pictures tiled edge-to-edge, nothing overlapping | **Taken.** §5 survives verbatim and the collision gate needs no exemption. The jam is bought with **zero gutters and small cells** instead of with overlap: nothing between the pictures, and the whole block smaller than one fan row is long |
+
+**The geometry, stated as a solved rect so the gate can read it:**
+
+1. **Five columns × two rows of square cells, edge-to-edge — no gutter, no gap, no border, no caption.** Each subject is *contained* inside its cell, never clipped and never scaled past it, so no two pictures share a pixel. The zero gutter is what makes it read as a jam; the containment is what keeps §5 true.
+2. **Chronological, reading order** — left to right, top to bottom, oldest first. Cell 1 is *Ardipithecus*, cell 10 is the industrial revolution. The same order as the ten rows above it, so a visitor can tie a row to a cell without being told to.
+3. **Desktop: the stamp is right-anchored to the free column's right edge, and its bottom sits `CLOSING_CLEARANCE` above the closing block.** The cell size is whatever that space leaves, solved — not chosen. This is the same posture as every other rect in the site: the box is derived, and if it cannot be derived the build fails.
+4. **Mobile: the phone has a 3 px free column, so the stamp cannot share the screen with the fan.** It takes the screen the fan gives up: the fan goes fully out at the end of *the ten*, the stamp comes in for *hold*, centred, and then it goes out before the closing line. Sequential, never a crossfade — the same ruling staging rule 3 already makes for the closing block, applied one beat earlier. Nothing about this is new machinery; the phone already fades the fan out before the line.
+5. **The bracket.** Two hairlines run from the stamp's right-hand corners to the bar's last pixel, closing to a point. That is the only thing on the screen that states the relationship, and it states it geometrically rather than in words: this block, at that size, is that. The bracket is `aria-hidden` decoration like the leader lines.
+6. **The stamp fills cell by cell.** The block **assembles** rather than appearing — the same argument rule 2 already makes for the rows, and the difference between an avalanche and a photograph. Desktop runs it in lockstep with the ten rows: same start, same 42 px pitch, so a row and its picture land together and the tie between them never has to be explained. **A phone cannot**, because the fan is still clearing that one column — so there the run waits for the fan and takes the first part of *hold*, at a tighter **24 px** pitch so a real hold survives it. **Neither empty beat is touched:** *breath* is whole at every viewport, and *hold* still ends in stillness with the complete block on screen ([§15](#15--settled-do-not-relitigate) stands).
+7. **The stamp drops out entirely below a 28 px cell**, rather than shrinking to a smudge. [§10](#10--accessibility) already rules this: text costs art, never legibility. At 200% text the closing block doubles in height and takes the room the block was solved into — measured, the cell goes to zero at all three gate viewports — so the block goes and the ten rows carry the ending alone, which is the half [§8](#8--the-copy-deck) calls load-bearing. A ten-picture jam at 12 px a cell is not a smaller version of the argument; it is a smear.
+8. **The cell is filled by the subject, not by the asset.** Every baked cut-out carries a transparent halo margin — the servo halo is a dilation, so it needs the room — and measured 2026-08-02 that margin is **18–30% of the canvas**. Sizing each picture by its canvas leaves the subject covering ~70% of its cell, and ten pictures separated by their own padding is a row of icons, not a jam. `bake-art.ts` records each subject's own opaque box in `art.json`, and the cell is filled from that. **The cell clips**, so a picture grown to fill its square still cannot reach a neighbour — which is why §5 survives this and why the gate can assert it on the cells themselves.
+
+**No labels in the stamp.** The names are already directly above it, in the ten rows, at their true dates. Repeating them inside the cells would cost the cell size that is doing the work, and would turn a jam into a contact sheet.
 
 ### The beats, in px from `RUN_END` (116,600)
 
@@ -453,8 +490,8 @@ Then `↑ again`, and nothing else. This turns **the scale's edit of the page** 
 | **drain** | 0 → 525 | 1.0 s | Field darkens to black. HUD clock fades. **The 7 Ma card holds and finishes its dwell**, releasing at 485. The bar brightens and stays. |
 | **cascade** | 525 → 4,125 | 7.2 s | The thirty, chronological, top to bottom, **120 px apart**. Each label fades in at its final position and its leader line *draws* toward the bar. **Nothing travels.** |
 | **breath** | 4,125 → 4,725 | 1.2 s | Nothing. |
-| **the ten** | 4,725 → 5,325 | 1.2 s | A **fast run at 42 px** — line after line piling onto the same point, no new destination ever appearing. Amber, below the seam caption. |
-| **hold** | 5,325 → 6,025 | 1.4 s | Nothing. The full fan on screen. The sit-back. |
+| **the ten** | 4,725 → 5,325 | 1.2 s | A **fast run at 42 px** — line after line piling onto the same point, no new destination ever appearing. Amber, below the seam caption. **Each row drops its picture into the stamp on the same pixel**, so the block assembles as the rows land. |
+| **hold** | 5,325 → 6,025 | 1.4 s | Nothing. The full fan and the full stamp on screen. The sit-back — and the thing being sat back from is now the stamp. **On mobile the fan goes out at the start of this beat and the stamp takes the screen alone** (staging rule 4). |
 | **the line** | 6,025 → 6,725 | 1.4 s | The closing sentence. |
 | **left holding** | 6,725 → 7,000 | 0.6 s | The epilogue, and `↑ again`. Last state; holds indefinitely. |
 
@@ -475,6 +512,10 @@ Then `↑ again`, and nothing else. This turns **the scale's edit of the page** 
 | Fan rows | **40 at 20.0 px pitch / 12.4 px type** (1440×900) · **19.1 px / 11.9 px** (390×844) |
 | Row overflow | **0.** Widest row 294 px in a 337 px phone column — full names fit; no short fan labels needed |
 | Collisions | **0** over 281 scroll samples × 4 variants × both viewports, including the reserved scale-bar zone |
+| **Stamp cell** (2026-08-02) | **62.6 px** (1440×900) · **59.9 px** (390×844) · **55.4 px** (390×780) |
+| **Stamp block** | **313 × 125 px** · **300 × 120** · **277 × 111** — never wider than the fan's widest row, by construction |
+| **Stamp at 200% text** | **dropped at all three**, per staging rule 7. Solved cell 0 px; nothing left behind for the runtime to place |
+| **Stamp collisions** | **0.** Cells tile their block exactly (summed cell area = block area, to 1e-6), zero cell × cell intersections, zero against the fan, the closing block or either reserved zone — swept at 5,476–5,572 scroll samples × 6 variants |
 
 ### Repeatability and the share artifact
 
@@ -613,6 +654,8 @@ of one pixel.
 ```
 
 **The visual convergence is not described.** No "forty lines converge on one point". A sighted visitor is not told what the fan means either; they are shown a fact and left with it. The equivalent is the fact, not a description of the graphic. The leader-line SVG is `aria-hidden="true"`.
+
+**The stamp is `aria-hidden="true"` in its entirety, bracket included** ([§9](#9--the-finale)). Same ruling, and it costs nothing: the ten rows immediately above it already carry all ten names and dates in the `<ol>`, in the same order as the cells, so exposing each cell's `alt` would read the same ten moments twice — once as facts, once as descriptions of pictures of the facts. The `alt` strings still exist and are still build-asserted from `art.json`; they are simply not announced a second time. The equivalent of *looking at the stamp* is the finale summary's closing sentence, which was always the punchline in numbers.
 
 **The true-scale bar** is `role="img"` with a label recomputed **once per 1%** (≈1,150 px, ≈2.3 s):
 
@@ -794,6 +837,12 @@ Self-hosted via `@fontsource-variable/archivo`, roman **and italic** (the copy d
 | **Total generations** | **~13**, plus re-rounds for the obscure class and Chicxulub |
 | **Transfer budget** | 1.45 MB at current sheet size · ≤3.5 MB if the bigger sheets are taken |
 
+**Added 2026-08-02 — the withheld ten.** [§7](#7-the-verified-set--the-single-source-of-truth)'s revision gives the ten pictures, so the order grows by **ten cut-out subjects**, generated one per call like everything since 2026-08-01. They ship at stamp size (a two-row grid of small cells, [§9](#9--the-finale)), so the 2× draw cap is nowhere near binding and no bigger sheet is needed. Proof at `--quality low` first, fix the prompt against the proof, then `medium` — **Dustin approves the batch before any call is made**, which is [§1](#1--the-thesis-and-the-constraints-that-are-not-negotiable)'s standing rule and not a formality.
+
+**Four of the ten are reconstructions, not specimens** — *Ardipithecus*, the first *Homo*, *Homo erectus* and *Homo sapiens* are drawn as faces and figures ([§7](#7-the-verified-set--the-single-source-of-truth)). They belong to the **obscure class** for the purposes of this section and should be assumed to need more than one round, for a reason this section already names: the model fails by familiarity, and its familiar answer for "early human" is a hunched shaggy cave-man with a club. Each carries that as its explicit negative. Verification is against published reconstructions rather than PhyloPic silhouettes, recorded in `art.json` the same way.
+
+**Two of the ten fight the style block and must be watched at proof.** *The oldest known picture* is a painting, and §11's recipe forbids outlines and line art — so it is prompted as flat masses of earth-red pigment with soft patchy edges, not as a drawn outline. *Writing* is a clay tablet, and the recipe forbids text — so it is prompted as rows of small wedge-shaped impressions, never as readable characters. If either comes back as the thing the recipe bans, the prompt is revised, not the recipe.
+
 ---
 
 ## 12 — Stack, budget, degradation
@@ -962,6 +1011,8 @@ Everything in the build is decided. **Two art-order questions remain, and both s
 | **Warped or piecewise scale** | Built, reviewed, rejected. So was an announced mid-scroll scale break. The honesty claim is absolute |
 | **A separate rail for the fan** | The bar persists unbroken. Faking a lookalike rail throws away the only thing that makes the ending mean anything |
 | **Cutting either empty finale beat** | 1.2 s of nothing is what converts a list into an avalanche. **This will be proposed and must be refused** |
+| **An overlapping pile at the finale** | Considered against the cram and rejected 2026-08-02. It is the more violent image, and it costs the one constraint stated verbatim as a ship gate — *"stuff can't overlap."* The cram buys the same jam with zero gutters instead of with an exemption ([§9](#9--the-finale)) |
+| **Drawing any of the withheld ten during the scroll** | The ten now have art ([§7](#7-the-verified-set--the-single-source-of-truth)), and that changes nothing about the withholding. They are never drawn on the page you scroll — that is what the seam caption says, what makes the cram land, and what the whole ending is built on |
 | **Audio** | The site is silent. WebAudio needs a gesture and phones are on silent, so only a minority would ever hear it — while the enabling toggle degrades the intro frame for everyone. Era ambience is invented, so it fails the accuracy constraint; sonifying day length needs an arbitrary transpose, which is a rescale on the site that never rescales; and it would be the only decision here with no measurable gate |
 | **Full-bleed scenes** | Replaced by planet cut-outs. Full-frame buys two seams per moment, a second art register, and a portrait recomposition for phones |
 | **Filling the Boring Billion** | The only true content available is repetition of sameness. Four labels saying *still nothing* is the same dead air wearing a badge |

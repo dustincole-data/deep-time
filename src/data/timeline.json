@@ -785,28 +785,36 @@
       "yearsAgo": 4400000,
       "date": "4.4 Ma",
       "name": "*Ardipithecus* walks upright",
-      "source": "White et al. 2009, *Science*"
+      "source": "White et al. 2009, *Science*",
+      "analogy": "a small ape standing upright on two legs, seen from the side, both feet planted flat on the ground, long arms hanging free past its knees, a low forehead and a projecting muzzle, and a big toe that sticks out sideways from the foot like a thumb",
+      "negative": "It stands tall on its two hind legs with its hands empty in the air, well clear of the ground. It is a flat simplified painting built from a few masses of colour, with no skin texture, no wrinkles and no photographic detail."
     },
     {
       "id": "first-stone-tools",
       "yearsAgo": 3300000,
       "date": "3.3 Ma",
       "name": "The first stone tools",
-      "source": "Harmand et al. 2015, *Nature* — Lomekwi 3"
+      "source": "Harmand et al. 2015, *Nature* — Lomekwi 3",
+      "analogy": "a fist-sized grey river cobble with a few broad flakes knocked off one edge, leaving a rough zig-zag working edge, and one sharp pale flake lying beside it",
+      "negative": "It is not a smooth teardrop-shaped hand-axe and it is not a polished stone axe head on a handle."
     },
     {
       "id": "first-homo",
       "yearsAgo": 2800000,
       "date": "2.8 Ma",
       "name": "The first *Homo*",
-      "source": "Villmoare et al. 2015, *Science*"
+      "source": "Villmoare et al. 2015, *Science*",
+      "analogy": "the head of an early human in profile facing right, with a sloping forehead, a heavy ridge of bone jutting over the eye, almost no chin, and short mid-brown hair",
+      "negative": "It is a flat simplified painting built from a few masses of colour, with no skin texture, no wrinkles and no photographic detail. It is a side profile, not a front-facing portrait, and not a grey museum skull."
     },
     {
       "id": "homo-erectus",
       "yearsAgo": 1900000,
       "date": "1.9 Ma",
       "name": "*Homo erectus*",
-      "source": "Antón 2003"
+      "source": "Antón 2003",
+      "analogy": "the head of an early human in profile facing right, with a long low skull running far back, a straight heavy brow like a shelf over the eye, a broad flat nose and short mid-brown hair",
+      "negative": "It is a flat simplified painting built from a few masses of colour, with no skin texture, no wrinkles and no photographic detail. It is a side profile of the head and shoulders only, not a full-length body and not a front-facing portrait."
     },
     {
       "id": "fire-kept",
@@ -814,42 +822,54 @@
       "contested": true,
       "date": "~800 ka",
       "name": "Fire, kept",
-      "source": "Goren-Inbar et al. 2004, *Science*"
+      "source": "Goren-Inbar et al. 2004, *Science*",
+      "analogy": "a shallow ring of pale rounded stones holding a small bright fire, orange and yellow flame standing up from a bed of warm grey ash",
+      "negative": "It is not a big camp bonfire with logs stacked in a tepee, and there is no cave wall or campsite behind it."
     },
     {
       "id": "homo-sapiens",
       "yearsAgo": 300000,
       "date": "300 ka",
       "name": "*Homo sapiens*",
-      "source": "Hublin et al. 2017, *Nature*"
+      "source": "Hublin et al. 2017, *Nature*",
+      "analogy": "the head of a modern human in profile facing right, with a high domed forehead rising straight above the eye, a small chin that juts forward and short mid-brown hair",
+      "negative": "It is a flat simplified painting built from a few masses of colour, with no skin texture, no wrinkles and no photographic detail. It is a side profile, not a front-facing likeness of a particular person."
     },
     {
       "id": "oldest-known-picture",
       "yearsAgo": 51200,
       "date": "51.2 ka",
       "name": "The oldest known picture",
-      "source": "Oktaviana et al. 2024, *Nature*"
+      "source": "Oktaviana et al. 2024, *Nature*",
+      "analogy": "a fat wild pig with a bristly back and a short snout, painted in flat earth-red pigment that is patchy and faded, thin in places and worn away in others, as if brushed onto stone by hand a very long time ago",
+      "negative": "It is a worn hand-made painting of a pig, not a smooth even illustration of a living animal. It is not drawn in outline, and it is not a wall covered in a scene of many animals — it is one painted pig alone."
     },
     {
       "id": "farming",
       "yearsAgo": 12000,
       "date": "12 ka",
       "name": "Farming",
-      "source": "Fertile Crescent"
+      "source": "Fertile Crescent",
+      "analogy": "a bundle of ripe golden wheat ears with their long whiskers fanning out, tied at the middle, and a curved pale wooden sickle laid across it",
+      "negative": "It is not a field of crops, a farmhouse, or a tractor."
     },
     {
       "id": "writing",
       "yearsAgo": 5400,
       "date": "5.4 ka",
       "name": "Writing",
-      "source": "cuneiform, ~3400 BC"
+      "source": "cuneiform, ~3400 BC",
+      "analogy": "a small pale clay tablet the size of a palm, its face divided by faint ruled lines into a few rows of wedge marks, each wedge a small triangle with a thin tail and each one turned a different way",
+      "negative": "The wedges vary in size and direction and sit in ruled rows, not in an even repeating grid. There are no letters of any alphabet, no readable characters and no hieroglyphs. It is not a scroll, a book or a carved stone monument."
     },
     {
       "id": "industrial-revolution",
       "yearsAgo": 250,
       "date": "250 yr",
       "name": "The industrial revolution",
-      "source": null
+      "source": null,
+      "analogy": "a squat red-brick chimney stack with a pale grey plume of smoke curling off the top, a riveted warm-grey iron boiler at its foot and a big spoked flywheel beside it",
+      "negative": "It is not a whole factory building or a city skyline, and it is not a steam locomotive."
     }
   ],
   "fieldNote": [

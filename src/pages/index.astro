@@ -188,6 +188,47 @@ const nf = (n: number) => n.toLocaleString('en-US');
         }
       </ol>
 
+      {/* THE STAMP (§9) — the whole human era, crammed. Ten pictures tiled
+          edge-to-edge with no gutter; the jam is the zero gap and the small
+          cell, never overlap, so §5 survives this screen verbatim.
+
+          aria-hidden in its entirety, bracket included (§10): the ten rows
+          immediately above carry all ten names and dates in the same order, so
+          exposing each cell's alt would read the same ten moments twice. The
+          alt strings still exist and are still build-asserted in art.json. */}
+      <div id="stamp" aria-hidden="true">
+        <svg id="stamp-bracket"></svg>
+        {
+          fanRows.filter((r) => r.ten).map((r, i) => {
+            const e = artFor(r.id)!;
+            /* Fill the cell with the SUBJECT, not with the asset. Every asset
+               carries a transparent halo margin (18-30%, measured), so sizing
+               the picture by its canvas leaves the subject covering 70% of its
+               cell — and ten pictures separated by their own padding is a row
+               of icons, not a jam. `opaque` is the subject's own box inside the
+               asset, recorded at bake time; these four numbers are it, solved
+               here as multiples of the cell so the runtime only has to place a
+               square and the browser does the rest in percentages.
+
+               The overflow is clipped BY the cell, so growing the picture past
+               its square cannot reach a neighbour: §5 holds by construction,
+               which is what the gate asserts on the cells themselves. */
+            const [fx, fy, fw, fh] = e.opaque;
+            const base = Math.min(fw * e.w, fh * e.h);
+            const wMul = e.w / base;
+            const hMul = e.h / base;
+            const style =
+              `--w:${wMul.toFixed(4)};--h:${hMul.toFixed(4)};` +
+              `--l:${(0.5 - (fx + fw / 2) * wMul).toFixed(4)};--t:${(0.5 - (fy + fh / 2) * hMul).toFixed(4)}`;
+            return (
+              <span class="sc" data-stamp-cell={i} style={style}>
+                <img src={e.file} alt="" width={e.w} height={e.h} />
+              </span>
+            );
+          })
+        }
+      </div>
+
       <div id="closing-block">
         <p class="closing">{FINALE_CFG.copy.closing}</p>
         {/* Cut 2026-07-31 — see finaleNote in timeline.json. Open question, not yet re-authored. */}
@@ -431,6 +472,31 @@ const nf = (n: number) => n.toLocaleString('en-US');
     position: absolute; left: 0; margin: 0; text-align: right; white-space: nowrap;
     letter-spacing: 0.24em; text-transform: uppercase; color: #ffd9a0; opacity: 0;
     line-height: 1.25;
+  }
+  /* THE STAMP (§9). No-JS gets nothing here on purpose: without the solved
+     geometry the cells have no size, and the no-JS document already carries all
+     ten moments as the last ten rows of the list above. */
+  #stamp { display: none; }
+  /* A full-size layer, like #leaders — the cells carry finale-relative
+     coordinates, and a shrink-to-fit box would collapse to 0×0 and take the
+     bracket's SVG viewport with it. */
+  .js #stamp { display: block; position: absolute; inset: 0; width: 100%; height: 100%; opacity: 1; }
+  /* Cells are placed by main.ts, edge-to-edge — no gap, no border, no caption.
+     The cell CLIPS, which is the containment §5 needs: a picture grown to fill
+     its square cannot reach a neighbour, so no two ever share a pixel.
+     No transition on the opacity: every pixel of motion is bought with a pixel
+     of the visitor's own scroll (§10), and a CSS transition is time-driven. */
+  .js #stamp .sc { position: absolute; overflow: hidden; opacity: 0; }
+  /* Percentages of the cell, so the four build-solved multiples are all the
+     runtime needs — it places a square and the browser does the rest. */
+  .js #stamp .sc img {
+    position: absolute; display: block;
+    width: calc(var(--w) * 100%); height: calc(var(--h) * 100%);
+    left: calc(var(--l) * 100%); top: calc(var(--t) * 100%);
+  }
+  .js #stamp-bracket {
+    position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
+    opacity: 0; pointer-events: none;
   }
   .js #closing-block { position: absolute; opacity: 0; }
   #closing-block p { margin: 0; }

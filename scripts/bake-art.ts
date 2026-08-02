@@ -32,7 +32,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
-import { arrivals, yearsAgo } from '../src/lib/timeline.ts';
+import { arrivals, withheld, yearsAgo } from '../src/lib/timeline.ts';
 import { place, zones } from '../src/lib/layout.ts';
 import { fieldAt, type RGB } from '../src/lib/field.ts';
 
@@ -80,7 +80,24 @@ interface ManifestEntry {
   quadrants: string[];
   /** True for the four planet portraits (§11): whole-disc subject, square crop, no rim trim. */
   isPlanet: boolean;
+  /**
+   * Cap on the baked long edge, in px. Omit to ship at the trimmed source size,
+   * which is what every scroll subject does — its box grows with the viewport,
+   * so the ceiling is the viewport's.
+   *
+   * The withheld ten are the one set with a KNOWN, small, capped box: a stamp
+   * cell is ≤ 62.6 px at every gate viewport, by construction (§9 caps the cell
+   * at a fifth of the fan's widest row). §12's draw rule is
+   * `maxDrawCSS = 2 × intrinsicPx / dpr`, so 62.6 CSS px at DPR 3 is satisfied
+   * by an intrinsic 94 px. Baking them at ~1,000 px shipped 1.11 MB to draw
+   * 60 px pictures. 256 is 2.7× what the rule needs and still an eighth of the
+   * bytes — §12's own words are "the art box is a maximum, not a target".
+   */
+  maxEdge?: number;
 }
+
+/** See ManifestEntry.maxEdge — the withheld ten only ever draw in a stamp cell. */
+const STAMP_MAX_EDGE = 256;
 
 const MANIFEST: ManifestEntry[] = [
   {
@@ -291,6 +308,54 @@ const MANIFEST: ManifestEntry[] = [
     quadrants: ['chicxulub'],
     isPlanet: true,
   },
+  /* THE WITHHELD TEN, 2026-08-02 — §7's revision gives them art for the finale
+     stamp (§9). They are never drawn on the scrolling page, so their field is
+     not a dwell sample but the drained finale black (see FINALE_FIELD).
+
+     Three proof rounds at --quality low, recorded because each fixed a
+     different failure the recipe already predicts:
+       1. `homo-erectus` came back as a nude modern man and tripped the safety
+          filter twice. All three hominin heads moved to PROFILE busts — a
+          profile carries the brow, the forehead and the chin as silhouette,
+          which is what §11's "readable as a strong silhouette at small size"
+          asks for and what a front-facing portrait cannot do.
+       2. `ardipithecus` came back KNUCKLE-WALKING — the exact thing its
+          negative named. Same failure as the gharial and the three fingers:
+          naming the default summons it. The words were deleted and bipedality
+          stated positively three ways instead (upright on two legs, feet flat
+          on the ground, hands empty and clear of the ground).
+       3. The three heads came back photoreal, off-register from the flat
+          painted set. The flatness push went in the `negative` field, not the
+          analogy — the analogy ships as alt text and must stay a description
+          of the subject, never of the treatment.
+     `writing` then needed a fourth round at medium: it baked as an even grid
+     of identical triangles reading as a waffle, and was re-rolled for ruled
+     rows of wedges turned different ways. */
+  {
+    file: 'art/source/sheet-29-ardipithecus-first-stone-tools-first-homo-homo-erectus.png',
+    quadrants: ['ardipithecus', 'first-stone-tools', 'first-homo', 'homo-erectus'],
+    isPlanet: false,
+    maxEdge: STAMP_MAX_EDGE,
+  },
+  {
+    file: 'art/source/sheet-30-fire-kept-homo-sapiens-oldest-known-picture-farming.png',
+    quadrants: ['fire-kept', 'homo-sapiens', 'oldest-known-picture', 'farming'],
+    isPlanet: false,
+    maxEdge: STAMP_MAX_EDGE,
+  },
+  {
+    // The `writing` quadrant here is superseded by sheet 32.
+    file: 'art/source/sheet-31-writing-industrial-revolution.png',
+    quadrants: ['', 'industrial-revolution', '', ''],
+    isPlanet: false,
+    maxEdge: STAMP_MAX_EDGE,
+  },
+  {
+    file: 'art/source/sheet-32-writing.png',
+    quadrants: ['writing'],
+    isPlanet: false,
+    maxEdge: STAMP_MAX_EDGE,
+  },
 ];
 
 const DESKTOP = { w: 1440, h: 900 };
@@ -311,7 +376,16 @@ const STRENGTH = 0.62;
 const RINGS: [number, number][] = [[0.008, 0.003], [0.016, 0.008]];
 
 /** §10: sample the field across the arrival's real dwell window, not at a point. */
+/**
+ * §9's finale field, fully drained. `drawField` lays `rgba(3,5,8,drain)` over
+ * everything and the drain reaches 1 before the cascade starts, so every one of
+ * the withheld ten sits on this one colour for its whole life. There is no
+ * dwell window to sample: they are never on the scrolling page at all (§7).
+ */
+const FINALE_FIELD: RGB = [3, 5, 8];
+
 function dwellFieldSamples(id: string): RGB[] {
+  if (withheld.some((w) => w.id === id)) return [FINALE_FIELD];
   const z = zones(DESKTOP);
   const placed = place(arrivals, z);
   const p = placed.find((x) => x.id === id);
@@ -337,6 +411,8 @@ async function bakeSheetInPage(
     dataUrl: string;
     quadrants: string[];
     isPlanetBySubject: Record<string, boolean>;
+    /** 0 = ship at the trimmed source size. See ManifestEntry.maxEdge. */
+    maxEdge: number;
     fieldSamplesBySubject: Record<string, [number, number, number][]>;
     strength: number;
     gate: number;
@@ -610,6 +686,24 @@ async function bakeSheetInPage(
     const boxes: [number, number][] = single
       ? [[0, 0]]
       : [[0, 0], [cw, 0], [0, ch], [cw, ch]];
+    /** The opaque bounding box of a finished canvas, in its own pixels. */
+    function alphaBounds(c: HTMLCanvasElement) {
+      const d = c.getContext('2d', { willReadFrequently: true })!.getImageData(0, 0, c.width, c.height).data;
+      let minX = c.width, minY = c.height, maxX = -1, maxY = -1;
+      for (let y = 0; y < c.height; y++) {
+        for (let x = 0; x < c.width; x++) {
+          if (d[(y * c.width + x) * 4 + 3]! > 8) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+      if (maxX < 0) return { x: 0, y: 0, w: c.width, h: c.height };
+      return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
+    }
+
     const results: Record<string, any> = {};
     for (let i = 0; i < boxes.length; i++) {
       const id = args.quadrants[i]!;
@@ -624,11 +718,38 @@ async function bakeSheetInPage(
       const rim = rimLum(subject);
       const fields = args.fieldSamplesBySubject[id] ?? [[20, 20, 25]];
       const solved = solveHalo(subject, fields, args.strength);
-      const baked = bakeHalo(subject, solved.strength, solved.dark);
+      const full = bakeHalo(subject, solved.strength, solved.dark);
+      /* Downscale AFTER the halo is baked and measured, never before: the ring
+         geometry is a fraction of subject size, so scaling the finished asset
+         keeps the halo exactly proportional and leaves the measured contrast
+         representative of what ships. Scaling first would re-solve a different
+         ring on a different rim. */
+      const longEdge = Math.max(full.width, full.height);
+      let baked = full;
+      if (args.maxEdge > 0 && longEdge > args.maxEdge) {
+        const k = args.maxEdge / longEdge;
+        const small = document.createElement('canvas');
+        small.width = Math.max(1, Math.round(full.width * k));
+        small.height = Math.max(1, Math.round(full.height * k));
+        const sctx = small.getContext('2d')!;
+        sctx.imageSmoothingQuality = 'high';
+        sctx.drawImage(full, 0, 0, small.width, small.height);
+        baked = small;
+      }
+      /* The SUBJECT's own box inside the shipped asset, as fractions.
+         Every asset carries a transparent margin — the halo ring is a dilation,
+         so it needs room, and `trim` leaves it. Measured 2026-08-02 that margin
+         is 18-30% of the canvas, which is invisible on the scroll (the box is a
+         maximum there) and fatal in the finale stamp: filling a 62 px CELL with
+         the CANVAS leaves the picture covering 70% of it, and ten pictures
+         separated by their own padding read as a row of icons rather than as a
+         jam. Recorded here because this is the only place that can measure it. */
+      const ob = alphaBounds(baked);
       const webp = baked.toDataURL('image/webp', 0.92);
       results[id] = {
         w: baked.width,
         h: baked.height,
+        opaque: [ob.x / baked.width, ob.y / baked.height, ob.w / baked.width, ob.h / baked.height],
         rimLuminance: rim,
         halo: { strength: solved.strength, polarity: solved.dark === null ? null : solved.dark ? 'dark' : 'light' },
         contrast: Math.round(solved.r * 100) / 100,
@@ -662,6 +783,7 @@ async function main() {
         quadrants: entry.quadrants,
         isPlanetBySubject,
         fieldSamplesBySubject,
+        maxEdge: entry.maxEdge ?? 0,
         strength: STRENGTH,
         gate: GATE,
         rings: RINGS,
@@ -705,6 +827,8 @@ async function main() {
           file: `/art/${file}`,
           w: r.w,
           h: r.h,
+          /** [x, y, w, h] of the subject inside the asset, as fractions of it. */
+          opaque: r.opaque.map((v: number) => Math.round(v * 1e4) / 1e4),
           alt: a?.analogy ?? '',
           halo: r.halo,
           contrast: r.contrast,

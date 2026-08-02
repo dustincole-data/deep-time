@@ -55,7 +55,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, type Page } from 'playwright';
-import { arrivals } from '../src/lib/timeline.ts';
+import { arrivals, withheld } from '../src/lib/timeline.ts';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const OUT_DIR = join(ROOT, 'art', 'source');
@@ -134,8 +134,12 @@ async function apiKey(): Promise<string> {
 
 /** §11's three required clauses, in the order the model weights them. */
 function promptFor(id: string): string {
-  const a = arrivals.find((x) => x.id === id);
-  if (!a) throw new Error(`no arrival with id "${id}"`);
+  /* The withheld ten are subjects too, since §7's 2026-08-02 revision — they
+     are drawn for the finale stamp (§9) and never for the scroll. They carry
+     the same `analogy` / `negative` clauses in the same file, so the only thing
+     that changes here is where the id is looked up. */
+  const a = arrivals.find((x) => x.id === id) ?? withheld.find((x) => x.id === id);
+  if (!a) throw new Error(`no arrival or withheld moment with id "${id}"`);
   if (!a.analogy) throw new Error(`${id}: no analogy — §11 requires one, and it is also the alt text`);
   if (!a.negative) throw new Error(`${id}: no negative — §11 requires one naming the model's default`);
   return `${a.name.replace(/\*/g, '')}. ${a.analogy} ${a.negative}\n\n${STYLE}`;

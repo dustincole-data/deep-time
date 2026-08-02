@@ -741,7 +741,15 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
       }
     }
 
-    it.availH = it.rect.h - it.textH - it.glide * 3 - ART_TEXT_CLEARANCE;
+    /* TWICE the glide, not three times. The art hangs off the top of the text
+       block and both carry the SAME `gl`, so their separation is already fixed
+       at ART_TEXT_CLEARANCE — the glide is paid for once, by the text, and the
+       art rides along. A third glide bought nothing and cost the picture: a
+       band slot measured 2026-08-02 reserved 60 of its 122 free px and rendered
+       the ape skull at 57×62 under 60 px of empty. Containment is unchanged —
+       at the top of the glide the art's bottom sits CLEARANCE above the text,
+       and at the bottom of it the art's top sits exactly on the box edge. */
+    it.availH = it.rect.h - it.textH - it.glide * 2 - ART_TEXT_CLEARANCE;
     it.hasArt = it.tier !== 'F' && showsArt(a, z) && it.availH > ART_MIN_H;
   }
 
@@ -808,7 +816,7 @@ export function frame(
       art = {
         x: p.right ? r.x + r.w - w : r.x,
         // The glide can never push the art out of the box: art and text carry
-        // the same `gl`, so their separation is fixed at glide + 14 px.
+        // the same `gl`, so their separation is fixed at ART_TEXT_CLEARANCE.
         y: r.y + p.glide + (p.availH - h) + gl,
         w,
         h,

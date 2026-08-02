@@ -156,7 +156,9 @@ describe('an arrival is ONE box (§5, rules 3 and 4)', () => {
 
   it('moves art and text in lockstep, so their separation cannot close', () => {
     // The whole reason the card × art collision class disappeared: both carry the
-    // same glide offset, so the gap between them is a constant glide + 14 px.
+    // same glide offset, so the gap between them is a constant 14 px — the
+    // clearance, and nothing else. Reserving a further glide on top of it is what
+    // starved the art in a band slot.
     const z = zones(DESKTOP);
     const placed = place(arrivals, z).filter((p) => p.hasArt);
     expect(placed.length).toBeGreaterThan(0);
@@ -165,7 +167,7 @@ describe('an arrival is ONE box (§5, rules 3 and 4)', () => {
         const v = frame([p], at)[0]!;
         return v.text.y - (v.art!.y + v.art!.h);
       });
-      for (const g of gaps) expect(g).toBeCloseTo(p.glide + 14, 6);
+      for (const g of gaps) expect(g).toBeCloseTo(14, 6);
     }
   });
 });

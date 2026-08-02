@@ -189,6 +189,75 @@ async function runVariant(page: Page, url: string, vp: Viewport, points: number[
 const r2 = (n: number) => Math.round(n * 10) / 10;
 const r = (rect: DomRect) => `${r2(rect.x)},${r2(rect.y)} ${r2(rect.w)}×${r2(rect.h)}`;
 
+/**
+ * The field must survive a resize that is not a scroll.
+ *
+ * On iOS the URL bar collapses as you scroll, which changes the box of a
+ * `position: fixed; height: 100%` canvas and fires main.ts's ResizeObserver.
+ * `relayout()` then writes `cv.width`/`cv.height` — and ANY write to those
+ * clears the canvas bitmap. At degradation ladder level 4 the field repaint is
+ * throttled to once per 250px of scroll, so if the resize does not also
+ * invalidate the repaint cache, the very next frame draws nothing and the
+ * visitor is left looking at the `#05070a` html background: a black screen,
+ * for as long as it takes them to scroll another 250px.
+ *
+ * Reported from a real phone 2026-08-02, and reproduced here at 390×844 with
+ * `prefers-reduced-motion`, which pins the ladder at level 4 from the first
+ * frame. That is the deterministic way to reach level 4 — the perf ladder
+ * climbs to the same level on a slow device and takes the same path, so this
+ * one case covers both.
+ *
+ * Neither the Node model nor the collision sweep can see this: every box stays
+ * exactly where it belongs. Only the pixels are gone.
+ */
+async function checkFieldSurvivesResize(url: string, browser: Awaited<ReturnType<typeof chromium.launch>>) {
+  const failures: string[] = [];
+  const centre = (page: Page) =>
+    page.evaluate(() => {
+      const c = document.getElementById('field') as HTMLCanvasElement;
+      const d = c
+        .getContext('2d')!
+        .getImageData(Math.round(c.width / 2), Math.round(c.height / 2), 1, 1).data;
+      return { r: d[0]!, g: d[1]!, b: d[2]!, a: d[3]! };
+    });
+  const dark = (p: { r: number; g: number; b: number; a: number }) => p.a < 8 || p.r + p.g + p.b < 30;
+
+  // Sampled at 110,000px: deep into the ramp to daylight, so the field is
+  // unambiguously lit and "went black" cannot be confused with "is black".
+  const AT = 110_000;
+  for (const reduced of ['reduce', 'no-preference'] as const) {
+    const ctx = await browser.newContext({
+      viewport: { width: 390, height: 844 },
+      deviceScaleFactor: 3,
+      isMobile: true,
+      hasTouch: true,
+      reducedMotion: reduced,
+    });
+    const page = await ctx.newPage();
+    await page.goto(url, { waitUntil: 'load' });
+    await page.evaluate((y) => window.scrollTo(0, y), AT);
+    await settle(page);
+    const before = await centre(page);
+
+    // The URL bar collapsing. A resize, and deliberately NOT a scroll.
+    await page.setViewportSize({ width: 390, height: 780 });
+    await settle(page);
+    await settle(page);
+    const after = await centre(page);
+
+    if (dark(before)) {
+      failures.push(`reducedMotion=${reduced}: field was already dark at y=${AT} — the probe is invalid`);
+    } else if (dark(after)) {
+      failures.push(
+        `reducedMotion=${reduced}: the field went black on a URL-bar-sized resize at y=${AT} ` +
+          `(rgba ${before.r},${before.g},${before.b} → ${after.r},${after.g},${after.b})`,
+      );
+    }
+    await ctx.close();
+  }
+  return failures;
+}
+
 async function main() {
   try {
     await stat(join(DIST, 'index.html'));
@@ -221,6 +290,12 @@ async function main() {
           console.log(`    … ${res.failures.length - show.length} more (--verbose)`);
       }
     }
+    const fieldFailures = await checkFieldSurvivesResize(url, browser);
+    if (fieldFailures.length > 0) failed++;
+    console.log(
+      `\nfield survives a resize  ${fieldFailures.length === 0 ? '✅ holds' : `❌ ${fieldFailures.length} failures`}`,
+    );
+    for (const f of fieldFailures) console.log(`    ${f}`);
   } finally {
     await browser.close();
     await close();
@@ -228,8 +303,8 @@ async function main() {
 
   console.log(
     failed === 0
-      ? `\nGATE PASS — zero real-browser collisions across ${VARIANTS.length} variants.\n`
-      : `\nGATE FAIL — ${failed} of ${VARIANTS.length} variants collide.\n`,
+      ? `\nGATE PASS — zero real-browser collisions across ${VARIANTS.length} variants, and the field survives a resize.\n`
+      : `\nGATE FAIL — ${failed} check(s) failed.\n`,
   );
   process.exit(failed === 0 ? 0 : 1);
 }

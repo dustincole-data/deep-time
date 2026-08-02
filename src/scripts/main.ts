@@ -144,6 +144,13 @@ function relayout() {
   cv.width = Math.round(W * DPR);
   cv.height = Math.round(H * DPR);
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  // Writing width/height CLEARED the bitmap just now, so the cached field is
+  // gone whether or not the scroll moved. At ladder level 4 the repaint below
+  // is throttled to once per 250px of scroll, so without this the next frame
+  // draws nothing and the visitor sees the html background — a black screen
+  // until they scroll another 250px. On iOS this fires constantly: the URL bar
+  // collapsing as you scroll resizes a fixed, full-height canvas.
+  lastFieldY = -1e9;
 
   Z = zones({ w: W, h: H });
   F = fan(Z);

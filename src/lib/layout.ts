@@ -787,12 +787,24 @@ export function frame(
       // fitted into `availH` and clipped to the column either way — so the gate
       // is aspect-independent and 1 is a safe stand-in until the manifest exists.
       const aspect = artAspect[p.id] ?? 1;
-      let h = p.tier === 'M' ? p.availH : p.availH * ART_H_FRAC_I;
-      let w = h * aspect;
-      if (w > r.w) {
-        w = r.w;
-        h = w / aspect;
-      }
+      // Target an APPARENT SIZE, not a height. Giving every subject the same
+      // height makes its apparent size scale with sqrt(aspect), because the
+      // width then follows the aspect unchecked: measured 2026-08-02, that put
+      // a 7.6× spread across the set on desktop — Qingshania (aspect 2.43)
+      // rendered seven times the size of the first primate (0.97), for no
+      // reason anyone looking at the page could name. The tier still sets how
+      // prominent an arrival is; it just sets it in area now, so an M and an I
+      // are reliably different and two Ms are reliably the same.
+      const target = p.tier === 'M' ? p.availH : p.availH * ART_H_FRAC_I;
+      const k = Math.sqrt(aspect);
+      let h = target / k;
+      let w = target * k;
+      // The box is the hard constraint and always wins — shrink uniformly, so
+      // a subject too wide or too tall for its slot keeps its aspect and loses
+      // size. Containment is unchanged, which is what keeps the sweep valid.
+      const fit = Math.min(1, p.availH / h, r.w / w);
+      h *= fit;
+      w *= fit;
       art = {
         x: p.right ? r.x + r.w - w : r.x,
         // The glide can never push the art out of the box: art and text carry

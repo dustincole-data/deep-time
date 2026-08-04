@@ -261,7 +261,7 @@ const ART_H_FRAC_I = 0.66;
  * inside a single band. The uncapped jump measured 2.9× at the median and 6.9×
  * end to end, which reads as an inconsistency rather than as prominence.
  */
-const ART_TALL_MAX = 1.6;
+const ART_TALL_MAX = 2.2;
 
 const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v);
 const smooth = (e0: number, e1: number, x: number) => {

@@ -753,7 +753,7 @@ describe('a lone card cannot outgrow a banded one without limit (ruling F)', () 
   };
   const median = (a: number[]) => a.slice().sort((x, y) => x - y)[a.length >> 1] ?? 0;
 
-  it('holds the median jump near 1.6×, not the 2.9× it measured', () => {
+  it('holds the median jump near 2.2×, not the 2.9× it measured', () => {
     for (const vp of GATE_VIEWPORTS) {
       const z = zones(vp);
       const P = place(arrivals, z);
@@ -761,7 +761,7 @@ describe('a lone card cannot outgrow a banded one without limit (ruling F)', () 
       const tall = median(sizes.filter((x) => x.tall).map((x) => x.s));
       const band = median(sizes.filter((x) => !x.tall).map((x) => x.s));
       if (!tall || !band) continue;
-      expect([vp.w, tall / band <= 1.61]).toEqual([vp.w, true]);
+      expect([vp.w, tall / band <= 2.21]).toEqual([vp.w, true]);
     }
   });
 

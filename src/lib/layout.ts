@@ -50,6 +50,28 @@
  *
  * A, B and C are all inert at 100% text: the three gate viewports are
  * byte-identical to the geometry §5 swept.
+ *
+ * RULING E — THE SOLVE IS FROZEN AT 1440×900 AND CENTRED ABOVE IT (Dustin,
+ * 2026-08-04). §5's grid was solved at one desktop viewport and every rect kept
+ * inflating past it: measured, `colW` ran 616 → 835 → 1126 px at 1440 / 1920 /
+ * 2560, which pinned the two columns to the viewport's outside edges and left
+ * the middle of a wide monitor dead, and grew the art box past the 2× draw cap
+ * §12 already carries as an open scar. The alternative — a genuine third column
+ * above ~1600 px — buys almost nothing: max concurrent arrivals is 4 and ≥2
+ * happens 6% of the time, so a third column is mostly more empty, at the price
+ * of a second geometry with its own gate.
+ *
+ * So the stage is solved at `min(viewport, 1440×900)` and CENTRED in whatever
+ * the real viewport gives. Above the reference the stage is the same box in a
+ * different place, which is why every number §5 and §9 measured at 1440×900
+ * still describes it, and why the art box can no longer grow with the monitor.
+ * The reserved zones are NOT clamped — the clock and the scale bar are
+ * instruments and belong on the viewport's own edges (rule 1), so a wide
+ * monitor reads as centred content between pinned instruments.
+ *
+ * The clamp defers to ruling C: it is skipped on the height axis whenever
+ * freezing would collapse the grid to one row whilst the live viewport could
+ * hold two. A clamp exists to stop growth, never to manufacture contention.
  */
 import {
   arrivals as ALL_ARRIVALS,
@@ -140,6 +162,11 @@ export interface Placed {
   textH: number;
   /** Height left for the art once the text and the glide have taken theirs. */
   availH: number;
+  /**
+   * Ruling F's ceiling on the art's apparent size — `Infinity` for a card that
+   * is already in a single band and has nothing to give up.
+   */
+  artCeil: number;
   hasArt: boolean;
   /** Whether the description line is rendered here, after ruling A. */
   hasLine: boolean;
@@ -209,6 +236,9 @@ const T = {
 
 /** The grid is two rows deep unless ruling C collapses it. */
 const ROWS_MAX = 2;
+/** Ruling E — the viewport §5 solved the grid at. The stage never grows past this box. */
+export const SOLVE_W = 1440;
+export const SOLVE_H = 900;
 /** The stage never runs past 72% of the viewport height, clock or no clock. */
 const STAGE_BOTTOM_FRAC = 0.72;
 /** Half the fade window, as a fraction of viewport height. */
@@ -226,6 +256,12 @@ export const ART_MIN_H = 46;
 const ART_TEXT_CLEARANCE = 14;
 /** An inhabitant's art is quieter: two thirds of the height a milestone would take. */
 const ART_H_FRAC_I = 0.66;
+/**
+ * Ruling F — the most a lone card's picture may outgrow the same card drawn
+ * inside a single band. The uncapped jump measured 2.9× at the median and 6.9×
+ * end to end, which reads as an inconsistency rather than as prominence.
+ */
+const ART_TALL_MAX = 1.6;
 
 const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v);
 const smooth = (e0: number, e1: number, x: number) => {
@@ -364,7 +400,11 @@ function typeScale(vp: Required<Viewport>, mobile: boolean, tier: Tier) {
   const cl = (lo: number, vw: number, hi: number) => clamp(w * vw, lo, hi);
   const isM = tier === 'M';
   const dateSize = isM ? 11 : 9.5;
-  const lineSize = isM ? cl(12.5, 0.0102, 14.5) : 12;
+  // 2026-08-04 — raised into §11's stated 14–16px band, which is where the
+  // description line always belonged; the old ceiling of 14.5 put every desktop
+  // at the floor of it, and the inhabitant's flat 12 below it entirely. These
+  // three numbers are `.js .ar .s` / `.js .ar.I .s` in index.astro verbatim.
+  const lineSize = isM ? cl(14, 0.0115, 16) : 13.5;
   return {
     date: {
       size: dateSize * k,
@@ -502,6 +542,47 @@ const WHISPER_COPY = ALL_ARRIVALS.filter((a) => a.tier === 'F').map((a) => plain
 /** Every card. A row of the grid must hold the tallest of them (ruling C). */
 const CARD_ARRIVALS = ALL_ARRIVALS.filter((a) => a.tier !== 'F');
 
+/**
+ * Ruling E's reference solve, for one (width, height) pair. Everything the stage
+ * is made of, computed from a viewport that is NOT necessarily the real one —
+ * which is what lets `zones()` ask "what would §5 have solved at 1440×900?"
+ * without recursing into itself.
+ *
+ * `textScale` is always the LIVE one: the clamp freezes the viewport, never the
+ * visitor's type size, or rulings A–C would be solving against the wrong copy.
+ */
+function stageMetrics(
+  vw: number,
+  vh: number,
+  k: number,
+  mobile: boolean,
+  t: (typeof T)['desktop'] | (typeof T)['mobile'],
+) {
+  const ref: Required<Viewport> = { w: vw, h: vh, textScale: k };
+  const padX = vw * t.padXFrac;
+  const stageW = vw - t.scaleW - padX;
+  const gutX = vw * t.gutXFrac;
+
+  /* Ruling B — the whisper band is the one box with no art to sacrifice, so it
+     takes the height its own copy needs whenever that exceeds the fixed band.
+     At 100% text nothing grows; this only fires under an enlarged text scale. */
+  const wf = typeScale(ref, mobile, 'F').whisper;
+  const whisperH = Math.max(vh * t.whisperHFrac, ...WHISPER_COPY.map((s) => blockH(s, wf, stageW)));
+
+  const topOff = vh * t.topOffFrac;
+  const rowTop = topOff + whisperH + vh * t.rowGapTopFrac;
+  // Ruling D — the clock zone is at least t.clockH, but grows to whatever the
+  // modelled HUD content actually needs, the same defensive move ruling B
+  // already makes for the whisper band. The HUD is bottom-anchored `hudBottomInset`
+  // px off the zone's own bottom edge (main.ts's `relayout()`), so that inset is
+  // part of the footprint too — a real-browser sweep caught this once already,
+  // spilling 12px past a clockH that only budgeted the content itself.
+  const clockH = Math.max(t.clockH, hudHeight(ref, mobile) + t.hudBottomInset);
+  const rowBot = Math.min(vh * STAGE_BOTTOM_FRAC, vh - clockH - t.clockClearance);
+
+  return { padX, stageW, gutX, whisperH, topOff, rowTop, rowBot, clockH };
+}
+
 export function zones(vp: Viewport): Zones {
   const w = vp.w;
   const h = vp.h;
@@ -509,51 +590,78 @@ export function zones(vp: Viewport): Zones {
   const mobile = w < MOBILE_BELOW;
   const t = mobile ? T.mobile : T.desktop;
 
-  // Ruling D — the clock zone is at least t.clockH, but grows to whatever the
-  // modelled HUD content actually needs, the same defensive move ruling B
-  // already makes for the whisper band. The HUD is bottom-anchored `hudBottomInset`
-  // px off the zone's own bottom edge (main.ts's `relayout()`), so that inset is
-  // part of the footprint too — a real-browser sweep caught this once already,
-  // spilling 12px past a clockH that only budgeted the content itself.
-  const clockH = Math.max(t.clockH, hudHeight(viewport, mobile) + t.hudBottomInset);
-  const clock: Rect = { x: 0, y: h - clockH, w: w * t.clockWFrac, h: clockH };
+  const live = stageMetrics(w, h, viewport.textScale, mobile, t);
+
+  const clock: Rect = { x: 0, y: h - live.clockH, w: w * t.clockWFrac, h: live.clockH };
   const scale: Rect = { x: w - t.scaleW, y: 0, w: t.scaleW, h };
 
-  const padX = w * t.padXFrac;
-  const topOff = h * t.topOffFrac;
-  const stageR = w - t.scaleW;
-  const stageW = stageR - padX;
+  /* RULING E — freeze the solve at 1440×900 and centre it. A phone is below the
+     reference on both axes, so `solve` is `live` there and nothing changes; the
+     three gate viewports §5 swept are likewise untouched, by construction. */
+  const solve = stageMetrics(
+    Math.min(w, SOLVE_W),
+    Math.min(h, SOLVE_H),
+    viewport.textScale,
+    mobile,
+    t,
+  );
 
-  /* Ruling B — the whisper band is the one box with no art to sacrifice, so it
-     takes the height its own copy needs whenever that exceeds the fixed band.
-     At 100% text nothing grows; this only fires under an enlarged text scale. */
-  const wf = typeScale(viewport, mobile, 'F').whisper;
-  const whisperTextH = Math.max(...WHISPER_COPY.map((s) => blockH(s, wf, stageW)));
-  const whisper: Rect = {
-    x: padX,
-    y: topOff,
-    w: stageW,
-    h: Math.max(h * t.whisperHFrac, whisperTextH),
-  };
+  const topOff = live.topOff;
+  const stageW = Math.min(live.stageW, solve.stageW);
+  // Centred in the room between the left pad and the scale zone — this is the
+  // whole point of the ruling: on a wide monitor the content moves to the
+  // middle instead of the two columns sliding onto the outside edges.
+  const padX = live.padX + (live.stageW - stageW) / 2;
 
+  const whisper: Rect = { x: padX, y: topOff, w: stageW, h: live.whisperH };
+
+  /* §5.2 puts the whisper band across the TOP OF THE STAGE, so the stage stays
+     anchored under it and a tall monitor's surplus falls at the bottom, above
+     the clock. Only the height is clamped, never the adjacency. */
   const rowTop = topOff + whisper.h + h * t.rowGapTopFrac;
-  const rowBot = Math.min(h * STAGE_BOTTOM_FRAC, clock.y - t.clockClearance);
+  const liveH = live.rowBot - rowTop;
+  const solveH = Math.min(liveH, solve.rowBot - solve.rowTop);
 
   const cols = t.cols;
-  const gutX = w * t.gutXFrac;
+  // The gutter is frozen with the stage, or it would keep eating the columns it
+  // sits between: unfrozen, colW ran 616 → 607 → 594 px across the same three
+  // widths whose whole point is that they solve identically.
+  const gutX = solve.gutX;
   const colW = (stageW - gutX * (cols - 1)) / cols;
 
   /* Ruling C — the shortest a card's text can be made is date + name, after the
      line has already gone (ruling A). If a row of the grid cannot hold even that,
      the grid loses the row rather than the card losing its box. */
   const worstCard = Math.max(...CARD_ARRIVALS.map((a) => textBlockH(a, viewport, mobile, colW, false)));
-  const bandFor = (rows: number) => (rowBot - rowTop - t.gutY * (rows - 1)) / rows;
-  const holds = (rows: number) => {
-    const bh = bandFor(rows);
+  const bandFor = (stageH: number, rows: number) => (stageH - t.gutY * (rows - 1)) / rows;
+  const holds = (stageH: number, rows: number) => {
+    const bh = bandFor(stageH, rows);
     return bh > 0 && worstCard <= bh - 2 * Math.min(GLIDE_MAX, bh * GLIDE_FRAC);
   };
-  const rows = holds(ROWS_MAX) ? ROWS_MAX : 1;
-  const bandH = bandFor(rows);
+
+  /* Ruling E defers to rulings A and C. A clamp exists to stop the stage growing
+     past the viewport §5 solved it at — never to manufacture a squeeze the real
+     viewport does not have. It is dropped on the height axis in either of the
+     two ways freezing could cost something the live viewport was affording:
+
+       - it would cost a ROW (ruling C fires here but not live), or
+       - it would cost the FIT (the worst card overflows the frozen band and
+         would not have overflowed the live one).
+
+     The second case is not hypothetical: it is what the new 1920×1080 variant
+     caught the day it was added. At 200% text the 1440×900 reference is the one
+     §12 already carries as a known gap — a ~522px HUD leaving row 1 about 209px,
+     shorter than DATE + NAME alone for 13 of the 30 milestones — and freezing to
+     it EXPORTED that gap to every wider monitor, where 1080px of height had
+     enough room to avoid it. Growth on this axis is the lesser cost. */
+  const rowsAt = (H: number) => (holds(H, ROWS_MAX) ? ROWS_MAX : 1);
+  const fits = (H: number) => holds(H, rowsAt(H));
+  const clampCosts = rowsAt(solveH) < rowsAt(liveH) || (!fits(solveH) && fits(liveH));
+  const stageH = clampCosts ? liveH : solveH;
+  const rowBot = rowTop + stageH;
+
+  const rows = rowsAt(stageH);
+  const bandH = bandFor(stageH, rows);
 
   const slots: Slot[] = [];
   for (let r = 0; r < rows; r++) {
@@ -642,6 +750,7 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
       right: false,
       textH: 0,
       availH: 0,
+      artCeil: Infinity,
       hasArt: false,
       hasLine: false,
       lineDroppedToFit: false,
@@ -750,6 +859,31 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
        at the top of the glide the art's bottom sits CLEARANCE above the text,
        and at the bottom of it the art's top sits exactly on the box edge. */
     it.availH = it.rect.h - it.textH - it.glide * 2 - ART_TEXT_CLEARANCE;
+
+    /* RULING F — CAP THE JUMP BETWEEN A FULL COLUMN AND A BAND (Dustin,
+       2026-08-04). Rule 5 gives a lone card its column's whole height, and the
+       art takes whatever the text leaves — so the same subject is drawn at
+       wildly different sizes depending on whether some neighbour's window
+       happened to overlap it. Measured at 1440×900 before this cap: 37 cards
+       tall at a 214 px median, 14 in a band at 74 px, a 2.9× median jump and a
+       6.9× spread end to end (42 px for the first flowers, 288 px at the top).
+       Worse, the band cases are not scattered — contention rises through the
+       Phanerozoic, so the whole last third of the page drew its art at a third
+       the size of the first two thirds, for a reason no visitor can see.
+
+       Rule 5 is kept: the card still TAKES the full column, so its text has all
+       the room it had and mobile still gets the lone-card box §5 calls the only
+       thing keeping art usable there. Only the picture is capped, at
+       ART_TALL_MAX× the size the same card would have got inside one band. The
+       art stays bottom-anchored above its text, so the cap spends its saving as
+       air at the top of the box, not as a shifted picture. */
+    if (it.tall && it.tier !== 'F') {
+      const bandH = z.slots[it.slot]!.h;
+      const bandGlide = Math.min(GLIDE_MAX, bandH * GLIDE_FRAC);
+      const bandAvail = bandH - it.textH - bandGlide * 2 - ART_TEXT_CLEARANCE;
+      it.artCeil = bandAvail > 0 ? bandAvail * ART_TALL_MAX : Infinity;
+    }
+
     it.hasArt = it.tier !== 'F' && showsArt(a, z) && it.availH > ART_MIN_H;
   }
 
@@ -803,7 +937,10 @@ export function frame(
       // reason anyone looking at the page could name. The tier still sets how
       // prominent an arrival is; it just sets it in area now, so an M and an I
       // are reliably different and two Ms are reliably the same.
-      const target = p.tier === 'M' ? p.availH : p.availH * ART_H_FRAC_I;
+      // Ruling F caps the apparent size BEFORE the tier splits it, so an M and
+      // an I stay in the same ratio to each other at every box size.
+      const base = Math.min(p.availH, p.artCeil);
+      const target = p.tier === 'M' ? base : base * ART_H_FRAC_I;
       const k = Math.sqrt(aspect);
       let h = target / k;
       let w = target * k;
@@ -1009,6 +1146,60 @@ const STAMP_ROWS = 2;
  */
 export const STAMP_CELL_MIN = 28;
 
+/**
+ * How much of a stamp subject's VERTICAL overflow is taken off the top.
+ *
+ * §9 rule 8 fills each cell with the subject rather than the asset, so the
+ * subject's short axis fills the square exactly and its long axis overflows and
+ * is clipped. Splitting that overflow evenly — which is what centring does —
+ * cuts the same amount off the head as off the feet, and measured 2026-08-04
+ * `ardipithecus` overflows its cell by 94%, so an even split took 24% off each
+ * end of a standing figure and removed its head. Four of the ten are
+ * reconstructions of faces and figures (§11); the thing the finale is FOR is
+ * that a visitor recognises us in the block, and a headless figure is not a
+ * smaller version of that argument any more than a 12 px cell is.
+ *
+ * Heads sit at the top of a figure, so the crop keeps the top: an eighth of the
+ * overflow comes off the head, the rest off the feet. HORIZONTAL overflow stays
+ * centred — subjects are horizontally centred already and there is no
+ * equivalent of a head on that axis. Nothing here can touch §5: the cell still
+ * clips, so a picture moved inside its square still cannot reach a neighbour.
+ */
+const STAMP_CROP_TOP = 0.125;
+
+/**
+ * One stamp cell's fill, as multiples of the cell (§9 rule 8). Pure, so the
+ * page can solve all four numbers at build and the runtime only places a square.
+ *
+ * `opaque` is the subject's own box inside the asset, recorded at bake time as
+ * fractions of the asset — the halo margin is 18–30% of the canvas, so sizing
+ * by the canvas would leave the subject covering ~70% of its cell and turn the
+ * jam into a row of icons.
+ */
+export function stampFill(
+  opaque: readonly [number, number, number, number],
+  assetW: number,
+  assetH: number,
+): { w: number; h: number; l: number; t: number } {
+  const [fx, fy, fw, fh] = opaque;
+  // The subject's SHORT side fills the cell exactly; the long side overflows.
+  const base = Math.min(fw * assetW, fh * assetH);
+  const w = assetW / base;
+  const h = assetH / base;
+  // The subject, measured in cells. Exactly one of these is 1; the other is ≥1.
+  const subjH = fh * h;
+  return {
+    w,
+    h,
+    // Horizontal: centred, as before.
+    l: 0.5 - (fx + fw / 2) * w,
+    // Vertical: the subject's top edge sits this far above the cell's, which is
+    // STAMP_CROP_TOP of whatever overflows. At zero overflow this is identical
+    // to centring, so the six cells that do not overflow vertically are untouched.
+    t: -(subjH - 1) * STAMP_CROP_TOP - fy * h,
+  };
+}
+
 /** `.fd` — the date, then `.fn` — the name. One row, right-anchored. */
 function fanRowWidth(r: FanRowData, fs: number): number {
   const date: TypeSpec = { size: fs, lineHeight: 1.25, tracking: 0.04, upper: false, weight: 1 };
@@ -1018,6 +1209,16 @@ function fanRowWidth(r: FanRowData, fs: number): number {
   // `.fd { margin-right: .9em }`
   return ROW_PAD_LEFT + textWidth(r.date, date) + q + 0.9 * fs + textWidth(r.name, name);
 }
+
+/** The fan's right edge at a given desktop width — the rows end here, the leaders start. */
+const rowRightAt = (vw: number) =>
+  vw -
+  Math.max(FAN_T.desktop.barRight, vw * FAN_T.desktop.barRightFrac) -
+  FAN_T.desktop.barW / 2 -
+  FAN_T.desktop.gutter;
+
+/** The closing block's left edge at a given width, before ruling E freezes the span. */
+const closeLeftAt = (vw: number) => Math.max(20, vw * 0.034);
 
 /** The geometry of the ending. A pure function of the viewport, like everything else here. */
 export function fan(z: Zones): Fan {
@@ -1075,7 +1276,20 @@ export function fan(z: Zones): Fan {
 
   const freeColumn = rowRight - widestRow - CLOSING_CLEARANCE;
   const closingPlacement: 'beside' | 'after' = freeColumn < CLOSING_BESIDE_MIN ? 'after' : 'beside';
-  const closeLeft = Math.max(20, w * 0.034);
+  /* RULING E, applied to the ending. The fan is right-anchored to the bar and
+     the closing block was left-anchored to the viewport, so the two ends pulled
+     apart as the monitor grew: measured 2026-08-04, the gap between the closing
+     block's right edge and the stamp's left ran 0 px at 1440×900 and 422 px at
+     1920×1080 — a hole INSIDE the composition, which is what read as "huge
+     empty space" rather than any fault of the stamp.
+
+     The bar is not clamped: §9 keeps it the same object at the same right edge,
+     unbroken, and moving it is what §15 forbids. So the finale freezes the SPAN
+     between the closing block's left edge and the fan's right edge at its
+     1440×900 value, and the surplus becomes left margin OUTSIDE the ending
+     instead of a gap through the middle of it. */
+  const closeLeft =
+    z.mobile || w <= SOLVE_W ? closeLeftAt(w) : rowRight - (rowRightAt(SOLVE_W) - closeLeftAt(SOLVE_W));
   const closeBottom = Math.max(20, h * 0.055);
   const closeW =
     closingPlacement === 'after' ? Math.min(w * 0.82, 430) : Math.min(430, freeColumn);

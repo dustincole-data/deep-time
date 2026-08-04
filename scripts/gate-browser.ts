@@ -37,6 +37,11 @@ const DIST = join(ROOT, 'dist');
 
 const VARIANTS: Viewport[] = [
   { w: 1440, h: 900 },
+  // Ruling E, 2026-08-04 — the width the modelled sweep now also gates. This is
+  // the pass that matters most for it: the description line moved up into §11's
+  // 14–16px band the same day, and §13 already rules that line wrapping is
+  // ultimately the browser's opinion rather than the model's.
+  { w: 1920, h: 1080 },
   { w: 390, h: 844 },
   { w: 390, h: 780 },
 ];

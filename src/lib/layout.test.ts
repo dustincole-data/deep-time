@@ -15,12 +15,17 @@ import {
   place,
   sameRect,
   showsArt,
+  stampFill,
   showsLine,
   textHeight,
   windowsOverlap,
   zones,
   type Rect,
 } from './layout.ts';
+import artManifest from '../data/art.json' with { type: 'json' };
+
+interface ArtEntry { w: number; h: number; opaque: [number, number, number, number] }
+const ART = artManifest as unknown as Record<string, ArtEntry | undefined>;
 
 const DESKTOP = { w: 1440, h: 900 };
 const PHONE = { w: 390, h: 844 };
@@ -636,6 +641,191 @@ describe('the text model', () => {
     const z = zones(DESKTOP);
     for (const p of place(arrivals, z)) {
       if (p.hasArt) expect([p.id, p.availH > ART_MIN_H]).toEqual([p.id, true]);
+    }
+  });
+});
+
+describe('the solve is frozen at 1440×900 and centred above it (ruling E)', () => {
+  const WIDE = [
+    { w: 1920, h: 1080 },
+    { w: 2560, h: 1440 },
+    { w: 3440, h: 1440 },
+  ];
+  const ref = zones(DESKTOP);
+
+  it('leaves the reference viewport solving to itself', () => {
+    // The whole claim of the ruling: nothing at or below 1440×900 moves, so
+    // every number §5 and §9 measured still describes the page.
+    expect(ref.stage.w).toBeCloseTo(1440 - 78 - 72, 6);
+    expect(ref.stage.x).toBeCloseTo(72, 6);
+    for (const vp of GATE_VIEWPORTS) {
+      const z = zones(vp);
+      expect([vp.w, z.stage.w <= vp.w]).toEqual([vp.w, true]);
+    }
+  });
+
+  it('stops the stage growing with the monitor', () => {
+    for (const vp of WIDE) {
+      const z = zones(vp);
+      expect([vp.w, z.stage.w]).toEqual([vp.w, ref.stage.w]);
+      expect([vp.w, z.slots[0]!.w]).toEqual([vp.w, ref.slots[0]!.w]);
+      expect([vp.w, z.slots[0]!.h]).toEqual([vp.w, ref.slots[0]!.h]);
+    }
+  });
+
+  it('centres what it froze, instead of pinning columns to the outside edges', () => {
+    // The surplus is split around the frozen box, so the box keeps its own
+    // designed asymmetry (a left pad, flush to the scale zone on the right) and
+    // the COMPOSITION lands in the middle of the screen. That is the thing the
+    // ruling is for: the dead middle at 1920 was two columns on the outside edges.
+    for (const vp of WIDE) {
+      const z = zones(vp);
+      const off = Math.abs(z.stage.x + z.stage.w / 2 - vp.w / 2);
+      expect([vp.w, off < vp.w * 0.02]).toEqual([vp.w, true]);
+      // And genuinely moved: a 1920 stage still starting at 72px is the old bug.
+      expect(z.stage.x).toBeGreaterThan(ref.stage.x);
+    }
+  });
+
+  it('keeps the reserved zones on the viewport edges, not on the frozen box', () => {
+    // Rule 1 — the clock and the scale bar are instruments and belong to the
+    // screen, never to the stage. Freezing the stage must not drag them inward.
+    for (const vp of WIDE) {
+      const z = zones(vp);
+      expect([vp.w, z.clock.x]).toEqual([vp.w, 0]);
+      expect([vp.w, z.scale.x + z.scale.w]).toEqual([vp.w, vp.w]);
+    }
+  });
+
+  it('drops the clamp rather than squeeze a card the live viewport could hold', () => {
+    // The case the 1920×1080 gate variant caught the day it was added: freezing
+    // to the 1440×900/200% reference exported its known HUD gap to monitors with
+    // the height to avoid it.
+    const wide = zones({ w: 1920, h: 1080, textScale: 2 });
+    const refBig = zones({ ...DESKTOP, textScale: 2 });
+    expect(wide.stage.h).toBeGreaterThan(refBig.stage.h);
+  });
+
+  it('never lets the frozen stage enter a reserved zone', () => {
+    const cases: { w: number; h: number; textScale?: number }[] = [
+      ...WIDE,
+      ...WIDE.map((v) => ({ ...v, textScale: 2 })),
+    ];
+    for (const vp of cases) {
+      const z = zones(vp);
+      const k = [vp.w, vp.textScale];
+      expect([...k, intersects(z.stage, z.clock)]).toEqual([...k, false]);
+      expect([...k, intersects(z.stage, z.scale)]).toEqual([...k, false]);
+      expect([...k, intersects(z.whisper, z.scale)]).toEqual([...k, false]);
+    }
+  });
+
+  it('closes the hole the ending used to open through its own middle', () => {
+    // The fan is right-anchored to the bar and the closing block used to be
+    // left-anchored to the viewport, so the two ends pulled apart as the monitor
+    // grew — 0px at 1440×900, 422px at 1920×1080. It must not grow with the screen.
+    const gapAt = (vp: { w: number; h: number }) => {
+      const f = fan(zones(vp));
+      return f.stamp.box.x - (f.closing.x + f.closing.w);
+    };
+    const base = gapAt(DESKTOP);
+    for (const vp of WIDE) {
+      expect([vp.w, Math.abs(gapAt(vp) - base) < 40]).toEqual([vp.w, true]);
+    }
+  });
+
+  it('leaves the bar itself on the right edge, unbroken (§9, §15)', () => {
+    // The clamp moves the ending's TEXT inward; it must never move the bar. §9
+    // keeps it the same object at the same edge from 4.60 Ga to the last frame,
+    // and §15 forbids the lookalike rail that moving it would amount to.
+    for (const vp of WIDE) {
+      const z = zones(vp);
+      const f = fan(z);
+      expect([vp.w, f.bar.x >= z.scale.x]).toEqual([vp.w, true]);
+    }
+  });
+});
+
+describe('a lone card cannot outgrow a banded one without limit (ruling F)', () => {
+  const apparent = (P: ReturnType<typeof place>, id: string, y: number) => {
+    const v = frame(P, y).find((x) => x.id === id);
+    return v?.art ? Math.sqrt(v.art.w * v.art.h) : 0;
+  };
+  const median = (a: number[]) => a.slice().sort((x, y) => x - y)[a.length >> 1] ?? 0;
+
+  it('holds the median jump near 1.6×, not the 2.9× it measured', () => {
+    for (const vp of GATE_VIEWPORTS) {
+      const z = zones(vp);
+      const P = place(arrivals, z);
+      const sizes = P.filter((p) => p.hasArt).map((p) => ({ tall: p.tall, s: apparent(P, p.id, p.y) }));
+      const tall = median(sizes.filter((x) => x.tall).map((x) => x.s));
+      const band = median(sizes.filter((x) => !x.tall).map((x) => x.s));
+      if (!tall || !band) continue;
+      expect([vp.w, tall / band <= 1.61]).toEqual([vp.w, true]);
+    }
+  });
+
+  it('caps the picture without taking the column back off the card (rule 5)', () => {
+    // Rule 5 is about the BOX, and it is untouched: a lone card still owns its
+    // whole column, so its text keeps every pixel of room it had.
+    const z = zones(DESKTOP);
+    for (const p of place(arrivals, z)) {
+      if (!p.tall || p.tier === 'F') continue;
+      expect([p.id, sameRect(p.rect, z.colFull[z.slots[p.slot]!.col]!)]).toEqual([p.id, true]);
+    }
+  });
+
+  it('keeps the art inside its box after the cap', () => {
+    for (const vp of GATE_VIEWPORTS) {
+      const z = zones(vp);
+      const P = place(arrivals, z);
+      for (const p of P) {
+        const v = frame(P, p.y).find((x) => x.id === p.id);
+        if (v?.art) expect([vp.w, p.id, contains(v.box, v.art)]).toEqual([vp.w, p.id, true]);
+      }
+    }
+  });
+});
+
+describe('a stamp cell crops toward the head, not through it (§9 rule 8)', () => {
+  const ten = fanRows.filter((r) => r.ten).filter((r) => ART[r.id]);
+
+  it('fills the cell on the subject, so its short axis is exact', () => {
+    for (const r of ten) {
+      const e = ART[r.id]!;
+      const f = stampFill(e.opaque, e.w, e.h);
+      const [, , fw, fh] = e.opaque;
+      // One axis fills the cell exactly; neither may come up short of it.
+      expect([r.id, Math.min(fw * f.w, fh * f.h)]).toEqual([r.id, expect.closeTo(1, 6)]);
+    }
+  });
+
+  it('keeps the top of a figure when the cell has to clip it', () => {
+    let clipped = 0;
+    for (const r of ten) {
+      const e = ART[r.id]!;
+      const f = stampFill(e.opaque, e.w, e.h);
+      const [, fy, , fh] = e.opaque;
+      const cutTop = -(f.t + fy * f.h);
+      const cutBot = f.t + (fy + fh) * f.h - 1;
+      if (cutTop + cutBot < 1e-6) continue;
+      clipped++;
+      // Whatever is lost, more of it comes off the feet than off the head.
+      expect([r.id, cutTop <= cutBot + 1e-9]).toEqual([r.id, true]);
+    }
+    // ardipithecus alone overflows by 94%; if nothing clips, the test is vacuous.
+    expect(clipped).toBeGreaterThan(0);
+  });
+
+  it('never leaves a gap: the subject always covers the whole cell', () => {
+    for (const r of ten) {
+      const e = ART[r.id]!;
+      const f = stampFill(e.opaque, e.w, e.h);
+      const [fx, fy, fw, fh] = e.opaque;
+      const l = f.l + fx * f.w;
+      const t = f.t + fy * f.h;
+      expect([r.id, l <= 1e-9, t <= 1e-9]).toEqual([r.id, true, true]);
+      expect([r.id, l + fw * f.w >= 1 - 1e-9, t + fh * f.h >= 1 - 1e-9]).toEqual([r.id, true, true]);
     }
   });
 });

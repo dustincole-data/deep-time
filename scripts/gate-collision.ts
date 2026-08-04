@@ -60,11 +60,26 @@ const isKnownGap = (vp: Viewport) => vp.w === 1440 && vp.h === 900 && vp.textSca
 /** Every 25 px of a 123,600 px page, plus the exact edge of every fade window. */
 const STRIDE = 25;
 
+/**
+ * 1920×1080 added 2026-08-04 with ruling E. §12 gated three viewport heights and
+ * nothing above 1440×900, so the geometry a wide monitor actually rendered had
+ * never been read by any instrument — which is how `colW` came to run to 1126 px
+ * at 2560 and the finale to open a 422 px hole through its own middle without a
+ * gate saying a word. Ruling E freezes the solve above 1440×900, so this variant
+ * is in substance an assertion that the freeze holds and that a translated
+ * composition collides with nothing new.
+ *
+ * The COLLISION sweep gains it; the frame budget does not. Ruling E cannot make
+ * a wide monitor paint more — the stage stops growing at 1440×900 and the field
+ * was never viewport-bound — so §12's p95 gates stay where they were measured.
+ */
 const VARIANTS: Viewport[] = [
   { w: 1440, h: 900, textScale: 1 },
+  { w: 1920, h: 1080, textScale: 1 },
   { w: 390, h: 844, textScale: 1 },
   { w: 390, h: 780, textScale: 1 },
   { w: 1440, h: 900, textScale: 2 },
+  { w: 1920, h: 1080, textScale: 2 },
   { w: 390, h: 844, textScale: 2 },
   { w: 390, h: 780, textScale: 2 },
 ];

@@ -31,6 +31,7 @@ import {
   spokenName,
   withheld,
 } from '../lib/timeline.ts';
+import { stampFill } from '../lib/layout.ts';
 import art from '../data/art.json' with { type: 'json' };
 
 const { RUN, YEARS_PER_PX, TOTAL } = CONSTANTS;
@@ -50,6 +51,29 @@ const nf = (n: number) => n.toLocaleString('en-US');
       content={`The whole history of Earth on one linear scroll. This page is ${nf(RUN)} pixels tall. One pixel is ${nf(YEARS_PER_PX)} years. The scale never changes.`}
     />
     <meta name="color-scheme" content="dark" />
+
+    {/* The mark is the true-scale bar itself — an SVG, so it costs one request
+        and no raster set. */}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    {/* THE SHARE ARTIFACT (§9). The still is the fan, and the words under it are
+        the closing line — the site's punchline was always a number, so the card
+        can carry the whole argument without the reader having scrolled.
+
+        §9 specified rendering this at build via resvg from the layout module's
+        own SVG. It ships instead as a committed 1200×630 capture of this very
+        page's finale, taken with the Playwright the browser gate already runs:
+        same layout code, same geometry, and it moves the cost from every build
+        to zero. Re-capture it if the finale's geometry ever changes. It is
+        fetched by crawlers only, so it is outside §12's art budget. */}
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Deep Time — the whole history of Earth, at true scale" />
+    <meta property="og:description" content={plain(FINALE_CFG.copy.closing)} />
+    <meta property="og:image" content="https://deeptime.dustincoledata.com/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:url" content="https://deeptime.dustincoledata.com/" />
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
 
   <body>
@@ -212,14 +236,15 @@ const nf = (n: number) => n.toLocaleString('en-US');
 
                The overflow is clipped BY the cell, so growing the picture past
                its square cannot reach a neighbour: §5 holds by construction,
-               which is what the gate asserts on the cells themselves. */
-            const [fx, fy, fw, fh] = e.opaque;
-            const base = Math.min(fw * e.w, fh * e.h);
-            const wMul = e.w / base;
-            const hMul = e.h / base;
+               which is what the gate asserts on the cells themselves.
+
+               `stampFill` also decides WHERE the clip falls — the crop keeps the
+               top of a figure rather than splitting the overflow evenly, which
+               is what stopped the tallest of the ten losing its head. */
+            const f = stampFill(e.opaque, e.w, e.h);
             const style =
-              `--w:${wMul.toFixed(4)};--h:${hMul.toFixed(4)};` +
-              `--l:${(0.5 - (fx + fw / 2) * wMul).toFixed(4)};--t:${(0.5 - (fy + fh / 2) * hMul).toFixed(4)}`;
+              `--w:${f.w.toFixed(4)};--h:${f.h.toFixed(4)};` +
+              `--l:${f.l.toFixed(4)};--t:${f.t.toFixed(4)}`;
             return (
               <span class="sc" data-stamp-cell={i} style={style}>
                 <img src={e.file} alt="" width={e.w} height={e.h} />
@@ -323,30 +348,48 @@ const nf = (n: number) => n.toLocaleString('en-US');
     opacity: 0.42; margin-bottom: 11px;
   }
   .js .ar.R .rule { margin-left: auto; }
+  /* PROMINENCE, 2026-08-04. The dates, the description lines and the whispers
+     read as "small and subtle" on a real screen (Dustin, at 1920). §8 fixes the
+     COPY verbatim and none of it changes here — this is the other half: the
+     lines were sitting at the BOTTOM of §11's 14–16px band, or under it, at
+     0.5–0.76 opacity, over a field with no scrim behind them. §10 specifies a
+     per-box servo scrim solved at build; it is not built yet, so until it is,
+     the text carries its own halo the way the art does. The shadow is tighter
+     and darker than the name's because small type needs a closer ground. */
   .js .ar .d {
     display: block; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
-    opacity: 0.7; margin: 0 0 0.5em;
+    opacity: 0.84; margin: 0 0 0.5em;
+    text-shadow: 0 1px 9px rgba(0, 0, 0, 0.55);
   }
   .js .ar .n {
     display: block; font-size: clamp(19px, 2.2vw, 30px); line-height: 1.12;
     letter-spacing: -0.02em; font-weight: 650; margin: 0;
     text-shadow: 0 2px 22px rgba(0, 0, 0, 0.4);
   }
+  /* 14–16px is §11's stated band for "subject label + one line". This used to
+     top out at 14.5, i.e. the floor of the band on every desktop; it now spans
+     the band properly — 16px at 1440 and up, 14px on a phone. layout.ts's
+     `typeScale` carries the same three numbers and MUST be changed with it, or
+     the collision gate models a page that does not exist. */
   .js .ar .s {
-    display: block; font-size: clamp(12.5px, 1.02vw, 14.5px); line-height: 1.5;
-    opacity: 0.76; margin: 0.55em 0 0;
+    display: block; font-size: clamp(14px, 1.15vw, 16px); line-height: 1.5;
+    opacity: 0.92; margin: 0.55em 0 0;
+    text-shadow: 0 1px 9px rgba(0, 0, 0, 0.55);
   }
-  /* An inhabitant is quieter — an arrival, not a milestone. No tick, either. */
+  /* An inhabitant is quieter — an arrival, not a milestone. No tick, either.
+     Quieter is a RATIO to the milestone, not a licence to go under the band:
+     the line was 12px/0.62, which is below §11 outright. */
   .js .ar.I .rule { display: none; }
   .js .ar.I .n { font-size: clamp(14px, 1.3vw, 18px); font-weight: 600; letter-spacing: -0.008em; }
-  .js .ar.I .d { font-size: 9.5px; opacity: 0.5; margin-bottom: 0.3em; }
-  .js .ar.I .s { font-size: 12px; opacity: 0.62; }
+  .js .ar.I .d { font-size: 9.5px; opacity: 0.72; margin-bottom: 0.3em; }
+  .js .ar.I .s { font-size: 13.5px; opacity: 0.82; }
   /* A field whisper: one line in its own band. No art, no card, no tick. */
   .js .ar.F { align-items: center; justify-content: center; }
   .js .ar.F .tx { text-align: center; }
   .js .ar.F .n {
     font-size: clamp(11px, 1.1vw, 13px); font-weight: 500; letter-spacing: 0.26em;
-    text-transform: uppercase; opacity: 0.62; text-shadow: none;
+    text-transform: uppercase; opacity: 0.84;
+    text-shadow: 0 1px 9px rgba(0, 0, 0, 0.55);
   }
   /* layout.ts decides this, not a media query — so the gate and the DOM agree by
      construction. The line is enrichment, and it is what goes when a box is short. */
@@ -362,10 +405,10 @@ const nf = (n: number) => n.toLocaleString('en-US');
     margin: 0; font-size: clamp(30px, 6.4vw, 62px); font-weight: 700;
     letter-spacing: 0.22em; text-transform: uppercase; line-height: 1;
   }
-  #intro .thesis { margin: 1.4em 0 0; font-size: clamp(14px, 1.6vw, 18px); opacity: 0.8; }
+  #intro .thesis { margin: 1.4em 0 0; font-size: clamp(14px, 1.6vw, 18px); opacity: 0.92; }
   #intro .facts {
     list-style: none; margin: 2.6em 0 0; padding: 0; display: grid; gap: 0.5em;
-    font-size: clamp(13px, 1.4vw, 16px); opacity: 0.62;
+    font-size: clamp(13px, 1.4vw, 16px); opacity: 0.82;
   }
   #intro .scroll {
     margin: 3.4em 0 0; font-size: 10px; letter-spacing: 0.34em;
@@ -439,8 +482,8 @@ const nf = (n: number) => n.toLocaleString('en-US');
   #plate .t {
     font-size: clamp(26px, 4.6vw, 54px); font-weight: 700; letter-spacing: -0.04em; line-height: 1.02;
   }
-  #plate .sub { font-size: clamp(12px, 1.3vw, 15px); opacity: 0.5; margin-top: 0.7em; }
-  #plate .body { font-size: clamp(13px, 1.4vw, 16px); opacity: 0.72; line-height: 1.7; margin-top: 1.6em; }
+  #plate .sub { font-size: clamp(12px, 1.3vw, 15px); opacity: 0.72; margin-top: 0.7em; }
+  #plate .body { font-size: clamp(13px, 1.4vw, 16px); opacity: 0.88; line-height: 1.7; margin-top: 1.6em; }
   #plate .cnt { margin-top: 2.4em; display: grid; gap: 0.5em; }
   #plate .cnt b { font-size: clamp(15px, 1.9vw, 22px); font-weight: 650; }
   #plate .cnt span {
@@ -463,7 +506,7 @@ const nf = (n: number) => n.toLocaleString('en-US');
     padding: 1px 0 1px 7px; border-radius: 3px;
   }
   .js #finale li a:focus-visible { outline: 2px solid currentColor; outline-offset: 1px; }
-  #finale .fd { opacity: 0.5; margin-right: 0.9em; letter-spacing: 0.04em; }
+  #finale .fd { opacity: 0.7; margin-right: 0.9em; letter-spacing: 0.04em; }
   #finale .fn { font-weight: 500; letter-spacing: -0.004em; }
   /* The withheld ten: amber, below the seam, pointing at a pixel with no tick. */
   #finale li.ten .fd, #finale li.ten .fn { color: #ffd9a0; }

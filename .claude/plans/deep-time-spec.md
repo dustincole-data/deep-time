@@ -162,6 +162,27 @@ Instrumented, not eyeballed. Before the contract, a sweep of 688 scroll position
 
 **Result after the contract: zero collisions.** Desktop 1440×900 and mobile, all variants, 688 samples each. Card×card 0 · card×art 0 · art×art 0 · versus clock 0 · versus scale bar 0 · anything outside its own slot 0.
 
+### Ruling E — the solve is frozen at 1440×900 and centred above it
+
+**Added 2026-08-04, on Dustin's call, after seeing the page at ~1920 wide: "desktop uses only the left+right edges, middle is dead."** Rule 2's grid was solved at one viewport and every rect kept inflating past it — measured, `colW` ran **616 → 835 → 1126 px** at 1440 / 1920 / 2560, which pushed the two columns onto the screen's outside edges and grew the art box past the 2× draw cap [§12](#12--stack-budget-degradation) already carried as an open scar.
+
+**The stage is now solved at `min(viewport, 1440×900)` and centred in whatever the real viewport gives.** Above the reference it is the same box in a different place, so every number §5 and §9 measured still describes it.
+
+- **The reserved zones are not clamped.** The clock and the scale bar are instruments and belong on the screen's own edges (rule 1). A wide monitor reads as centred content between pinned instruments.
+- **The gutter is frozen with the stage**, or it eats the columns it sits between: unfrozen, `colW` ran 616 → 607 → 594 across the three widths whose whole point is that they solve identically.
+- **The clamp defers to rulings A and C.** It is dropped on the height axis if freezing would cost a row, or cost the fit — the worst card overflowing a frozen band it would not have overflowed live. That second case is not hypothetical: it is what the new 1920×1080 gate variant caught the day it was added, because freezing to the 1440×900/200% reference **exported that viewport's known HUD gap** to monitors with the height to avoid it.
+- **Rejected: a genuine third column above ~1600 px.** Max concurrent arrivals is 4 and ≥2 happens 6% of the time, so a third column is mostly more empty — at the price of a second geometry with its own gate.
+
+**§12 now gates 1920×1080** in the collision sweep, modelled and in a real browser. It does not gain a frame gate: the stage stops growing, so a wide monitor cannot paint more.
+
+### Ruling F — a lone card's picture cannot outgrow a banded one without limit
+
+**Added 2026-08-04, same call: "art sizes inconsistent across arrivals."** The cause is rule 5, not the tier. Measured at 1440×900: **37 cards tall at a 214 px median, 14 in a band at 74 px — a 2.9× median jump and a 6.9× spread end to end** (42 px for the first flowers, 288 px at the top). Worse, the band cases are not scattered: contention rises through the Phanerozoic, so the whole last third of the page drew its art at a third the size of the first two thirds, for a reason no visitor can see.
+
+**Rule 5 is kept.** The card still takes the full column, so its text keeps every pixel it had and mobile still gets the lone-card box §5 calls the only thing keeping art usable there. Only the picture is capped, at **1.6× the size the same card would have got inside one band** — measured after: **1.60× at desktop, 1.44× on a phone**. The art stays bottom-anchored above its text, so the saving is spent as air at the top of the box.
+
+**Open, and Dustin's to close:** 1.6 buys consistency by shrinking the dominant case — the tall median goes 214 → 119 px, so most of the page's art is now roughly half the size it shipped at. 2.2 measures ~120 px per subject and 3.0 is effectively the old look. It is one constant, `ART_TALL_MAX`.
+
 ---
 
 ## 6 — The field
@@ -481,6 +502,8 @@ The ten pictures land in one rect — **the stamp** — and the form of it was c
 7. **The stamp drops out entirely below a 28 px cell**, rather than shrinking to a smudge. [§10](#10--accessibility) already rules this: text costs art, never legibility. At 200% text the closing block doubles in height and takes the room the block was solved into — measured, the cell goes to zero at all three gate viewports — so the block goes and the ten rows carry the ending alone, which is the half [§8](#8--the-copy-deck) calls load-bearing. A ten-picture jam at 12 px a cell is not a smaller version of the argument; it is a smear.
 8. **The cell is filled by the subject, not by the asset.** Every baked cut-out carries a transparent halo margin — the servo halo is a dilation, so it needs the room — and measured 2026-08-02 that margin is **18–30% of the canvas**. Sizing each picture by its canvas leaves the subject covering ~70% of its cell, and ten pictures separated by their own padding is a row of icons, not a jam. `bake-art.ts` records each subject's own opaque box in `art.json`, and the cell is filled from that. **The cell clips**, so a picture grown to fill its square still cannot reach a neighbour — which is why §5 survives this and why the gate can assert it on the cells themselves.
 
+   **Where the clip falls is a decision, added 2026-08-04 on "faces cut off in the stamp".** Filling on the subject means its short axis fills the square exactly and its long axis overflows; splitting that overflow evenly — which is what centring does — takes the same amount off the head as off the feet. Measured, **`ardipithecus` overflows its cell by 94%**, so an even split removed 24% from each end of a standing figure and decapitated it; `homo-sapiens` and the industrial revolution overflow ~29%, farming 21%, fire 12%. Four of the ten are reconstructions of faces and figures ([§11](#11--art)) and the whole point of the finale is that a visitor **recognises us** in the block, so: **an eighth of the vertical overflow comes off the top, the rest off the feet.** Horizontal overflow stays centred — subjects are horizontally centred already and there is no equivalent of a head on that axis. At zero overflow the rule is identical to centring, so the cells that do not overflow are untouched. Nothing here touches §5: the cell still clips.
+
 **No labels in the stamp.** The names are already directly above it, in the ten rows, at their true dates. Repeating them inside the cells would cost the cell size that is doing the work, and would turn a jam into a contact sheet.
 
 ### The beats, in px from `RUN_END` (116,600)
@@ -502,6 +525,8 @@ The ten pictures land in one rect — **the stamp** — and the form of it was c
 1. **The 7 Ma card's overrun: let it finish.** It lands at 116,425 px and wants 660 px of dwell, so it releases 485 px into the finale, over a draining field. A hard release at the boundary would give the site's *last* card 0.35 s — the shortest read on the page. **Scale-safe**: the clock is pinned at 0 through the whole finale, so a card's dwell is a UI behaviour, never a time claim.
 2. **The ten arrive as a fast run, not one hit.** 42 px apart. You watch them accumulate onto one point; a single block reads as a paragraph.
 3. **Placement is measured, not taste.** Rows are **shrink-to-fit boxes anchored to the fan's right edge**, so the left of the stage is genuinely free. Desktop leaves a **763 px** free column, so the closing line sits *beside* the fan. Mobile leaves **9 px** — so below ~190 px of free column the line comes *after*: the fan goes fully out, **then** the line comes in. Sequential, not a crossfade, because two texts at 30% opacity stacked on each other is precisely the overlap the layout contract bans.
+
+   **Ruling E applies here too, added 2026-08-04 on "finale: huge empty space".** The fan is right-anchored to the bar and the closing block was left-anchored to the viewport, so the two ends pulled apart as the monitor grew: the gap between the closing block's right edge and the stamp's left measured **0 px at 1440×900 and 422 px at 1920×1080** — a hole through the middle of the composition, and **not a fault of the stamp**, which is capped by the fan's own widest row by construction and never grew at all. The ending now **freezes the span between the closing block's left edge and the fan's right edge** at its 1440×900 value, so the surplus becomes clean left margin *outside* the ending rather than a gap *through* it. **The bar is not clamped** — §9 keeps it the same object at the same right edge, and moving it is what [§15](#15--settled-do-not-relitigate) forbids.
 4. **The `TRUE SCALE` caption runs vertically**, inside the bar's reserved zone. A horizontal caption reaches left and collides with the top fan rows.
 5. **Rows must stay shrink-to-fit.** Full-width rows collide with the closing block at every viewport.
 
@@ -521,7 +546,9 @@ The ten pictures land in one rect — **the stamp** — and the form of it was c
 
 - **The fan doubles as the site's index.** Once the ending lands, every row is a link back to its moment in the scroll. First visit you feel it; second visit you read it and navigate with it. The payoff screen is the table of contents — no second surface, near-zero cost.
 - **Showing it over someone's shoulder does not work, and must not be fixed.** A deep link to the finale shows 40 labels and one bright pixel to someone who has not scrolled 123,600 px — which is the entire reason it lands. Deliberately not built.
-- **The share artifact is the fan as a still**, pre-rendered at build at 1200×630 by the same layout code, with the closing line as `og:description`. **No image generation, no runtime cost, no art spend.**
+- **The share artifact is the fan as a still**, at 1200×630, with the closing line as `og:description`. **No image generation, no runtime cost, no art spend.**
+
+  **Shipped 2026-08-04, one deviation.** This section specified rendering it *at build* from SVG the layout module emits, via resvg. It ships instead as a **committed capture of this page's own finale**, taken with the Playwright the browser gate already runs: same layout code, same geometry, and it moves the cost from every build to zero — which is the direction §12 argues in everywhere else. The trade is that it does not re-render itself, so **re-capture it if the finale's geometry changes**. It is fetched by crawlers only and is outside §12's art budget. The site also gains a favicon it never had: the true-scale bar as SVG, four ticks and one bright point at the bottom with no tick.
 
 ---
 
@@ -827,9 +854,24 @@ Swept across all twelve baked subjects at four geometries × three strengths. Th
 | Clock / scale numbers | Archivo 700, tabular, `clamp(34–74px)`, tight tracking |
 | Era names | Archivo 600, uppercase, wide tracking, small |
 | Subject label + one line | Archivo 400/500, 14–16 px |
+| *(the line, as it actually shipped until 2026-08-04)* | *`clamp(12.5, 1.02vw, 14.5)` for a milestone and a flat 12 px for an inhabitant — the floor of the band on every desktop, and under it entirely for the inhabitants* |
 | HUD (px counter, scale reminder) | Archivo 500, 11 px, uppercase, wide tracking |
 
 Self-hosted via `@fontsource-variable/archivo`, roman **and italic** (the copy deck sets every genus name in italic), subset.
+
+**Prominence, fixed 2026-08-04 on "subtitles or explanations are hard to read — small and subtle".** This is not a copy problem: [§8](#8--the-copy-deck) fixes every line verbatim and none of it changed. The lines were sitting at the bottom of the band above — or under it — at **0.5–0.76 opacity, over a field with no scrim behind them**, because §10's per-box servo scrim is specified and **not built**. Until it is, the text carries its own halo the way the art does.
+
+| | was | now |
+|---|---|---|
+| Description line, milestone | `clamp(12.5, 1.02vw, 14.5)` · 0.76 | **`clamp(14, 1.15vw, 16)` · 0.92** — 16 px at 1440 and up, 14 px on a phone |
+| Description line, inhabitant | 12 px · 0.62 | **13.5 px · 0.82** — quieter is a ratio to the milestone, not a licence to go under the band |
+| Date, milestone / inhabitant | 0.7 / 0.5 | **0.84 / 0.72** |
+| Field whisper | 0.62, `text-shadow: none` | **0.84, with the halo** |
+| Boring Billion sub / body | 0.5 / 0.72 | **0.72 / 0.88** |
+| Intro thesis / facts | 0.8 / 0.62 | **0.92 / 0.82** |
+| Fan row date | 0.5 | **0.7** |
+
+The halo is `0 1px 9px rgba(0,0,0,.55)` — tighter and darker than the name's `0 2px 22px rgba(0,0,0,.4)`, because small type needs a closer ground. **`layout.ts`'s `typeScale` carries the same three numbers as the CSS and must change with it**, or the collision gate models a page that does not exist. It did change with it, and all four viewports re-passed.
 
 ### The order
 
@@ -861,7 +903,7 @@ Self-hosted via `@fontsource-variable/archivo`, roman **and italic** (the copy d
 | **Scroll driver** | the native document scrollbar, read once per frame in **one** rAF loop | |
 | **Type** | `@fontsource-variable/archivo`, roman + italic, self-hosted, subset | |
 | **Build steps** | `node --experimental-strip-types scripts/*.ts`, tests in vitest | matches Cascade and Namesake; no new tooling |
-| **Share still** | `@resvg/resvg-js` rasterising SVG emitted by the site's own layout module | no headless browser in CI |
+| **Share still** | ~~`@resvg/resvg-js` rasterising SVG emitted by the site's own layout module~~ · **a committed 1200×630 capture of the page's own finale** ([§9](#9--the-finale)) | no headless browser in CI — and now no build step either |
 
 **Total runtime dependencies: zero.** The shipped JavaScript is this site's own.
 
@@ -914,7 +956,9 @@ The decoded figure is the one that matters — a phone dies on resident bitmaps,
 
 **No asset is ever drawn larger than 2× its intrinsic size in device pixels** (`maxDrawCSS = 2 × intrinsicPx / devicePixelRatio`). 2× is chosen for this style specifically — the recipe forbids outlines and line art, so there is no hard edge to alias. The art box is a maximum, not a target.
 
-**Held at the three gate viewports, and only there.** The art box is derived from the viewport, so it keeps growing on a monitor wider than 1440×900 while the intrinsic does not — measured 2026-08-04, six subjects already drew past 2× at 2560×1440 *before* the 700 px cap, and the cap deepens that. This is knowingly not closed: the rule is asserted where the gates are, the sentence above is a maximum rather than a target, and the alternative — sizing every asset for the widest monitor anyone might own — is what put the set 1.6× over the memory gate in the first place. **Anyone reopening it should know it argues in the opposite direction from the cap, and that it cannot be granted without moving the two budget gates.**
+~~**Held at the three gate viewports, and only there.** The art box is derived from the viewport, so it keeps growing on a monitor wider than 1440×900 while the intrinsic does not — measured 2026-08-04, six subjects already drew past 2× at 2560×1440 *before* the 700 px cap, and the cap deepens that. This is knowingly not closed.~~
+
+**CLOSED 2026-08-04 by [§5](#5--the-no-collision-layout-contract)'s ruling E, and not by moving a budget.** The scar existed because the art box grew with the viewport while the intrinsic did not. The stage now stops growing at 1440×900, so **the art box a subject can be given is bounded at every width** and the 2× rule holds everywhere rather than only where it is asserted. Ruling F caps it further. The alternative this paragraph used to warn about — sizing every asset for the widest monitor anyone might own — is exactly what is no longer needed, and neither budget gate moved.
 
 ### The numeric budget — gates, not targets
 
@@ -929,7 +973,7 @@ The decoded figure is the one that matters — a phone dies on resident bitmaps,
 | **Load** | LCP ≤ 1.5 s on Fast 4G · no long task > 50 ms after first paint | — |
 | **Text contrast** | every text box ≥ 4.5:1 against the field across its dwell — asserted at build | — |
 | **Non-text contrast** | every arrival ≥ 3:1 across its own boundary — asserted from the art manifest at build | — |
-| **Collisions** | zero pairwise intersections over the scroll sweep, at **three** viewport heights (1440×900, 390×844, 390×780) **and at 200% text** | — |
+| **Collisions** | zero pairwise intersections over the scroll sweep, at **four** viewports (1440×900, **1920×1080**, 390×844, 390×780) **and at 200% text** | **8 modelled variants ✅ · 4 real-browser ✅** (2026-08-04) |
 | **Milestone floor** | zero sub-600 px gaps across all 55 arrivals | ✅ |
 | **Real device** | one full scroll on Dustin's phone, both ends, before ship | — |
 

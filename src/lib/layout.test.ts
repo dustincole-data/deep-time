@@ -403,15 +403,15 @@ describe('the finale (§9)', () => {
     return last.y + last.dwell - CONSTANTS.RUN_END;
   })();
 
-  it('stages the seven beats exactly where §9 puts them', () => {
+  it('stages the beats exactly where §9 puts them', () => {
     // The 7 Ma card releases 485 px in, and the drain is that plus a 40 px pad.
     expect(overrun).toBe(485);
     const B = finaleBeats(overrun);
-    expect([B.drainEnd, B.cascadeEnd, B.breathEnd, B.tenStart, B.tenEnd]).toEqual([
-      525, 4125, 4725, 4725, 5325,
+    expect([B.drainEnd, B.arrestEnd, B.cascadeEnd, B.breathEnd, B.tenStart, B.tenEnd]).toEqual([
+      525, 700, 4300, 4900, 4900, 5500,
     ]);
-    expect([B.holdEnd, B.lineStart, B.lineEnd, B.endStart, B.total]).toEqual([
-      6025, 6025, 6725, 6725, 7000,
+    expect([B.holdEnd, B.floodStart, B.floodEnd, B.plateEnd, B.lineStart, B.lineEnd, B.endStart, B.total]).toEqual([
+      6200, 6200, 8780, 9180, 9180, 9880, 9880, 10900,
     ]);
     expect(B.total).toBe(CONSTANTS.FINALE);
   });
@@ -424,7 +424,7 @@ describe('the finale (§9)', () => {
 
   it('cascades thirty rows at 120 px and runs the ten at 42', () => {
     const B = finaleBeats(overrun);
-    expect(B.cascadeEnd - B.drainEnd).toBe(30 * FINALE_CFG.cascadePitchPx);
+    expect(B.cascadeEnd - B.arrestEnd).toBe(30 * FINALE_CFG.cascadePitchPx);
     // A fast run, not one hit: you watch them accumulate onto one point.
     expect(FINALE_CFG.tenPitchPx).toBe(42);
   });
@@ -827,5 +827,38 @@ describe('a stamp cell crops toward the head, not through it (§9 rule 8)', () =
       expect([r.id, l <= 1e-9, t <= 1e-9]).toEqual([r.id, true, true]);
       expect([r.id, l + fw * f.w >= 1 - 1e-9, t + fh * f.h >= 1 - 1e-9]).toEqual([r.id, true, true]);
     }
+  });
+});
+
+describe('the finale grows for the flood, and the scale contract does not move', () => {
+  it('keeps every scale number exactly where it was', () => {
+    expect(CONSTANTS.INTRO).toBe(1600);
+    expect(CONSTANTS.RUN).toBe(115000);
+    expect(CONSTANTS.YEARS_PER_PX).toBe(40000);
+    expect(CONSTANTS.RUN_END).toBe(116600);
+  });
+
+  it('grows only FINALE, and TOTAL follows it', () => {
+    expect(CONSTANTS.FINALE).toBe(10900);
+    expect(CONSTANTS.TOTAL).toBe(CONSTANTS.INTRO + CONSTANTS.RUN + CONSTANTS.FINALE);
+    expect(CONSTANTS.TOTAL).toBe(127500);
+  });
+
+  it('orders the beats and keeps both empty ones whole', () => {
+    const b = finaleBeats(0);
+    const seq = [
+      b.drainEnd, b.arrestEnd, b.cascadeEnd, b.breathEnd,
+      b.tenEnd, b.holdEnd, b.floodEnd, b.plateEnd, b.lineEnd,
+    ];
+    for (let i = 1; i < seq.length; i++) expect(seq[i]!).toBeGreaterThan(seq[i - 1]!);
+    // §15: neither empty beat may be shortened.
+    expect(b.breathEnd - b.cascadeEnd).toBe(600);
+    expect(b.holdEnd - b.tenEnd).toBe(700);
+    expect(b.plateEnd).toBeLessThanOrEqual(CONSTANTS.FINALE);
+  });
+
+  it('starts the flood only after hold has finished', () => {
+    const b = finaleBeats(0);
+    expect(b.floodStart).toBe(b.holdEnd);
   });
 });

@@ -11,8 +11,8 @@
   "constants": {
     "INTRO": 1600,
     "RUN": 115000,
-    "FINALE": 7000,
-    "TOTAL": 123600,
+    "FINALE": 10900,
+    "TOTAL": 127500,
     "RUN_END": 116600,
     "YEARS_PER_PX": 40000,
     "EARTH_AGE": 4600000000,
@@ -1015,10 +1015,13 @@
   "finale": {
     "beats": {
       "drainPad": 40,
+      "arrest": 175,
       "cascade": 3600,
       "breath": 600,
       "ten": 600,
       "hold": 700,
+      "flood": 2580,
+      "plate": 400,
       "line": 700
     },
     "cascadePitchPx": 120,

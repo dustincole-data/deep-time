@@ -471,6 +471,12 @@ Then `↑ again`, and nothing else. This turns **the scale's edit of the page** 
 
 ## 9 — The finale
 
+> **SUPERSEDED FROM `hold` ONWARD, 2026-08-04.** Dustin rejected the shipped ending — *"hate the finale"* — and ruled a replacement: the timeline visibly stops, then the screen fills with the actual historical record, under a big title, so that all of it reads as the blip. **[The finale redesign](deep-time-finale-redesign-design.md) is authoritative** for everything after the `hold` beat: the stamp is deleted, the flood and the plate replace it, `FINALE` grows 7,000 → 10,000 px, and the art register changes to real public-domain historical images.
+>
+> **What this section still governs, unchanged:** `drain`, `arrest`, `cascade`, `breath`, `the ten` and `hold`; the fan and its thirty targets; the bar as one unbroken object; staging rules 1–5; and every number in *Measured* that describes the fan. **The scale contract is untouched** — `INTRO` and `RUN` do not move, so no date, position or scale claim changes.
+>
+> The **stamp** subsection below is retained as the record of a rejected design and the reasoning that produced it. Do not build it.
+
 **The finale is the whole human era, crammed into one small block of pictures.** The bar is what measures it, and the fan is what leads you there — but the thing the visitor is left looking at is *us*, jammed.
 
 **Revised 2026-08-02, on Dustin's call: "end with a bang — jam the human images on screen so the whole human era reads as nothing."** This section used to make the payoff *the bar being read*. That was right about the instrument and wrong about the hit. Reading an instrument is a comprehension; the site's last move should be a recognition. Ten labels converging on a point is a diagram of smallness. **Ten pictures crushed into a block the size of a postage stamp is smallness itself** — and the pictures are of fire, of writing, of a face, so the visitor is not being told that humans are small, they are looking at everything they mean by "us" and finding it fits in a stamp.
@@ -739,6 +745,18 @@ aria-label="True-scale bar: 34 percent of Earth's history passed."
 
 ## 11 — Art
 
+**Two registers, and the boundary between them is a fact.** Everything below governs the **painted register** — the scroll's 55 arrivals — unless a clause says otherwise.
+
+### The record register — the finale only
+
+**Added 2026-08-04** with [the finale redesign](deep-time-finale-redesign-design.md). The flood uses **real historical images**: photographs of surviving artefacts, and works that are themselves the artefact.
+
+- **Public domain or CC0 only**, verified per image, with attribution recorded in `art.json` beside the `source` field every milestone already carries. A licence audit is a ship gate.
+- **No generation. No retouching beyond crop and resize**, and no colour grading that would misrepresent an object.
+- **Rectangular, no alpha.** These are prints, not cut-outs — so the 3:1 boundary gate does not apply to them, having no keyed boundary to measure across.
+
+**Why a second register is legitimate here**, when [§15](#15--settled-do-not-relitigate) cut procedural silhouettes for being one: painted plates exist because nobody photographed a trilobite, and every scroll subject is therefore a *reconstruction*. Recorded history is the opposite case — the object survives. [§8](#8--the-copy-deck) already rules that *"where there is nothing real to paint, say the words instead of painting a fake"*; the record register is that rule inverted. **Where there is something real, do not paint a fake of it** — a site whose first non-negotiable is accuracy cannot substitute invention for available evidence. The register flips on the pixel the clock arrests, so *reconstruction → record* lands with *time stops*.
+
 ### What an image is
 
 **Subjects on a field, not full-screen environments.** Discrete illustrated subjects dropped on the code-drawn field at their true date, each labelled. Every image is a labelled fact rather than a mood; a fossil sits at its true date, where an environment has no true position.
@@ -967,6 +985,8 @@ The decoded figure is the one that matters — a phone dies on resident bitmaps,
 | **Frame, phone** | p50 ≤ 16.7 ms · p95 ≤ 20 ms · **zero frames > 50 ms**, full autoscroll at 390×844 / 4× CPU throttle | 16.7 / 16.8 / 0 ✅ |
 | **Frame, desktop** | p95 ≤ 16.7 ms at 1440×900, unthrottled | — |
 | **Art transfer** | ≤ 3.5 MB — **asserted by `bake-art.ts`, which exits non-zero over it** | 3.27 MB ✅ |
+| **Art transfer, after the flood** | **≤ 3.5 MB holds** if the withheld ten's now-unreferenced painted art is dropped (projected 3.37); **≤ 3.6 MB** if it is kept (projected 3.52). One open decision, [redesign §9](deep-time-finale-redesign-design.md) | — |
+| **Peak decoded, after the flood** | **≤ 80 MB, unchanged.** ~50 record images at a 160 px long edge cost ~4.2 MB → projected **75.8 MB** with the ten's art dropped, 78.4 kept. The flood does not move the gate that matters | — |
 | **Everything else** | HTML + CSS + JS + fonts ≤ 180 KB gzipped, of which JS ≤ 30 KB | — |
 | **Peak decoded image memory** | ≤ 80 MB — **asserted by `bake-art.ts`, same exit** | 74.17 MB ✅ |
 | **JS heap** | ≤ 25 MB | 1.7 MB ✅ |
@@ -1070,7 +1090,8 @@ Everything in the build is decided. **Two art-order questions remain, and both s
 | **Warped or piecewise scale** | Built, reviewed, rejected. So was an announced mid-scroll scale break. The honesty claim is absolute |
 | **A separate rail for the fan** | The bar persists unbroken. Faking a lookalike rail throws away the only thing that makes the ending mean anything |
 | **Cutting either empty finale beat** | 1.2 s of nothing is what converts a list into an avalanche. **This will be proposed and must be refused** |
-| **An overlapping pile at the finale** | Considered against the cram and rejected 2026-08-02. It is the more violent image, and it costs the one constraint stated verbatim as a ship gate — *"stuff can't overlap."* The cram buys the same jam with zero gutters instead of with an exemption ([§9](#9--the-finale)) |
+| **An overlapping pile at the finale** | ~~Considered against the cram and rejected 2026-08-02.~~ **AMENDED 2026-08-04 on Dustin's ruling, after the shipped cram was rejected outright.** Image × image overlap is legal inside `.blip` — the finale's named flood rect — and nowhere else. **"Stuff can't overlap" remains a ship gate:** text × text, text × image, and anything × a reserved zone are still zero, at the finale as everywhere else, and the sweep asserts the flood never leaves its rect. The carve-out is scoped to one rect and one pair of types precisely so it cannot leak — two overlapping labels anywhere is a bug, never a precedent ([the finale redesign](deep-time-finale-redesign-design.md)) |
+| **A second art register at the finale** | **Settled 2026-08-04.** The flood uses real historical images; the scroll keeps [§11](#11--art)'s painted plates. This does not reopen the procedural-silhouette ruling below, which is about a second register *competing with painted subjects while they arrive*. At the flood the field is black, the clock is arrested, the fan is gone, and no painted subject is or will be on screen. The register carries the difference between a reconstruction and a record, and it flips on the pixel the clock stops |
 | **Drawing any of the withheld ten during the scroll** | The ten now have art ([§7](#7-the-verified-set--the-single-source-of-truth)), and that changes nothing about the withholding. They are never drawn on the page you scroll — that is what the seam caption says, what makes the cram land, and what the whole ending is built on |
 | **Audio** | The site is silent. WebAudio needs a gesture and phones are on silent, so only a minority would ever hear it — while the enabling toggle degrades the intro frame for everyone. Era ambience is invented, so it fails the accuracy constraint; sonifying day length needs an arbitrary transpose, which is a rescale on the site that never rescales; and it would be the only decision here with no measurable gate |
 | **Full-bleed scenes** | Replaced by planet cut-outs. Full-frame buys two seams per moment, a second art register, and a portrait recomposition for phones |

@@ -14,7 +14,9 @@
       "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 3.89,
+    "contrast": 3.9,
+    "contrastFullSize": 3.89,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "great-oxidation-begins": {
@@ -33,6 +35,8 @@
       "polarity": "light"
     },
     "contrast": 3.56,
+    "contrastFullSize": 3.56,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "snowball-earth": {
@@ -50,25 +54,29 @@
       "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 5.1,
+    "contrast": 5.11,
+    "contrastFullSize": 5.1,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "archaeopteryx": {
     "file": "/art/archaeopteryx.webp",
-    "w": 1106,
-    "h": 875,
+    "w": 700,
+    "h": 554,
     "opaque": [
-      0.0904,
-      0.1154,
-      0.8192,
-      0.7703
+      0.0914,
+      0.1155,
+      0.8186,
+      0.7708
     ],
     "alt": "a raven-sized dinosaur-like animal with sharp teeth in its jaws, a long bony tail trailing straight out behind with feathers running down either side of it, and broad rounded feathered wings — its plumage a deep iridescent blue-green shot with violet, like the sheen on a magpie's wing, with pale cream bars across the flight feathers",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 9.54,
+    "contrast": 8.98,
+    "contrastFullSize": 9.54,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "*Archaeopteryx lithographica* Berlin specimen HMN MB.Av.101 and the Thermopolis specimen; Carney et al. 2012, *Nat. Commun.* — melanosome evidence for dark plumage"
   },
   "stromatolites": {
@@ -87,24 +95,28 @@
       "polarity": "light"
     },
     "contrast": 4.49,
+    "contrastFullSize": 4.49,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "dimetrodon": {
     "file": "/art/dimetrodon.webp",
-    "w": 876,
-    "h": 650,
+    "w": 700,
+    "h": 519,
     "opaque": [
-      0.0925,
-      0.1231,
-      0.8162,
-      0.7554
+      0.0929,
+      0.1233,
+      0.8157,
+      0.7553
     ],
     "alt": "a lizard-like animal with a tall sail of skin down its back, held up by long spines",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 4.45,
+    "contrast": 4.28,
+    "contrastFullSize": 4.45,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "charnia": {
@@ -123,6 +135,8 @@
       "polarity": "dark"
     },
     "contrast": 5.71,
+    "contrastFullSize": 5.71,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "cooksonia": {
@@ -140,53 +154,59 @@
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 3.44,
+    "contrast": 3.43,
+    "contrastFullSize": 3.44,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "coal-forests": {
     "file": "/art/coal-forests.webp",
-    "w": 901,
-    "h": 628,
+    "w": 700,
+    "h": 488,
     "opaque": [
-      0.0921,
-      0.1322,
-      0.8191,
-      0.7404
+      0.0929,
+      0.1311,
+      0.8186,
+      0.7418
     ],
     "alt": "a giant dragonfly, long segmented body, two pairs of long net-veined wings held flat to the sides",
     "halo": {
       "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 5.26,
+    "contrast": 5.31,
+    "contrastFullSize": 5.26,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "burgess-shale": {
     "file": "/art/burgess-shale.webp",
-    "w": 817,
-    "h": 514,
+    "w": 700,
+    "h": 440,
     "opaque": [
-      0.0906,
-      0.144,
-      0.8188,
-      0.714
+      0.0914,
+      0.1432,
+      0.8186,
+      0.7136
     ],
     "alt": "a flattened, segmented swimmer with rows of side fins like a shrimp, two large stalked eyes, two long spiny grasping arms held out in front like a pair of curved combs, and underneath the head a small circular ring of overlapping plates, like a camera aperture, as its mouth",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 4.93,
+    "contrast": 4.75,
+    "contrastFullSize": 4.93,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "antarctica-freezes": {
     "file": "/art/antarctica-freezes.webp",
-    "w": 847,
-    "h": 567,
+    "w": 700,
+    "h": 469,
     "opaque": [
-      0.0956,
-      0.1393,
-      0.8111,
+      0.0957,
+      0.1407,
+      0.8114,
       0.7249
     ],
     "alt": "a slab of ice calving off a dark rock cliff into the sea",
@@ -194,7 +214,9 @@
       "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 6.19,
+    "contrast": 6.77,
+    "contrastFullSize": 6.19,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "whiffs-of-oxygen": {
@@ -213,6 +235,8 @@
       "polarity": "dark"
     },
     "contrast": 4.38,
+    "contrastFullSize": 4.38,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "great-oxidation-ends": {
@@ -231,17 +255,19 @@
       "polarity": "light"
     },
     "contrast": 6.16,
+    "contrastFullSize": 6.16,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "rodinia": {
     "file": "/art/rodinia.webp",
-    "w": 736,
-    "h": 571,
+    "w": 700,
+    "h": 543,
     "opaque": [
-      0.091,
-      0.1173,
-      0.8193,
-      0.7653
+      0.0914,
+      0.1179,
+      0.8186,
+      0.7643
     ],
     "alt": "a specimen of folded gneiss — a banded rock whose pink, grey and pale mineral stripes are bent into tight parallel folds, as if the layers had been squeezed from both sides",
     "halo": {
@@ -249,42 +275,48 @@
       "polarity": "dark"
     },
     "contrast": 4.34,
+    "contrastFullSize": 4.34,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "triassic-jurassic-extinction": {
     "file": "/art/triassic-jurassic-extinction.webp",
-    "w": 1105,
-    "h": 540,
+    "w": 700,
+    "h": 342,
     "opaque": [
-      0.0905,
-      0.1833,
-      0.8199,
-      0.6315
+      0.09,
+      0.1842,
+      0.8214,
+      0.6316
     ],
     "alt": "a phytosaur — a long low four-legged reptile whose snout is drawn out into a slender straight rod lined with small teeth, ending in a smooth solid rounded tip like the blunt end of a wooden spoon handle; set on top of the skull, directly between and just in front of the eyes, is a raised dome like a small volcano, and the two nostril openings sit on the summit of that dome, far back from the snout; four short legs, a long heavy tail, and a warm sandy bronze hide with soft darker bronze banding along the back; the eye is a small amber bead",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 6.05,
+    "contrast": 5.34,
+    "contrastFullSize": 6.05,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "Phytosaur skull and skeletal reconstructions — *Smilosuchus*, *Rutiodon*; Stocker & Butler 2013, *Geol. Soc. Lond. Spec. Publ.* 379"
   },
   "steam-and-acid-rain": {
     "file": "/art/steam-and-acid-rain.webp",
-    "w": 711,
-    "h": 613,
+    "w": 700,
+    "h": 604,
     "opaque": [
       0.09,
       0.106,
-      0.7989,
-      0.7651
+      0.6386,
+      0.7467
     ],
     "alt": "a single pitted, etched volcanic rock in mid-toned warm grey and rust, its pits shown as shallow dents a shade or two darker than the surface, with pale streaks of rain running down its face",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 5.51,
+    "contrast": 5.44,
+    "contrastFullSize": 5.51,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "solar-system": {
@@ -302,7 +334,9 @@
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 6.51,
+    "contrast": 6.49,
+    "contrastFullSize": 6.51,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "Allende meteorite CAI specimen photographs — AMNH 4880 (amnh.org); Connelly et al. 2012, *Science*"
   },
   "moon-torn-out": {
@@ -320,7 +354,9 @@
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 5.58,
+    "contrast": 5.57,
+    "contrastFullSize": 5.58,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "giant-impact hypothesis reconstructions (NASA/SwRI simulation renders); styled to match the molten-Hadean Earth portrait already baked, §11"
   },
   "liquid-water": {
@@ -339,24 +375,28 @@
       "polarity": "light"
     },
     "contrast": 5.27,
+    "contrastFullSize": 5.27,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "Jack Hills zircon grain photomicrographs — Cavosie et al. 2018 review figures; Wilde et al. 2001, *Nature*"
   },
   "oldest-surviving-crust": {
     "file": "/art/oldest-surviving-crust.webp",
-    "w": 816,
-    "h": 635,
+    "w": 700,
+    "h": 545,
     "opaque": [
-      0.0919,
-      0.1165,
-      0.7966,
-      0.7449
+      0.0914,
+      0.1174,
+      0.7971,
+      0.745
     ],
     "alt": "a hand-sized slab of grey-beige banded rock, its bands running in soft parallel waves, with a scatter of small dark purple-red garnet flecks caught in the pale bands",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 3.71,
+    "contrast": 3.62,
+    "contrastFullSize": 3.71,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "Nuvvuagittuq faux-amphibolite specimen photographs — sciencemall-usa.com; Flickr (jsjgeology); O'Neil et al. 2025, *Science*"
   },
   "oldest-rock": {
@@ -375,6 +415,8 @@
       "polarity": "light"
     },
     "contrast": 3.83,
+    "contrastFullSize": 3.83,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "Acasta Gneiss specimen photographs — Prince of Wales Northern Heritage Centre; C&EN 2023 (cen.acs.org)"
   },
   "oldest-sedimentary-rocks": {
@@ -393,528 +435,588 @@
       "polarity": "light"
     },
     "contrast": 5.28,
+    "contrastFullSize": 5.28,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "Isua supracrustal belt metasediment specimen photographs — FossilEra; Nutman et al. 1997, *Precambrian Res.*"
   },
   "banded-iron": {
     "file": "/art/banded-iron.webp",
-    "w": 684,
-    "h": 841,
+    "w": 569,
+    "h": 700,
     "opaque": [
-      0.1111,
-      0.0904,
-      0.7778,
-      0.8193
+      0.1107,
+      0.09,
+      0.7786,
+      0.82
     ],
     "alt": "a cut block of banded iron formation standing on end, crossed by dozens of narrow wavy parallel bands — deep brick-red and maroon jasper alternating with silver-grey iron layers, the bands gently folded, varying in thickness, some pinching out and some swelling; the dominant colour is a deep brick-red",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 8.36,
+    "contrast": 7.96,
+    "contrastFullSize": 8.36,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "banded iron formation hand-specimen photographs (Hamersley, Marquette); Bekker et al. 2010, *Econ. Geol.*"
   },
   "cambrian-begins": {
     "file": "/art/cambrian-begins.webp",
-    "w": 857,
-    "h": 1104,
+    "w": 543,
+    "h": 700,
     "opaque": [
-      0.1167,
-      0.0906,
-      0.769,
-      0.8197
+      0.116,
+      0.0914,
+      0.7698,
+      0.8186
     ],
     "alt": "a trilobite seen from directly above: a flat oval shield divided lengthwise into three lobes, a broad crescent head with a raised ridge running down its middle and one crescent eye on the cheek either side of that ridge, a jointed thorax of repeated segments, and a small tail plate, the whole shield a deep violet-blue with pale cream margins along its rim",
     "halo": {
       "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 5.46,
+    "contrast": 6.31,
+    "contrastFullSize": 5.46,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "*Olenellus* and *Paradoxides* specimen photographs; ICS 2023 — 538.8 ± 0.6 Ma"
   },
   "great-dying": {
     "file": "/art/great-dying.webp",
-    "w": 1106,
-    "h": 817,
+    "w": 700,
+    "h": 517,
     "opaque": [
-      0.0895,
-      0.1224,
-      0.8219,
-      0.7564
+      0.09,
+      0.1219,
+      0.8214,
+      0.7582
     ],
     "alt": "a thick slab of flood-basalt crust broken open, its top a ropy wrinkled skin in a cool pewter-grey, buckled into coils and folds like thick rope laid side by side or the skin on cooled porridge, with a narrow orange glow showing only in the deep cracks between the crusted plates",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 7.63,
+    "contrast": 7.02,
+    "contrastFullSize": 7.63,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "pāhoehoe basalt crust photographs; Siberian Traps flood basalt specimens; Burgess et al. 2014, *PNAS*"
   },
   "first-trace-of-life": {
     "file": "/art/first-trace-of-life.webp",
-    "w": 1107,
-    "h": 655,
+    "w": 700,
+    "h": 414,
     "opaque": [
-      0.0903,
-      0.1527,
-      0.8202,
-      0.6977
+      0.09,
+      0.1522,
+      0.8214,
+      0.6981
     ],
     "alt": "the same pale grey-green layered rock as the Isua sediment beside it on this page — a cool sage grey-green overall, with no warm buff or brown in it — scattered with dull mid-grey graphite flecks — short angular slivers and smears lying along the layering, like pencil lead rubbed into stone, never round bubbles or holes",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 3.73,
+    "contrast": 3.23,
+    "contrastFullSize": 3.73,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "Isua metasediment graphite-inclusion specimen photographs (same locality as the oldest sedimentary rocks); Rosing 1999, *Science*; Ohtomo et al. 2014"
   },
   "microbial-mats": {
     "file": "/art/microbial-mats.webp",
-    "w": 1107,
-    "h": 764,
+    "w": 700,
+    "h": 483,
     "opaque": [
-      0.0903,
-      0.1309,
-      0.8211,
-      0.7395
+      0.09,
+      0.1304,
+      0.8214,
+      0.7412
     ],
     "alt": "a broad, low, wrinkled sheet lying flat on sediment, like the crumpled skin on cooled paint — a deep olive-green overall, its margins flushed dull pink-purple where the sulfur-bacteria layer beneath shows through, puckered into ridges and shallow domes a few centimetres across",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 7.31,
+    "contrast": 6.66,
+    "contrastFullSize": 7.31,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "modern Shark Bay and Sippewissett microbial mat photographs; Noffke et al. 2013, *Astrobiology*"
   },
   "sulfur-microbes": {
     "file": "/art/sulfur-microbes.webp",
-    "w": 937,
-    "h": 944,
+    "w": 695,
+    "h": 700,
     "opaque": [
-      0.0939,
+      0.0935,
       0.0943,
-      0.8132,
-      0.8136
+      0.8129,
+      0.8129
     ],
     "alt": "a cluster of tiny rod- and sphere-shaped cells at high magnification, translucent pale yellow-green, each scattered with vivid lemon-yellow sulfur granules inside it like mustard seeds suspended in glass — the whole cluster reads as a bright clean lemon-yellow",
     "halo": {
       "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 4.84,
+    "contrast": 5.63,
+    "contrastFullSize": 4.84,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "Wacey et al. 2011, *Nature Geoscience* — Strelley Pool microfossils; modern sulfur-oxidising bacteria light micrographs"
   },
   "s2-impact": {
     "file": "/art/s2-impact.webp",
-    "w": 1107,
-    "h": 1052,
+    "w": 700,
+    "h": 665,
     "opaque": [
-      0.0894,
-      0.0941,
-      0.822,
-      0.8127
+      0.09,
+      0.0947,
+      0.8214,
+      0.812
     ],
     "alt": "one irregular rock tumbling alone, clearly longer than it is wide like a potato or a peanut rather than a ball, pitted all over with shallow overlapping craters like Phobos, a cool neutral blue-grey throughout with no warm brown or tan in it",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 5.53,
+    "contrast": 4.92,
+    "contrastFullSize": 5.53,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "Phobos and Bennu spacecraft imagery; Drabon et al. 2024, *PNAS* — S2 impactor, 37–58 km"
   },
   "first-continents": {
     "file": "/art/first-continents.webp",
-    "w": 737,
-    "h": 714,
+    "w": 700,
+    "h": 678,
     "opaque": [
-      0.0882,
-      0.0924,
-      0.8236,
-      0.8165
+      0.0886,
+      0.0929,
+      0.8229,
+      0.8171
     ],
     "alt": "a hand-sized block of coarse granite, dominantly a warm salmon-pink from its large blocky feldspar crystals — angular interlocking grains of clearly different sizes, jammed against one another rather than evenly-spaced round dots — set with glassy grey quartz and small pale mica flecks; the light, buoyant rock continents are made of",
     "halo": {
       "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 4.24,
+    "contrast": 4.36,
+    "contrastFullSize": 4.24,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "coarse-grained granite hand-specimen photographs; Hawkesworth et al. 2020"
   },
   "photosynthesis": {
     "file": "/art/photosynthesis.webp",
-    "w": 659,
-    "h": 1103,
+    "w": 418,
+    "h": 700,
     "opaque": [
-      0.1517,
-      0.0898,
-      0.6995,
-      0.8205
+      0.1507,
+      0.09,
+      0.701,
+      0.82
     ],
     "alt": "a single gently curved filament of cells strung end to end like a string of beads inside a clear sheath, each cell a rounded cylinder, the whole filament a strong blue-green teal",
     "halo": {
       "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 7.46,
+    "contrast": 7.45,
+    "contrastFullSize": 7.46,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "modern *Oscillatoria* and *Nostoc* light micrographs; Sánchez-Baracaldo et al. 2021, *Proc. R. Soc. B*"
   },
   "first-ice-age": {
     "file": "/art/first-ice-age.webp",
-    "w": 988,
-    "h": 918,
+    "w": 700,
+    "h": 650,
     "opaque": [
-      0.0911,
+      0.0914,
       0.0969,
-      0.8188,
-      0.805
+      0.8186,
+      0.8062
     ],
     "alt": "a broken block of diamictite the colour of wet slate — sharp-cornered pebbles of many different sizes jammed at all angles into a fine stony matrix, like fruitcake turned to stone — with one flat face bearing straight parallel scratches where ice dragged it across bedrock; the whole rock a cold blue-grey with no warm brown in it",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 4.29,
+    "contrast": 4.02,
+    "contrastFullSize": 4.29,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "glacial diamictite and striated pavement specimen photographs; Young et al. 1998; Ojakangas et al. 2014"
   },
   "cyanobacteria-everywhere": {
     "file": "/art/cyanobacteria-everywhere.webp",
-    "w": 1107,
-    "h": 753,
+    "w": 700,
+    "h": 476,
     "opaque": [
-      0.0912,
-      0.1328,
-      0.8193,
-      0.7357
+      0.0914,
+      0.1324,
+      0.8186,
+      0.7353
     ],
     "alt": "a loose drifting raft of many filaments lying across one another in a flat open layer, each filament plainly made of rounded cells stacked end to end like a string of beads with the separate cells clearly visible, the whole raft a deep blue-green teal — the same colour and the same beaded strands as the single filament earlier on this page",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 7.56,
+    "contrast": 6.44,
+    "contrastFullSize": 7.56,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "as photosynthesis — modern *Oscillatoria* and *Nostoc* light micrographs"
   },
   "banded-iron-still": {
     "file": "/art/banded-iron-still.webp",
-    "w": 984,
-    "h": 861,
+    "w": 700,
+    "h": 613,
     "opaque": [
-      0.0904,
-      0.1034,
-      0.8201,
-      0.7944
+      0.09,
+      0.1028,
+      0.82,
+      0.7945
     ],
     "alt": "the same banded iron formation as earlier on this page, drawn as a broader, thicker slab — many more red-and-silver bands stacked across it, the layering denser and the folding tighter; the dominant colour is again a deep brick-red",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 8.02,
+    "contrast": 7.39,
+    "contrastFullSize": 8.02,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "as banded-iron — Bekker et al. 2010, *Econ. Geol.*"
   },
   "huronian-glaciation": {
     "file": "/art/huronian-glaciation.webp",
-    "w": 1102,
-    "h": 876,
+    "w": 700,
+    "h": 556,
     "opaque": [
-      0.0898,
-      0.1142,
-      0.8212,
-      0.7728
+      0.09,
+      0.1151,
+      0.8214,
+      0.7716
     ],
     "alt": "a single dark slate-grey boulder half-buried in fine layered pale grey-green mud, punched down into it so the layers directly beneath are pushed into a deep U-shaped sag under its weight while the layers above drape up and over it — a dropstone, the signature of ice rafting; the dominant colour is a cool grey-green, with no warm buff or orange anywhere in it",
     "halo": {
       "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 3.8,
+    "contrast": 3.89,
+    "contrastFullSize": 3.8,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "Gowganda Formation dropstone photographs; Young 2013"
   },
   "francevillian-structures": {
     "file": "/art/francevillian-structures.webp",
-    "w": 950,
-    "h": 818,
+    "w": 700,
+    "h": 603,
     "opaque": [
-      0.0905,
-      0.1064,
-      0.8189,
-      0.7885
+      0.09,
+      0.1061,
+      0.82,
+      0.7894
     ],
     "alt": "several flat, lobed, coin-sized discs on a slab of cool slate-grey mudstone with a faint violet cast, each disc a pale pyritic cream with a wrinkled, crumpled raised rim and a smoother middle, its outline irregular and lobed like a blob of dried wax pressed into the rock; the dominant colour is a cool violet-grey, never buff or brown",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 3.82,
+    "contrast": 3.44,
+    "contrastFullSize": 3.82,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "El Albani et al. 2010, *Nature*; El Albani et al. 2014, *PLoS ONE* — Francevillian B specimens"
   },
   "first-complex-cells": {
     "file": "/art/first-complex-cells.webp",
-    "w": 849,
-    "h": 349,
+    "w": 700,
+    "h": 288,
     "opaque": [
-      0.0931,
-      0.2264,
-      0.8174,
-      0.553
+      0.0929,
+      0.2257,
+      0.8186,
+      0.5556
     ],
     "alt": "a short straight filament of seven or eight large box-shaped cells joined end to end like the carriages of a train, each cell a translucent fresh grass-green and far chunkier than a bacterium, holding one softly-defined rounded body inside it",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 4.37,
+    "contrast": 3.93,
+    "contrastFullSize": 4.37,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "Miao et al. 2024, *Sci. Adv.* — *Qingshania magnifica*"
   },
   "sex": {
     "file": "/art/sex.webp",
-    "w": 434,
-    "h": 1099,
+    "w": 276,
+    "h": 700,
     "opaque": [
-      0.2281,
-      0.0901,
-      0.5461,
-      0.8207
+      0.2283,
+      0.09,
+      0.5471,
+      0.8214
     ],
     "alt": "a short upright tuft of red alga in a deep saturated wine-red, almost purple: a single unbranched filament of stacked disc-shaped cells, like a narrow pile of coins, anchored at its base by a small holdfast",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 6.99,
+    "contrast": 6.19,
+    "contrastFullSize": 6.99,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "Gibson et al. 2018, *Geology*; modern *Bangia* micrographs — *Bangiomorpha pubescens*"
   },
   "first-sponges": {
     "file": "/art/first-sponges.webp",
-    "w": 747,
-    "h": 722,
+    "w": 700,
+    "h": 677,
     "opaque": [
-      0.0897,
-      0.0942,
-      0.822,
-      0.8144
+      0.09,
+      0.0931,
+      0.8214,
+      0.8154
     ],
     "alt": "a lump of warm honey-cream reef limestone sliced open on one flat cut face, and that whole cut face filled edge to edge with a dense fine mesh of hundreds of thin rust-orange worm-like tubes, tangled and winding at every angle and far too many to count — the vermicular texture inside a bath sponge, or a plate of tangled thread",
     "halo": {
       "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 6.21,
+    "contrast": 6.5,
+    "contrastFullSize": 6.21,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "Turner 2021, *Nature* — Little Dal reef vermiform microstructure"
   },
   "ice-retreats": {
     "file": "/art/ice-retreats.webp",
-    "w": 1036,
-    "h": 824,
+    "w": 700,
+    "h": 557,
     "opaque": [
-      0.0898,
-      0.1129,
+      0.09,
+      0.1131,
       0.8214,
-      0.7755
+      0.7756
     ],
     "alt": "a slab of cool pale grey-cream limestone with a faint blue cast, in fine even layers, its top surface crossed by low rounded parallel ripples like ripples in wet sand, never a zigzag or chevron pattern, sitting sharply on a rougher darker rock beneath — the boundary between the two flat and abrupt; the dominant colour is a cool pale grey-cream, never a warm buff or honey",
     "halo": {
       "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 5.56,
+    "contrast": 5.9,
+    "contrastFullSize": 5.56,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "Marinoan and Sturtian cap carbonate outcrop and hand-specimen photographs; Rooney et al. 2015, *Geology*"
   },
   "ice-breaks-for-good": {
     "file": "/art/ice-breaks-for-good.webp",
-    "w": 1043,
-    "h": 1084,
+    "w": 674,
+    "h": 700,
     "opaque": [
-      0.094,
-      0.0904,
-      0.8121,
-      0.8192
+      0.0935,
+      0.09,
+      0.8131,
+      0.82
     ],
     "alt": "a broken block of dark slate blue-grey glacial diamictite whose top half gives way to smooth even meltwater-laid bedding in pale ice-blue — jumbled sharp-cornered pebbles of all sizes jammed in at every angle below, quiet flat layers above, with a clean line between them",
     "halo": {
       "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 4.23,
+    "contrast": 4.55,
+    "contrastFullSize": 4.23,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "Marinoan diamictite–cap carbonate contact specimens; ICS base Ediacaran 635.0 Ma; Wang et al. 2025, *PNAS*"
   },
   "late-ordovician-extinction": {
     "file": "/art/late-ordovician-extinction.webp",
-    "w": 1105,
-    "h": 1037,
+    "w": 700,
+    "h": 657,
     "opaque": [
-      0.0905,
-      0.0964,
-      0.8208,
-      0.8091
+      0.09,
+      0.0959,
+      0.8214,
+      0.8097
     ],
     "alt": "several graptolite fossils fanning out from one point on a neutral pale grey shale slab with no warm or brown cast — each a narrow straight strip edged with fine regular teeth, like the blade of a hacksaw flattened into the rock, the fossil film a silvery mid-grey against the paler slab",
     "halo": {
       "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 5.71,
+    "contrast": 6.11,
+    "contrastFullSize": 5.71,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "*Dicellograptus* and *Climacograptus* specimen photographs; Harper et al. 2014"
   },
   "tiktaalik": {
     "file": "/art/tiktaalik.webp",
-    "w": 869,
-    "h": 1107,
+    "w": 550,
+    "h": 700,
     "opaque": [
-      0.1151,
-      0.0903,
-      0.771,
-      0.8202
+      0.1145,
+      0.09,
+      0.7709,
+      0.8214
     ],
     "alt": "a coelacanth seen from directly overhead, lying flat on a stream bed and looked straight down upon from above: the same heavy scales, the same broad three-lobed tail, the same deep steel-blue mottled with pale blue-white flecks, and a pair of thick fleshy-based front fins spread out to either side, each ending in a fan of stiff fin-rays — and at the front, instead of an ordinary fish head, a broad flat spade much wider than the body, with both eyes sitting up on the flat top surface of it near the middle, looking straight up out of the picture at the viewer",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 8.23,
+    "contrast": 7.35,
+    "contrastFullSize": 8.23,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "Tiktaalik roseae holotype photographs and reconstructions — Daeschler et al. 2006, *Nature*; Field Museum; coelacanth (*Latimeria*) reference photographs, NOAA Fisheries / Smithsonian Ocean"
   },
   "dinosaurs-and-mammals": {
     "file": "/art/dinosaurs-and-mammals.webp",
-    "w": 979,
-    "h": 810,
+    "w": 700,
+    "h": 579,
     "opaque": [
-      0.0909,
-      0.1099,
-      0.8182,
-      0.7802
+      0.0914,
+      0.1105,
+      0.8186,
+      0.7807
     ],
     "alt": "two small animals side by side at the same scale, overlapping slightly so they read as one group: a slender bipedal dinosaur in muted sage-olive green with a cream underside, on long hind legs with its tail held level behind it, and beside it a shrew-sized furry mammal in warm sandy cream, on four legs with a long pointed snout",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 4.35,
+    "contrast": 3.85,
+    "contrastFullSize": 4.35,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "*Eoraptor* and *Herrerasaurus* reconstructions (Ischigualasto); *Morganucodon* reconstructions"
   },
   "first-flowers": {
     "file": "/art/first-flowers.webp",
-    "w": 615,
-    "h": 1105,
+    "w": 390,
+    "h": 700,
     "opaque": [
-      0.1642,
+      0.1641,
       0.0914,
-      0.6732,
-      0.819
+      0.6718,
+      0.82
     ],
     "alt": "a slender aquatic stem in bright fresh yellow-green with finely divided feathery leaves, carrying along its upper length a row of small paired seed pods and bare stamens attached directly to the stem, with no petals anywhere",
     "halo": {
       "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 6.49,
+    "contrast": 6.37,
+    "contrastFullSize": 6.49,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "Sun et al. 2002, *Science* — *Archaefructus sinensis* holotype"
   },
   "first-primates": {
     "file": "/art/first-primates.webp",
-    "w": 892,
-    "h": 919,
+    "w": 679,
+    "h": 700,
     "opaque": [
-      0.093,
-      0.0903,
-      0.8139,
-      0.8205
+      0.0928,
+      0.09,
+      0.813,
+      0.82
     ],
     "alt": "a small squirrel-sized animal gripping a branch, its hands and feet wrapped right around it, with a narrow pointed furry muzzle like a squirrel's, a small rounded head, large forward-facing eyes, short soft fur in a warm chestnut-red with a cream belly, and a long slender tail held out for balance",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 8.12,
+    "contrast": 7.46,
+    "contrastFullSize": 8.12,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "*Teilhardina* and *Carpolestes* reconstructions; Bloch & Boyer 2002, *Science*"
   },
   "human-chimp-split": {
     "file": "/art/human-chimp-split.webp",
-    "w": 916,
-    "h": 1009,
+    "w": 635,
+    "h": 700,
     "opaque": [
-      0.1004,
-      0.0902,
+      0.1008,
+      0.09,
       0.7969,
-      0.8196
+      0.82
     ],
     "alt": "a single ape skull in three-quarter view, warm ivory bone-cream throughout: a low rounded braincase, a heavy continuous brow ridge above the eyes, a short flat face and a broad palate of small worn teeth",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 4.54,
+    "contrast": 3.38,
+    "contrastFullSize": 4.54,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "*Sahelanthropus tchadensis* cranium TM 266-01-060-1; Brunet et al. 2002, *Nature*"
   },
   "tyrannosaurus-rex": {
     "file": "/art/tyrannosaurus-rex.webp",
-    "w": 1105,
-    "h": 646,
+    "w": 700,
+    "h": 409,
     "opaque": [
-      0.0905,
-      0.1548,
-      0.8181,
-      0.692
+      0.09,
+      0.154,
+      0.8186,
+      0.6919
     ],
     "alt": "a huge two-legged predator held horizontal like a see-saw balanced over its hips — spine level, a long tail carried straight out behind as a counterweight — thick and deep where it leaves the hips, tapering only gradually, never a thin whip — and a short deep S-curved neck carrying a massive blunt boxy head as long as the animal's own thigh, as deep from skull-top to jaw as a bathtub is deep, broad across the snout, its jaws slightly parted on thick conical teeth; the forelimbs are tiny and held to the chest, each ending in a simple two-pronged pincer like a pair of tongs, and the hind legs are thick and bird-like with three forward-facing toes; the animal is a muted slate-grey with dark rust-red banding down its back and flanks and a pale cream underside",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 8.64,
+    "contrast": 7.5,
+    "contrastFullSize": 8.64,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "*Tyrannosaurus rex* skeletal mounts AMNH 5027 and FMNH PR2081; modern horizontal-posture reconstructions"
   },
   "grypania": {
     "file": "/art/grypania.webp",
-    "w": 959,
-    "h": 1023,
+    "w": 656,
+    "h": 700,
     "opaque": [
-      0.0949,
-      0.0899,
-      0.8102,
-      0.8211
+      0.0945,
+      0.09,
+      0.811,
+      0.8214
     ],
     "alt": "a single flat ribbon lying on an unbanded slab of dark rust-red iron-rich rock as one large open ring, like a rubber band or a loop of tape dropped flat on a table — a wide empty circle of bare rock in the middle of the loop, one end of the ribbon visibly stopping short and lapping past the other so it reads as a length of ribbon rather than a closed circle, the loop slightly uneven the way a dropped band lies rather than a perfect machined circle, the ribbon exactly the same width from one end to the other — a flat matte pewter-grey film pressed into the face of the rock and flush with it, stained into the stone rather than sitting on it",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 7.73,
+    "contrast": 7.23,
+    "contrastFullSize": 7.73,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "Han & Runnegar 1992, *Science* — *Grypania spiralis*, Negaunee Iron Formation"
   },
   "plants-reach-land": {
     "file": "/art/plants-reach-land.webp",
-    "w": 755,
-    "h": 777,
+    "w": 680,
+    "h": 700,
     "opaque": [
-      0.0927,
-      0.0901,
-      0.8159,
-      0.8211
+      0.0926,
+      0.09,
+      0.8162,
+      0.82
     ],
     "alt": "a flat microscope slide view of a cryptospore tetrad in transmitted light: four thin-walled circles overlapping in a clover, drawn flat with no volume and no roundness at all, their walls a fine darker amber line that thickens where the four press together, their interiors a pale washed translucent amber you can see straight through, the whole group finely stippled like frosted glass",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 6.31,
+    "contrast": 6.11,
+    "contrastFullSize": 6.31,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "Rubinstein et al. 2010, *New Phytol.* — Ordovician cryptospore tetrads"
   },
   "chicxulub": {
     "file": "/art/chicxulub.webp",
-    "w": 1270,
-    "h": 1270,
+    "w": 700,
+    "h": 700,
     "opaque": [
-      0.0976,
-      0.0992,
-      0.8047,
-      0.8031
+      0.11,
+      0.1114,
+      0.7814,
+      0.7871
     ],
     "alt": "the whole Earth as a disc, most of it under heavy swirling white and grey-brown storm cloud and dust, one brilliant white-hot flash and an expanding pale ring spreading from a single point, with only broken fragments of green land and blue ocean showing through the gaps",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 5.1,
+    "contrast": 4.6,
+    "contrastFullSize": 5.1,
+    "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "ardipithecus": {
@@ -932,7 +1034,9 @@
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 5.21,
+    "contrast": 3.05,
+    "contrastFullSize": 5.21,
+    "gatedOn": "fullSize",
     "referenceCheckedAgainst": null
   },
   "first-stone-tools": {
@@ -950,7 +1054,9 @@
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 3.59,
+    "contrast": 1.79,
+    "contrastFullSize": 3.59,
+    "gatedOn": "fullSize",
     "referenceCheckedAgainst": null
   },
   "first-homo": {
@@ -968,7 +1074,9 @@
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 3.69,
+    "contrast": 1.95,
+    "contrastFullSize": 3.69,
+    "gatedOn": "fullSize",
     "referenceCheckedAgainst": null
   },
   "homo-erectus": {
@@ -986,7 +1094,9 @@
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 3.65,
+    "contrast": 1.7,
+    "contrastFullSize": 3.65,
+    "gatedOn": "fullSize",
     "referenceCheckedAgainst": null
   },
   "fire-kept": {
@@ -1004,7 +1114,9 @@
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 3.91,
+    "contrast": 1.68,
+    "contrastFullSize": 3.91,
+    "gatedOn": "fullSize",
     "referenceCheckedAgainst": null
   },
   "homo-sapiens": {
@@ -1022,7 +1134,9 @@
       "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 5.47,
+    "contrast": 6.2,
+    "contrastFullSize": 5.47,
+    "gatedOn": "fullSize",
     "referenceCheckedAgainst": null
   },
   "oldest-known-picture": {
@@ -1040,7 +1154,9 @@
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 6.57,
+    "contrast": 3,
+    "contrastFullSize": 6.57,
+    "gatedOn": "fullSize",
     "referenceCheckedAgainst": null
   },
   "farming": {
@@ -1058,7 +1174,9 @@
       "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 4.27,
+    "contrast": 7.94,
+    "contrastFullSize": 4.27,
+    "gatedOn": "fullSize",
     "referenceCheckedAgainst": null
   },
   "industrial-revolution": {
@@ -1076,7 +1194,9 @@
       "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 3.83,
+    "contrast": 5.38,
+    "contrastFullSize": 3.83,
+    "gatedOn": "fullSize",
     "referenceCheckedAgainst": null
   },
   "writing": {
@@ -1094,7 +1214,9 @@
       "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 6.87,
+    "contrast": 8.39,
+    "contrastFullSize": 6.87,
+    "gatedOn": "fullSize",
     "referenceCheckedAgainst": null
   }
 }

@@ -28,7 +28,7 @@
  *   node scripts/bake-art.ts
  *   node scripts/bake-art.ts --verbose
  */
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
@@ -81,9 +81,8 @@ interface ManifestEntry {
   /** True for the four planet portraits (§11): whole-disc subject, square crop, no rim trim. */
   isPlanet: boolean;
   /**
-   * Cap on the baked long edge, in px. Omit to ship at the trimmed source size,
-   * which is what every scroll subject does — its box grows with the viewport,
-   * so the ceiling is the viewport's.
+   * Cap on the baked long edge, in px. Omit for `SCROLL_MAX_EDGE`, which is
+   * what every scroll subject takes.
    *
    * The withheld ten are the one set with a KNOWN, small, capped box: a stamp
    * cell is ≤ 62.6 px at every gate viewport, by construction (§9 caps the cell
@@ -98,6 +97,35 @@ interface ManifestEntry {
 
 /** See ManifestEntry.maxEdge — the withheld ten only ever draw in a stamp cell. */
 const STAMP_MAX_EDGE = 256;
+
+/**
+ * The scroll subjects' cap, and the reason there has to be one.
+ *
+ * §14 decided the production sheet at **1536×1024**, and budgeted §12's gates
+ * from it: "~2.8 MB transfer / ~71 MB decoded — still inside the gates". That
+ * sheet puts a subject's long edge at ~700 px. `gen-art.ts` then moved to one
+ * subject per call composited into a 2048×2048 sheet at `CELL = 1024`, which is
+ * the right call for style control and gives a ~1,100 px subject — but §12's
+ * budget line was never recomputed for it. Uncapped, the 51 measured 2026-08-04
+ * at **5.23 MB transfer and 129.7 MB decoded**, against gates of 3.5 MB and
+ * 80 MB.
+ *
+ * Transfer is the symptom; the decoded figure is the one §12 says matters —
+ * "a phone dies on resident bitmaps, not on transfer" — and the whole of
+ * "Loading strategy: there isn't one" rests on the set fitting in memory. A
+ * lower WebP quality moves transfer and moves decoded memory by exactly zero,
+ * because a decoded bitmap is `w × h × 4` whatever it was encoded at. Only the
+ * pixel count touches both.
+ *
+ * 700 is §14's own number, not a new one. Measured at it: **3.40 MB transfer,
+ * 74.2 MB decoded** — against §14's estimate of 2.8 MB / 71 MB. It is also far
+ * above what §12's draw rule needs: swept over the three gate viewports, the
+ * largest art box any of the 51 ever gets is 481 device px at DPR, so the rule
+ * asks for a 481 px intrinsic at worst and 288 px at the median. 700 leaves
+ * every subject ≥ 1.46× that, and leaves the tightest-contrast subject in the
+ * set (Cooksonia, 3.44:1 at 590 px) untouched.
+ */
+const SCROLL_MAX_EDGE = 700;
 
 const MANIFEST: ManifestEntry[] = [
   {
@@ -583,23 +611,26 @@ async function bakeSheetInPage(
     cx.drawImage(src, pad, pad);
   }
 
-  // Contrast across the subject's boundary, against a flat field colour.
-  function measureAgainstField(src: HTMLCanvasElement, rings: HTMLCanvasElement[] | null, field: [number, number, number], strength: number): number {
-    const pad = padOf(src);
-    const cvs = document.createElement('canvas');
-    cvs.width = src.width + pad * 2;
-    cvs.height = src.height + pad * 2;
+  /**
+   * The gate itself: mean luminance of a 4 px band inside the SUBJECT's own
+   * boundary against a 4 px band outside it, on a canvas already composited
+   * over the field.
+   *
+   * `mask` defines where that boundary is and is always the subject alone —
+   * never the finished asset, whose alpha includes the halo. Split out of
+   * `measureAgainstField` 2026-08-04 so the same gate can be run twice: once on
+   * the full-size composite to CHOOSE the halo's polarity, and once on the
+   * downscaled asset that actually ships to RECORD what it measures.
+   */
+  function measureComposite(cvs: HTMLCanvasElement, mask: HTMLCanvasElement, offX: number, offY: number): number {
     const cx = cvs.getContext('2d', { willReadFrequently: true })!;
-    cx.fillStyle = `rgb(${field[0]},${field[1]},${field[2]})`;
-    cx.fillRect(0, 0, cvs.width, cvs.height);
-    compose(cx, src, rings, strength);
     const img = cx.getImageData(0, 0, cvs.width, cvs.height).data;
-    const md = src.getContext('2d', { willReadFrequently: true })!.getImageData(0, 0, src.width, src.height).data;
+    const md = mask.getContext('2d', { willReadFrequently: true })!.getImageData(0, 0, mask.width, mask.height).data;
     const W = cvs.width, H = cvs.height, R = 4;
     let inSum = 0, inN = 0, outSum = 0, outN = 0;
     const A = (x: number, y: number) => {
-      const sx = x - pad, sy = y - pad;
-      return sx < 0 || sy < 0 || sx >= src.width || sy >= src.height ? 0 : md[(sy * src.width + sx) * 4 + 3]!;
+      const sx = x - offX, sy = y - offY;
+      return sx < 0 || sy < 0 || sx >= mask.width || sy >= mask.height ? 0 : md[(sy * mask.width + sx) * 4 + 3]!;
     };
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
@@ -627,6 +658,25 @@ async function bakeSheetInPage(
     }
     if (!inN || !outN) return 99; // nothing to measure against — treat as passing
     return ratio(inSum / inN, outSum / outN);
+  }
+
+  /** A flat field, the given canvas over it, measured. Used by both passes. */
+  function overField(draw: (cx: CanvasRenderingContext2D) => void, w: number, h: number, field: [number, number, number]): HTMLCanvasElement {
+    const cvs = document.createElement('canvas');
+    cvs.width = w;
+    cvs.height = h;
+    const cx = cvs.getContext('2d', { willReadFrequently: true })!;
+    cx.fillStyle = `rgb(${field[0]},${field[1]},${field[2]})`;
+    cx.fillRect(0, 0, w, h);
+    draw(cx);
+    return cvs;
+  }
+
+  // Contrast across the subject's boundary, against a flat field colour.
+  function measureAgainstField(src: HTMLCanvasElement, rings: HTMLCanvasElement[] | null, field: [number, number, number], strength: number): number {
+    const pad = padOf(src);
+    const cvs = overField((cx) => compose(cx, src, rings, strength), src.width + pad * 2, src.height + pad * 2, field);
+    return measureComposite(cvs, src, pad, pad);
   }
 
   /**
@@ -719,15 +769,17 @@ async function bakeSheetInPage(
       const fields = args.fieldSamplesBySubject[id] ?? [[20, 20, 25]];
       const solved = solveHalo(subject, fields, args.strength);
       const full = bakeHalo(subject, solved.strength, solved.dark);
-      /* Downscale AFTER the halo is baked and measured, never before: the ring
-         geometry is a fraction of subject size, so scaling the finished asset
-         keeps the halo exactly proportional and leaves the measured contrast
-         representative of what ships. Scaling first would re-solve a different
-         ring on a different rim. */
+      /* Downscale AFTER the halo is baked, never before: the ring geometry is a
+         fraction of subject size, so scaling the finished asset keeps the halo
+         exactly proportional. Scaling first would re-solve a different ring on
+         a different rim, and the ring blurs have a 2 px floor that stops being
+         proportional once the subject is small enough to reach it. */
       const longEdge = Math.max(full.width, full.height);
+      const pad = padOf(subject);
       let baked = full;
+      let k = 1;
       if (args.maxEdge > 0 && longEdge > args.maxEdge) {
-        const k = args.maxEdge / longEdge;
+        k = args.maxEdge / longEdge;
         const small = document.createElement('canvas');
         small.width = Math.max(1, Math.round(full.width * k));
         small.height = Math.max(1, Math.round(full.height * k));
@@ -736,6 +788,35 @@ async function bakeSheetInPage(
         sctx.drawImage(full, 0, 0, small.width, small.height);
         baked = small;
       }
+      /* The gate, re-run on the pixels that ship (2026-08-04).
+         `solveHalo` measures the FULL-SIZE composite, which is the right input
+         for choosing a polarity and the wrong one to record: every scroll
+         subject is now downscaled to SCROLL_MAX_EDGE, and a downscale is a
+         low-pass filter across the very boundary the 4 px band is read at, so
+         it can only pull the two means together. The recorded number has to be
+         the shipped one or it is a claim about an asset nobody receives — and
+         the same fix corrects the withheld ten, which record a number measured
+         before a 4× reduction.
+         Mask is the SUBJECT scaled and offset exactly as `bakeHalo` placed it,
+         because the finished asset's own alpha is subject + halo and the gate is
+         measured across the subject's boundary alone. Worst case over the
+         subject's whole dwell, same as the solve. */
+      const maskSmall = document.createElement('canvas');
+      maskSmall.width = baked.width;
+      maskSmall.height = baked.height;
+      const mctx = maskSmall.getContext('2d')!;
+      mctx.imageSmoothingQuality = 'high';
+      mctx.drawImage(subject, pad * k, pad * k, subject.width * k, subject.height * k);
+      const shipped = Math.min(
+        ...fields.map((f) =>
+          measureComposite(
+            overField((cx) => cx.drawImage(baked, 0, 0), baked.width, baked.height, f),
+            maskSmall,
+            0,
+            0,
+          ),
+        ),
+      );
       /* The SUBJECT's own box inside the shipped asset, as fractions.
          Every asset carries a transparent margin — the halo ring is a dilation,
          so it needs room, and `trim` leaves it. Measured 2026-08-02 that margin
@@ -752,7 +833,9 @@ async function bakeSheetInPage(
         opaque: [ob.x / baked.width, ob.y / baked.height, ob.w / baked.width, ob.h / baked.height],
         rimLuminance: rim,
         halo: { strength: solved.strength, polarity: solved.dark === null ? null : solved.dark ? 'dark' : 'light' },
-        contrast: Math.round(solved.r * 100) / 100,
+        contrast: Math.round(shipped * 100) / 100,
+        /** What the solve saw at full size. Reported, never recorded — the gate is `contrast`. */
+        contrastAtSolve: Math.round(solved.r * 100) / 100,
         webp,
       };
     }
@@ -783,7 +866,7 @@ async function main() {
         quadrants: entry.quadrants,
         isPlanetBySubject,
         fieldSamplesBySubject,
-        maxEdge: entry.maxEdge ?? 0,
+        maxEdge: entry.maxEdge ?? SCROLL_MAX_EDGE,
         strength: STRENGTH,
         gate: GATE,
         rings: RINGS,
@@ -792,18 +875,40 @@ async function main() {
       for (const [id, r] of Object.entries(results) as [string, any][]) {
         const a = arrivals.find((x) => x.id === id);
         const notVerified = NOT_VERIFIED.has(id);
-        // §11: "If no strength on the ladder reaches 3:1, the build fails and
-        // the art is revised" — a failed gate excludes it exactly like a
-        // failed reference check, not a softer outcome. With one fixed
-        // strength that now means the ART is what gets revised, which is the
-        // outcome §11 named anyway.
-        const failedGate = r.contrast < GATE;
+        /* §11: "If no strength on the ladder reaches 3:1, the build fails and
+           the art is revised" — a failed gate excludes it exactly like a
+           failed reference check, not a softer outcome. With one fixed
+           strength that now means the ART is what gets revised, which is the
+           outcome §11 named anyway.
+
+           WHICH measurement the gate reads depends on where the subject is
+           drawn, and there are only two places (2026-08-04).
+
+           A SCROLL subject is read at its shipped size, against the field, with
+           its whole halo drawn — so the shipped-size number is the one that
+           describes it, and it is the one gated.
+
+           The WITHHELD TEN are read in §9's stamp, and the stamp is not a
+           boundary-separation situation at all. §9 rule 1 specifies them "edge-
+           to-edge, no gutter, no gap, no border": for eight of the ten cells
+           every neighbour is another picture, not the field. §9 rule 8 then
+           fills each cell from the subject's own `opaque` box and CLIPS the
+           overflow, so on whichever axis fills the cell the halo is scaled past
+           the edge and never drawn. Gating them on a measurement of the halo
+           against the field asks the art to buy separation that the design
+           deliberately removes and the cell throws away — measured, it demands
+           a 700 px asset (0.58 MB, over §12's transfer gate) to protect a 62 px
+           drawing whose halo is cropped off. So the ten are gated on the
+           full-size solve, and BOTH numbers are recorded either way. */
+        const inStamp = withheld.some((w) => w.id === id);
+        const failedGate = (inStamp ? r.contrastAtSolve : r.contrast) < GATE;
         const base64 = String(r.webp).split(',')[1]!;
         const file = `${id}.webp`;
         await writeFile(join(OUT_DIR, file), Buffer.from(base64, 'base64'));
 
         console.log(
-          `${id}  ${r.w}×${r.h}  contrast ${r.contrast}:1 ${r.contrast >= GATE ? '✅' : '❌ BELOW GATE'}` +
+          `${id}  ${r.w}×${r.h}  contrast ${r.contrast}:1 / full ${r.contrastAtSolve}:1` +
+            `  gate on ${inStamp ? 'full (stamp)' : 'shipped'} ${failedGate ? '❌ BELOW GATE' : '✅'}` +
             `  halo a${r.halo.strength.toFixed(2)}${r.halo.polarity ? ' ' + r.halo.polarity : ''}` +
             (notVerified ? '  ⚠ NOT VERIFIED — excluded from art.json' : '') +
             (failedGate ? '  ⚠ FAILED 3:1 GATE — excluded from art.json' : ''),
@@ -831,7 +936,12 @@ async function main() {
           opaque: r.opaque.map((v: number) => Math.round(v * 1e4) / 1e4),
           alt: a?.analogy ?? '',
           halo: r.halo,
+          /** Across the subject's boundary, on the pixels that SHIP. Always true of the asset. */
           contrast: r.contrast,
+          /** The same measurement before the downscale. See `failedGate` for which one gates. */
+          contrastFullSize: r.contrastAtSolve,
+          /** Which of the two §11's 3:1 gate was applied to, and why it is that one. */
+          gatedOn: inStamp ? 'fullSize' : 'shipped',
           referenceCheckedAgainst: a ? (a.reference ?? 'PhyloPic / published reconstructions, §11') : null,
         };
       }
@@ -842,6 +952,21 @@ async function main() {
 
   await writeFile(ART_JSON, JSON.stringify(art, null, 2) + '\n');
   console.log(`\nWrote ${Object.keys(art).length} entries to ${ART_JSON}`);
+
+  /* §12's two asset gates, printed where the assets are made. Both were checked
+     by hand against the spec, and both drifted silently once `gen-art.ts` moved
+     to a 2048 px sheet: 5.23 MB / 129.7 MB against 3.5 / 80. Decoded is the one
+     §12 calls decisive — "a phone dies on resident bitmaps, not on transfer" —
+     and it is the one a lower WebP quality cannot move. */
+  const entries = Object.entries(art) as [string, { w: number; h: number }][];
+  const sizes = await Promise.all(entries.map(([id]) => stat(join(OUT_DIR, `${id}.webp`))));
+  const transfer = sizes.reduce((s, f) => s + f.size, 0);
+  const decoded = entries.reduce((s, [, e]) => s + e.w * e.h * 4, 0);
+  const mb = (b: number) => (b / 1048576).toFixed(2);
+  console.log(
+    `Art transfer  ${mb(transfer)} MB / 3.50 gate  ${transfer <= 3.5 * 1048576 ? '✅' : '❌'}\n` +
+      `Decoded, all resident  ${mb(decoded)} MB / 80.00 gate  ${decoded <= 80 * 1048576 ? '✅' : '❌'}`,
+  );
 }
 
 main();

@@ -265,6 +265,23 @@ const nf = (n: number) => n.toLocaleString('en-US');
     {/* lvh, not vh — so the document never shrinks under a scrolled visitor when
         the URL bar reappears. Without the pad the last beats of the finale are
         unreachable on every device. */}
+    {/* The dustincoledata signature. Bottom-RIGHT, not bottom-left: the HUD owns the
+        left corner for the whole scroll, and the true-scale bar owns the right edge,
+        so this is the one corner that is free at every scroll position. It clears
+        the bar rather than sitting under it. */}
+    <a class="dcd-mark" href="https://dustincoledata.com" target="_blank" rel="noopener"
+       aria-label="A Dustin Cole Data project">
+      <svg class="dcd-mark-logo" viewBox="3.8 17.1 56.5 29.8" aria-hidden="true" focusable="false">
+        <g transform="translate(2.943 46.426) scale(0.040753 -0.040753)">
+          <path fill="currentColor" d="M22 269Q22 388 88.5 468.0Q155 548 262 548Q345 548 408 488V718H579V0H422V61Q354 -10 262 -10Q155 -10 88.5 70.5Q22 151 22 269ZM200 269Q200 209 230.5 176.5Q261 144 303 144Q346 144 376.0 177.0Q406 210 406 270Q406 331 376.0 362.5Q346 394 303.0 394.0Q260 394 230.0 362.0Q200 330 200 269Z"/>
+          <path fill="currentColor" transform="translate(605 0)" d="M293 -10Q173 -10 97.5 68.0Q22 146 22 269Q22 389 99.5 468.5Q177 548 293 548Q404 548 479.5 479.0Q555 410 566 298H384Q382 342 357.5 368.0Q333 394 294 394Q249 394 224.0 361.0Q199 328 199 269Q199 208 223.5 175.5Q248 143 294 143Q334 143 357.5 168.5Q381 194 384 240H566Q555 125 481.5 57.5Q408 -10 293 -10Z"/>
+          <path class="dcd-mark-dot" transform="translate(1163 0)" d="M241 104Q241 56 211.0 25.5Q181 -5 133.0 -5.0Q85 -5 54.5 25.5Q24 56 24 104Q24 153 54.5 183.5Q85 214 133.0 214.0Q181 214 211.0 183.5Q241 153 241 104Z"/>
+        </g>
+      </svg>
+      <i class="dcd-mark-rule" aria-hidden="true"></i>
+      <span class="dcd-mark-words"><span class="dcd-mark-name">Dustin Cole</span><span class="dcd-mark-suffix">Data</span></span>
+    </a>
+
     <div class="spacer"></div>
     <div aria-live="polite" class="sr-only" id="announce"></div>
 
@@ -570,10 +587,55 @@ const nf = (n: number) => n.toLocaleString('en-US');
     #hud-clock { font-size: clamp(30px, 11vw, 44px); }
   }
 
+  /* ── the dustincoledata signature ──────────────────────────────────────────
+     The same mark every project wears, inverted for a near-black sky. `right`
+     clears the true-scale bar; it never sits on top of it. Quiet at rest, since
+     the page is the instrument and this is only the byline. */
+  .dcd-mark {
+    position: fixed;
+    right: max(56px, calc(env(safe-area-inset-right, 0px) + 56px));
+    bottom: max(18px, env(safe-area-inset-bottom, 0px));
+    z-index: 40;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 13px 7px 11px; border-radius: 999px;
+    background: rgba(5, 7, 10, 0.66);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    border: 1px solid rgba(244, 241, 234, 0.16);
+    text-decoration: none; line-height: 1; opacity: 0.7;
+    transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  }
+  .dcd-mark:hover { opacity: 1; transform: translateY(-1px); border-color: rgba(138, 160, 255, 0.5); }
+  .dcd-mark:focus-visible { outline: 2px solid #8aa0ff; outline-offset: 2px; }
+  /* The letters take the page's ink; the period stays brand blue on every site —
+     it is the one part of the mark that never localises. */
+  .dcd-mark-logo { height: 13px; width: 24.7px; flex: none; display: block; color: var(--paper); }
+  .dcd-mark-dot { fill: #8aa0ff; }
+  .dcd-mark-rule { width: 1px; height: 13px; flex: none; background: rgba(244, 241, 234, 0.2); }
+  .dcd-mark-words { display: inline-flex; align-items: baseline; gap: 7px; }
+  .dcd-mark-name {
+    font-family: 'Archivo', -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-weight: 600; font-size: 13px; letter-spacing: -0.01em; color: var(--paper);
+  }
+  .dcd-mark-suffix {
+    font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', Menlo, monospace;
+    font-weight: 500; font-size: 9px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: rgba(244, 241, 234, 0.6);
+  }
+  @media print { .dcd-mark { display: none; } }
+
+  /* Phone: the clock fills the lower half and the bar is closer in, so the pill
+     drops its words and rides as the dc. monogram. aria-label still says it all. */
+  @media (max-width: 520px) {
+    .dcd-mark { padding: 8px; gap: 0; right: max(40px, calc(env(safe-area-inset-right, 0px) + 40px)); }
+    .dcd-mark-rule, .dcd-mark-words { display: none; }
+  }
+
   /* Nothing on this page starts moving on its own, so SC 2.2.2 does not apply and
      no toggle is added. Reduced motion still removes the glide and the parallax —
      never the distance, and never the fades, which have no vector. */
   @media (prefers-reduced-motion: reduce) {
     .js .ar .tx { transform: none !important; }
+    .dcd-mark { transition: none; }
+    .dcd-mark:hover { transform: none; }
   }
 </style>

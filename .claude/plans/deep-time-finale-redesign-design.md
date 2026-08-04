@@ -20,6 +20,10 @@ Four questions were put to Dustin and answered before any design work. They are 
 
 ---
 
+![The finale, settled: two masses of the historical record with the words cut through them as a band, and the arrested bar at the right.](deep-time-finale-mock.webp)
+
+*The prototype at 1440×900, referred to below as **frame D**. **The images are stand-ins** — Wikipedia lead photos pulled to prove density, cell size and the band; one of them is a screenshot of Wikipedia itself. Nothing here ships. The geometry, the two-field split, the bar clearance and the bracket are real.*
+
 ## 1 — The thesis of the ending
 
 **The scroll's argument is that humans are small. The ending's argument is that the thing you are looking at — all of it, everything you would name if asked what humans have done — is the blip.**

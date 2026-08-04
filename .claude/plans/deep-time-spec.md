@@ -814,6 +814,10 @@ Swept across all twelve baked subjects at four geometries × three strengths. Th
 
 **If the fixed strength does not reach 3:1, the build fails and the art is revised.** With one strength for the whole set that is now the only remedy, which is the outcome this line always named.
 
+**The gate is measured on the pixels that ship (2026-08-04).** It used to be measured on the full-size composite, after which the asset was downscaled — so the recorded number was a claim about an asset nobody receives, and a downscale is a low-pass filter across the very boundary the 4 px band is read at. `bake-art.ts` now runs the measurement twice: **at full size to choose the halo's polarity**, and **at the shipped size to record and to gate**. Where no downscale happens the two agree exactly, which is the check on the split. The 51 lose 2–4% and all 51 still clear 3:1. `art.json` carries both as `contrast` (shipped) and `contrastFullSize`, with `gatedOn` naming which one applied.
+
+**The withheld ten are gated on the full-size number, because [§9](#9--the-finale)'s stamp is not a boundary-separation situation.** Rule 1 specifies them *edge-to-edge, no gutter, no gap, no border* — for eight of the ten cells every neighbour is another picture, not the field — and rule 8 fills each cell from the subject's own `opaque` box and **clips** the overflow, so on whichever axis fills the cell the halo is scaled past the edge and never drawn. Gating them against the field asks the art to buy a separation the design deliberately removes and the cell then throws away. Measured: four of the ten (the hominin busts and *fire kept*, all light-polarity halo on the drained near-black field) fall to **1.68–1.95:1** at their shipped 256 px, and clearing 3:1 there would need a **700 px** asset — 0.58 MB, putting transfer over gate — to protect a **62 px** drawing whose halo is cropped off. The band is fixed at 4 px, which is 2% of a 256 px subject and 0.4% of a 700 px one, so it runs past the thin halo into black; dark-polarity subjects *rise* under the same downscale. **This is a scope ruling about where the gate applies, not a softening of it** — the ten still clear 3:1 on the measurement that describes a subject drawn against a field, and no subject anywhere is exempt from the 3:1 number itself.
+
 ### Type
 
 **One family, no display face — Archivo** (free, variable, real tabular figures; the locked dustincoledata brand face). The numbers carry the emotional payload and a counter needs tabular figures or it jitters as it counts. A second display face is where data toys start looking like posters.
@@ -835,7 +839,7 @@ Self-hosted via `@fontsource-variable/archivo`, roman **and italic** (the copy d
 | Planet singles | **4**, at 1024×1024 |
 | Proofs already spent | 4 generations (3 style sheets + 1 planet sheet) |
 | **Total generations** | **~13**, plus re-rounds for the obscure class and Chicxulub |
-| **Transfer budget** | 1.45 MB at current sheet size · ≤3.5 MB if the bigger sheets are taken |
+| **Transfer budget** | ≤3.5 MB · **3.27 MB measured 2026-08-04**, with every scroll subject capped at a 700 px long edge ([§12](#12--stack-budget-degradation)) |
 
 **Added 2026-08-02 — the withheld ten.** [§7](#7-the-verified-set--the-single-source-of-truth)'s revision gives the ten pictures, so the order grows by **ten cut-out subjects**, generated one per call like everything since 2026-08-01. They ship at stamp size (a two-row grid of small cells, [§9](#9--the-finale)), so the 2× draw cap is nowhere near binding and no bigger sheet is needed. Proof at `--quality low` first, fix the prompt against the proof, then `medium` — **Dustin approves the batch before any call is made**, which is [§1](#1--the-thesis-and-the-constraints-that-are-not-negotiable)'s standing rule and not a formality.
 
@@ -889,10 +893,17 @@ One honest caveat: absolute fps drifts with whatever else the host machine is do
 
 | | |
 |---|---|
-| Whole art set, WebP | **1.45 MB** transfer (36 cut-outs + 4 planets) |
-| **Decoded, every asset resident at once** | **36.5 MB** |
+| Whole art set, WebP | **3.27 MB** transfer (51 cut-outs + 4 planets + the withheld ten) |
+| **Decoded, every asset resident at once** | **74.17 MB** |
 
-The decoded figure is the one that matters — a phone dies on resident bitmaps, not on transfer — and at 36.5 MB **the entire art set can simply stay in memory.**
+The decoded figure is the one that matters — a phone dies on resident bitmaps, not on transfer — and at 74.17 MB **the entire art set can simply stay in memory.**
+
+**Both numbers are a consequence of one cap, and they were re-measured 2026-08-04 because they had drifted.** Every scroll subject's baked long edge is capped at **700 px** (`SCROLL_MAX_EDGE`), the withheld ten at 256. The first figures here were **1.45 MB / 36.5 MB**, computed for the 1536×1024 sheet [§14](#14-open-only-at-the-art-gate) decided — which puts a subject at ~700 px. `gen-art.ts` then moved to one subject per call composited at `CELL = 1024`, i.e. a 2048×2048 sheet, which is the right call for style control and yields a **~1,100 px** subject; nothing recomputed this section for it. Uncapped, the finished set measured **5.23 MB transfer and 129.7 MB decoded** — 1.5× and 1.6× over gate.
+
+**Two consequences worth stating, because the obvious fix is the wrong one:**
+
+1. **Transfer is the symptom; decoded is the disease.** A decoded bitmap is `w × h × 4` whatever quality it was encoded at, so a lower WebP quality moves transfer and moves resident memory by **exactly zero**. Measured, quality alone only reaches the transfer gate at q0.80 — and leaves 129.7 MB resident, which is the number this section calls decisive and the number "Loading strategy: there isn't one" rests on. **Only the pixel count touches both.** Re-encoding is not a remedy here and should not be proposed as one.
+2. **The cap costs nothing the draw rule wanted.** Swept over the three gate viewports, the largest art box any of the 51 ever gets is **481 device px**, so the 2× rule below asks for a 481 px intrinsic at worst and **288 px at the median**. 700 leaves every subject ≥ **1.46×** that, at the unchanged q0.92.
 
 **Loading strategy: there isn't one.**
 
@@ -903,15 +914,17 @@ The decoded figure is the one that matters — a phone dies on resident bitmaps,
 
 **No asset is ever drawn larger than 2× its intrinsic size in device pixels** (`maxDrawCSS = 2 × intrinsicPx / devicePixelRatio`). 2× is chosen for this style specifically — the recipe forbids outlines and line art, so there is no hard edge to alias. The art box is a maximum, not a target.
 
+**Held at the three gate viewports, and only there.** The art box is derived from the viewport, so it keeps growing on a monitor wider than 1440×900 while the intrinsic does not — measured 2026-08-04, six subjects already drew past 2× at 2560×1440 *before* the 700 px cap, and the cap deepens that. This is knowingly not closed: the rule is asserted where the gates are, the sentence above is a maximum rather than a target, and the alternative — sizing every asset for the widest monitor anyone might own — is what put the set 1.6× over the memory gate in the first place. **Anyone reopening it should know it argues in the opposite direction from the cap, and that it cannot be granted without moving the two budget gates.**
+
 ### The numeric budget — gates, not targets
 
 | | gate | measured |
 |---|---|---|
 | **Frame, phone** | p50 ≤ 16.7 ms · p95 ≤ 20 ms · **zero frames > 50 ms**, full autoscroll at 390×844 / 4× CPU throttle | 16.7 / 16.8 / 0 ✅ |
 | **Frame, desktop** | p95 ≤ 16.7 ms at 1440×900, unthrottled | — |
-| **Art transfer** | ≤ 2.0 MB at current sheet size · ≤ 3.5 MB at the bigger sheets | 1.45 MB ✅ |
+| **Art transfer** | ≤ 3.5 MB — **asserted by `bake-art.ts`, which exits non-zero over it** | 3.27 MB ✅ |
 | **Everything else** | HTML + CSS + JS + fonts ≤ 180 KB gzipped, of which JS ≤ 30 KB | — |
-| **Peak decoded image memory** | ≤ 80 MB | 36.5 MB ✅ |
+| **Peak decoded image memory** | ≤ 80 MB — **asserted by `bake-art.ts`, same exit** | 74.17 MB ✅ |
 | **JS heap** | ≤ 25 MB | 1.7 MB ✅ |
 | **Load** | LCP ≤ 1.5 s on Fast 4G · no long task > 50 ms after first paint | — |
 | **Text contrast** | every text box ≥ 4.5:1 against the field across its dwell — asserted at build | — |
@@ -1001,6 +1014,8 @@ Everything in the build is decided. **Two art-order questions remain, and both s
 
 1. **Stand-ins for the six abstract milestones** — *steam and acid rain* (4,300) · *whiffs of oxygen* (2,700) · *the Great Oxidation ends* (2,220) · *Rodinia* (1,000) · *the Triassic–Jurassic extinction* (201.4) · *Antarctica freezes* (33.9). The mobile fallback ([§8](#8--the-copy-deck)) lowers the stakes — a weak stand-in now costs desktop polish rather than costing the fact — but it does not remove the decision. Suggested for the extinctions: **paint what died** (a graptolite for 445, a trilobite for 251.9) rather than paint the event. Rodinia is the genuinely hard one, because a landmass is a map and a map is a different visual language from a natural-history plate. **Decided:** a single rock specimen for steam/acid rain; rising bubbles for whiffs of oxygen; a rust-red slab with a crack of sky for the GOE ending; a phytosaur for the T/J extinction; a calving iceberg for Antarctica; and for Rodinia, a stylized flat-colour landmass silhouette treated as a specimen, not a map. Analogies + negatives recorded on each arrival in `timeline.json` (`analogy` / `negative` fields).
 2. **Sheet size.** Sheets at 1024² yield subjects of 198–534 px on the long edge, so the 2× draw cap binds on desktop. Recommended: generate the remaining sheets at **1536×1024** (or 1024×1536 for tall subjects, grouped by orientation), lifting the per-subject long edge to ~700 px. Same generation count, same style guarantee, budget ~2.8 MB transfer / ~71 MB decoded — still inside the gates. **Decided: 1536×1024**, as recommended.
+
+   **Superseded in the source, reinstated at the bake (2026-08-04).** `gen-art.ts` generates **one subject per call** and composites it into a 2048×2048 sheet at `CELL = 1024` — a change made for style control, and the right one: the model can only de-conflict subjects it sees at once, so the sheet became a composition step rather than a generation step. It also yields a ~1,100 px subject rather than ~700. **The budget above was never recomputed for it**, and the finished set landed at 5.23 MB / 129.7 MB against gates of 3.5 / 80. `bake-art.ts` now caps every scroll subject's baked long edge at **`SCROLL_MAX_EDGE = 700`** — this decision's own number — which restores both gates (3.27 MB / 74.17 MB) without touching generation, quality or the art. **The source stays at 2048²; only the shipped asset is capped.**
 
 ---
 

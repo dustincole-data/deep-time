@@ -388,6 +388,9 @@ const MANIFEST: ManifestEntry[] = [
 
 const DESKTOP = { w: 1440, h: 900 };
 const GATE = 3;
+/** §12's two asset gates. Asserted at the end of `main()`, not just printed. */
+const TRANSFER_GATE = 3.5 * 1024 * 1024;
+const DECODED_GATE = 80 * 1024 * 1024;
 /**
  * One strength for every subject (see `solveHalo`). 0.62 is the smallest rung
  * of §11's ladder at which all twelve baked subjects clear 3:1 on the tight
@@ -953,20 +956,31 @@ async function main() {
   await writeFile(ART_JSON, JSON.stringify(art, null, 2) + '\n');
   console.log(`\nWrote ${Object.keys(art).length} entries to ${ART_JSON}`);
 
-  /* §12's two asset gates, printed where the assets are made. Both were checked
-     by hand against the spec, and both drifted silently once `gen-art.ts` moved
-     to a 2048 px sheet: 5.23 MB / 129.7 MB against 3.5 / 80. Decoded is the one
-     §12 calls decisive — "a phone dies on resident bitmaps, not on transfer" —
-     and it is the one a lower WebP quality cannot move. */
+  /* §12's two asset gates, ASSERTED where the assets are made.
+     Both were checked by hand against the spec, and both drifted silently over
+     twenty-odd sheets once `gen-art.ts` moved to a 2048 px sheet: 5.23 MB /
+     129.7 MB against 3.5 / 80. A gate nobody runs is a note, so these exit
+     non-zero exactly like `gate-collision.ts` does — the whole reason the drift
+     went unseen is that nothing failed.
+     Decoded is the one §12 calls decisive — "a phone dies on resident bitmaps,
+     not on transfer" — and it is the one a lower WebP quality cannot move, since
+     a decoded bitmap is `w × h × 4` whatever it was encoded at. If either fails,
+     the remedy is fewer pixels (`SCROLL_MAX_EDGE`), not a lower quality. */
   const entries = Object.entries(art) as [string, { w: number; h: number }][];
   const sizes = await Promise.all(entries.map(([id]) => stat(join(OUT_DIR, `${id}.webp`))));
   const transfer = sizes.reduce((s, f) => s + f.size, 0);
   const decoded = entries.reduce((s, [, e]) => s + e.w * e.h * 4, 0);
   const mb = (b: number) => (b / 1048576).toFixed(2);
+  const overTransfer = transfer > TRANSFER_GATE;
+  const overDecoded = decoded > DECODED_GATE;
   console.log(
-    `Art transfer  ${mb(transfer)} MB / 3.50 gate  ${transfer <= 3.5 * 1048576 ? '✅' : '❌'}\n` +
-      `Decoded, all resident  ${mb(decoded)} MB / 80.00 gate  ${decoded <= 80 * 1048576 ? '✅' : '❌'}`,
+    `Art transfer  ${mb(transfer)} MB / ${mb(TRANSFER_GATE)} gate  ${overTransfer ? '❌' : '✅'}\n` +
+      `Decoded, all resident  ${mb(decoded)} MB / ${mb(DECODED_GATE)} gate  ${overDecoded ? '❌' : '✅'}`,
   );
+  if (overTransfer || overDecoded) {
+    console.error('\n❌ GATE FAIL — §12. Lower SCROLL_MAX_EDGE; a lower WebP quality cannot move the decoded figure.');
+    process.exitCode = 1;
+  }
 }
 
 main();

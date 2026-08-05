@@ -1213,6 +1213,58 @@ export function fan(z: Zones): Fan {
 }
 
 /* ============================================================================
+   THE MARKER — the one piece of the instrument nothing modelled
+
+   `#bar .head` is the bright dash that rides the bar, and design §3's arrest beat
+   pulses it: the marker reaches the bar's last pixel, swells once, and never moves
+   again. It shipped unbounded on 2026-08-04 and was clipped by the glass on a
+   phone — at 390×844 the head's centre sits 11 px from the right edge, and a 2.6×
+   scale about that centre put its right edge at 402.4 on a 390 px screen, cutting
+   the arrest's ONLY visible event in half. Nothing caught it because nothing here
+   described the head: the collision gate reads `#bar`'s own rect, and the head is
+   a child that overflows it by design.
+
+   So the head is geometry now, in the module every other rect comes from, and the
+   pulse is SOLVED against the room the viewport actually gives rather than chosen.
+   ========================================================================= */
+
+/** `#bar .head` in index.astro: `left: -7px; width: 18px; height: 2px`, at the bar's fill line. */
+export const BAR_HEAD = { left: -7, w: 18, h: 2 } as const;
+/** The arrest pulse's peak scale about the head's own centre, before the viewport bounds it. */
+export const ARREST_PULSE = { x: 2.6, y: 3.2 } as const;
+/** Clear space kept between the pulsed marker and the edge of the glass. */
+const ARREST_EDGE_CLEAR = 1;
+
+/** The marker's rect at rest — page px, in the same space as `fan()`'s bar. */
+export const barHead = (bar: Rect): Rect => ({
+  x: bar.x + BAR_HEAD.left,
+  y: bar.y + bar.h,
+  w: BAR_HEAD.w,
+  h: BAR_HEAD.h,
+});
+
+/**
+ * The pulse's peak scale, clamped so the marker's widest frame still lands on the
+ * glass. Y is unbounded: the head is 2 px tall with the whole lower bar to grow
+ * into, so it is the axis that carries the beat once X runs out of room.
+ */
+export function barHeadPulse(bar: Rect, vp: Pick<Viewport, 'w'>): { x: number; y: number } {
+  const r = barHead(bar);
+  const cx = r.x + r.w / 2;
+  const room = Math.min(cx, vp.w - cx) - ARREST_EDGE_CLEAR;
+  return { x: clamp(room / (r.w / 2), 1, ARREST_PULSE.x), y: ARREST_PULSE.y };
+}
+
+/** The marker's footprint at the pulse's peak — what the test and the runtime both read. */
+export function barHeadPulsed(bar: Rect, vp: Pick<Viewport, 'w'>): Rect {
+  const r = barHead(bar);
+  const s = barHeadPulse(bar, vp);
+  const w = r.w * s.x;
+  const h = r.h * s.y;
+  return { x: r.x + (r.w - w) / 2, y: r.y + (r.h - h) / 2, w, h };
+}
+
+/* ============================================================================
    THE BLIP (design §4) — the record, heaped
 
    The one place on the whole site where image × image overlap is legal. It is
@@ -1372,22 +1424,56 @@ function clampInto(r: Rect, box: Rect): Rect {
   };
 }
 
-/** `.pk` → `.pt`, `.pt` → `.pr`, `.pr` → the closing line, and the band's own padding. Decorative px: they do not take text zoom. */
-const PLATE_GAPS = { kicker: 18, title: 26, rule: 26, pad: 40 } as const;
+/**
+ * The band's gaps, as fractions of THE TYPE THEY SEPARATE — never fixed px.
+ *
+ * TIGHTENED 2026-08-05, on Dustin's ruling from the first render. The gaps were
+ * the literals 18 / 26 / 26 / 40, which put **151 px of air around 226 px of
+ * type**: the band took 41.8% of a 1440×900 viewport, the heap was left 58%, and
+ * the ending read as two dense bands with a black gap between them — the exact
+ * failure design §4 names ("too tall and the mass becomes two thin strips with
+ * dead black between"). Nothing about the type changed; only the slack went.
+ *
+ * Ratios rather than px for a second reason: a fixed 18 px gap under a kicker
+ * that has doubled is not the same design, it is a crowded one. Expressed against
+ * their own type the gaps take the text scale with them, which is what "the band
+ * is SOLVED to the words" has to mean if it means anything. `index.astro` sets
+ * exactly these numbers as `em` on exactly these elements.
+ */
+const PLATE_GAPS = {
+  /** kicker → title, of the kicker's own size. */
+  kicker: 1.0,
+  /** title → rule, of the title's own size. */
+  title: 0.17,
+  /** rule → the line, of the line's size. */
+  rule: 0.55,
+  /** The band's clear space from the heap, top and bottom, of the line's size. */
+  pad: 1.05,
+} as const;
 /** `.pr { height: 1px }`. */
 const PLATE_RULE_H = 1;
 
 /**
- * The band the words own: kicker + title + rule + the closing line, at this
- * viewport and this text scale. The closing line is measured with the SAME spec
- * `fan()` gives it, because the plate reuses the finale's existing closing block
- * rather than duplicating it — one sentence, one measurement.
+ * The band the words own, at this viewport and this text scale. The closing line
+ * is measured with the SAME spec `fan()` gives it, because the plate reuses the
+ * finale's existing closing block rather than duplicating it — one sentence, one
+ * measurement.
  *
  * EVERY string comes from `FINALE_CFG.copy`, never from a literal here. The band
  * is SOLVED to the words' own height (§4 consequence 4), so a copy edit that this
  * model could not see would silently leave the solved band and the rendered plate
  * describing different text. `plateTitle` is an array because the break between
- * its two lines is authored, not wrapped — `#plate` joins it with `<br />`.
+ * its two lines is authored, not wrapped — `#blip-plate` joins it with `<br />`.
+ *
+ * TWO SLOTS HOLD TWO TENANTS EACH, and are therefore solved as a `max`. The
+ * left-holding beat SWAPS rather than adds (sequential, never a crossfade — §9
+ * staging rule 3): `↑ again` takes the kicker's slot and the epilogue takes the
+ * line's. Modelling them as a max is what makes the band's height the same in
+ * both states, so the words never move when they trade places — and it is why
+ * the last beat costs the heap nothing. Solved as a SUM instead, `↑ again` alone
+ * added 22 px the band was never given, and the runtime spent it out of the
+ * clear space between the words and the prints: measured before this was fixed,
+ * the 40 px pad delivered 24.7 px of real clearance at 1440×900.
  */
 function blipBandHeight(z: Zones, boxW: number): number {
   const { w, textScale: k } = z.viewport;
@@ -1400,6 +1486,9 @@ function blipBandHeight(z: Zones, boxW: number): number {
   const title: TypeSpec = { size: cl(28, 0.042, 60) * k, lineHeight: 1.02, tracking: -0.02, upper: true, weight: 1.1 };
   // `fan()`'s own `lineSpec`, verbatim — the same sentence in the same block.
   const line: TypeSpec = { size: cl(14, 0.015, 19) * k, lineHeight: 1.55, tracking: 0, upper: false, weight: 1 };
+  // `fan()`'s `againSpec` and `epSpec`, verbatim — the same two tenants.
+  const again: TypeSpec = { size: 10 * k, lineHeight: 1.25, tracking: 0.28, upper: true, weight: 1 };
+  const ep: TypeSpec = { size: 13 * k, lineHeight: 1.6, tracking: 0, upper: false, weight: 1 };
 
   // The title is centred across the whole band; the paragraph is set to a
   // measure, which is why it is the narrower of the two.
@@ -1408,16 +1497,25 @@ function blipBandHeight(z: Zones, boxW: number): number {
 
   const c = FINALE_CFG.copy;
   const titleH = c.plateTitle.reduce((acc, s) => acc + blockH(plain(s), title, titleW), 0);
+  const topH = Math.max(
+    blockH(plain(c.plateKicker), kicker, titleW),
+    blockH(plain(c.again), again, titleW),
+  );
+  const bodyH = Math.max(
+    blockH(plain(c.closing), line, lineW),
+    blockH(plain(c.epilogue), ep, lineW),
+  );
+  const pad = line.size * PLATE_GAPS.pad;
   return (
-    PLATE_GAPS.pad +
-    blockH(plain(c.plateKicker), kicker, titleW) +
-    PLATE_GAPS.kicker +
+    pad +
+    topH +
+    kicker.size * PLATE_GAPS.kicker +
     titleH +
-    PLATE_GAPS.title +
+    title.size * PLATE_GAPS.title +
     PLATE_RULE_H +
-    PLATE_GAPS.rule +
-    blockH(plain(c.closing), line, lineW) +
-    PLATE_GAPS.pad
+    line.size * PLATE_GAPS.rule +
+    bodyH +
+    pad
   );
 }
 

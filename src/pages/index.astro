@@ -247,7 +247,14 @@ const nf = (n: number) => n.toLocaleString('en-US');
           different text. `plateTitle` is an array because the break between its
           two lines is authored, not wrapped. */}
       <div id="blip-plate">
-        <p class="pk">{FINALE_CFG.copy.plateKicker}</p>
+        {/* TWO TENANTS, ONE SLOT. The left-holding beat swaps rather than adds, so
+            `↑ again` takes the kicker's slot and the epilogue takes the line's —
+            which is what lets the band be solved as a `max` and cost the heap
+            nothing for the last beat. Sequential, never a crossfade. */}
+        <div class="ptop">
+          <p class="pk">{FINALE_CFG.copy.plateKicker}</p>
+          <a class="again" href="#top">{FINALE_CFG.copy.again}</a>
+        </div>
         <h2 class="pt" set:html={FINALE_CFG.copy.plateTitle.map(emphasise).join('<br />')} />
         <hr class="pr" />
         {/* The closing line lives HERE, in the band — one sentence, one
@@ -256,7 +263,6 @@ const nf = (n: number) => n.toLocaleString('en-US');
           <p class="closing">{FINALE_CFG.copy.closing}</p>
           {/* Cut 2026-07-31 — see finaleNote in timeline.json. Open question, not yet re-authored. */}
           {FINALE_CFG.copy.epilogue && <p class="epilogue" set:html={emphasise(FINALE_CFG.copy.epilogue)} />}
-          <a class="again" href="#top">{FINALE_CFG.copy.again}</a>
         </div>
       </div>
     </section>
@@ -535,8 +541,10 @@ const nf = (n: number) => n.toLocaleString('en-US');
   #closing-block p { margin: 0; }
   #closing-block .closing { font-size: clamp(14px, 1.5vw, 19px); line-height: 1.55; }
   #closing-block .epilogue { font-size: 13px; line-height: 1.6; margin-top: 1.5em; }
-  #closing-block .again {
-    display: inline-block; margin-top: 1.8em; font-size: 10px; letter-spacing: 0.28em;
+  /* `↑ again` lives in the plate's top slot, not in the closing block — see the
+     `.ptop` rule below for why. `fan()`'s `againSpec` is the model of this type. */
+  #blip-plate .again {
+    display: inline-block; margin: 0; font-size: 10px; letter-spacing: 0.28em;
     text-transform: uppercase; color: inherit; text-decoration: none;
     border-bottom: 1px solid currentColor; padding-bottom: 3px; pointer-events: auto;
   }
@@ -566,34 +574,45 @@ const nf = (n: number) => n.toLocaleString('en-US');
      EVERY number below is `blipBandHeight()` in layout.ts, which solves the band's
      height from these exact gaps and type sizes. Changing one here without changing
      it there leaves the solved band and the rendered words describing different
-     text — which is the whole reason the copy moved into `timeline.json`. */
+     text — which is the whole reason the copy moved into `timeline.json`.
+
+     The gaps are `em` against the type they separate, which is `PLATE_GAPS`
+     verbatim: 1.0 of the kicker, 0.17 of the title, 0.55 of the line, and 1.05 of
+     the line as the band's own clear space from the heap. The plate carries the
+     LINE's size so the two gaps written against it resolve correctly. */
   .js #blip-plate {
     position: absolute; display: flex; flex-direction: column; align-items: center;
     justify-content: center; text-align: center; pointer-events: none;
-    padding: 40px 0; /* PLATE_GAPS.pad, both ends */
+    font-size: clamp(14px, 1.5vw, 19px);
+    padding: 1.05em 0; /* PLATE_GAPS.pad, both ends */
   }
-  /* `flex: none`, and it is load-bearing. The band is solved for the kicker, the
-     title, the rule and the line; `↑ again` adds ~30px on top of that, so the
-     column overflows slightly and a shrinkable item absorbs ALL of it — every
-     other child is floored at its own min-content height, so the 1px rule was
-     the only thing that could give, and it rendered at 0. */
+  /* `flex: none`, and it is load-bearing. Any overflow of the content box is
+     absorbed entirely by the one shrinkable child — every text child is floored at
+     its own min-content height, so the 1px rule was the only thing that could
+     give, and it rendered at 0 until this was added. */
   .js #blip-plate > * { flex: none; }
-  .js #blip-plate .pk, .js #blip-plate .pt, .js #blip-plate .pr { opacity: 0; }
-  /* main.ts writes the opacity of all three: they arrive in sequence, and each
+  .js #blip-plate .pk, .js #blip-plate .pt, .js #blip-plate .pr, .js #blip-plate .again { opacity: 0; }
+  /* The kicker's slot, holding the kicker and `↑ again` stacked in one cell: its
+     height is the taller of the two and does not change when they swap. */
+  .js #blip-plate .ptop { display: grid; }
+  .js #blip-plate .ptop > * { grid-area: 1 / 1; justify-self: center; }
+  #blip-plate .ptop {
+    margin: 0 0 1em; font-size: clamp(10px, 0.8vw, 12px); /* PLATE_GAPS.kicker */
+  }
+  /* main.ts writes the opacity of every part: they arrive in sequence, and each
      one's resting value is folded into that write rather than split across two
      files. */
   #blip-plate .pk {
-    margin: 0 0 18px; font-size: clamp(10px, 0.8vw, 12px); letter-spacing: 0.28em;
-    text-transform: uppercase;
+    margin: 0; font-size: inherit; letter-spacing: 0.28em; text-transform: uppercase;
   }
   /* The site's punchline set as a title. The FLOOR is the constant that matters:
      a 16px punchline is not a smaller version of it. */
   #blip-plate .pt {
-    margin: 0 0 26px; max-width: 92%; font-size: clamp(28px, 4.2vw, 60px);
+    margin: 0 0 0.17em; max-width: 92%; font-size: clamp(28px, 4.2vw, 60px);
     line-height: 1.02; letter-spacing: -0.02em; font-weight: 700; text-transform: uppercase;
   }
   #blip-plate .pr {
-    margin: 0 0 26px; border: 0; width: 88px; height: 1px; background: #ffd9a0;
+    margin: 0 0 0.55em; border: 0; width: 88px; height: 1px; background: #ffd9a0;
   }
   /* The closing line's own measure, `blipBandHeight`'s `lineW` verbatim. */
   .js #closing-block {
@@ -604,7 +623,6 @@ const nf = (n: number) => n.toLocaleString('en-US');
      never a crossfade, the same ruling §9 staging rule 3 already makes. */
   .js #closing-block .closing, .js #closing-block .epilogue { grid-area: 1 / 1; opacity: 0; }
   .js #closing-block .epilogue { margin-top: 0; }
-  .js #closing-block .again { grid-area: 2 / 1; justify-self: center; opacity: 0; }
 
   /* The document is one viewport taller than the scroll: without a pad the last
      beats of the finale are unreachable on every device. lvh, not vh. */

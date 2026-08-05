@@ -6,7 +6,11 @@
 import { describe, expect, it } from 'vitest';
 import { arrivals, CONSTANTS, fanRows, finaleBeats, FINALE_CFG, flood, pxFromNow, withheld } from './timeline.ts';
 import {
+  ARREST_PULSE,
   ART_MIN_H,
+  barHead,
+  barHeadPulse,
+  barHeadPulsed,
   blip,
   BLIP_CELL_MIN,
   BLIP_ROT_MAX,
@@ -850,5 +854,55 @@ describe('the blip — the record, heaped (design §4)', () => {
     const a = blipOf(DESKTOP).b;
     const c = blipOf(DESKTOP).b;
     expect(a.cells.map((x) => [x.id, x.rect, x.rot])).toEqual(c.cells.map((x) => [x.id, x.rect, x.rot]));
+  });
+});
+
+/* The marker is the arrest beat's only visible event, and until 2026-08-05 nothing
+   modelled it: the collision gate reads `#bar`'s own rect, and the head is a child
+   that overflows it by design. It shipped clipped on a phone. */
+describe('the marker — the arrest pulse stays on the glass', () => {
+  const WIDE = { w: 1920, h: 1080 };
+  const barOf = (vp: { w: number; h: number }) => fan(zones(vp)).bar;
+
+  it('keeps the pulsed marker inside the viewport at every gate width', () => {
+    for (const vp of [...GATE_VIEWPORTS, WIDE, { w: 2560, h: 1440 }, { w: 3840, h: 2160 }]) {
+      const r = barHeadPulsed(barOf(vp), vp);
+      expect([vp.w, r.x >= 0]).toEqual([vp.w, true]);
+      expect([vp.w, Math.round((r.x + r.w) * 10) / 10 <= vp.w]).toEqual([vp.w, true]);
+    }
+  });
+
+  it('keeps the pulsed marker inside the bar own reserved zone (§15)', () => {
+    for (const vp of [...GATE_VIEWPORTS, WIDE]) {
+      const z = zones(vp);
+      const r = barHeadPulsed(barOf(vp), vp);
+      // Height only grows downward from the bar's fill line, so the zone check is
+      // the x axis: the zone spans the full viewport height by construction.
+      expect([vp.w, r.x >= z.scale.x]).toEqual([vp.w, true]);
+      expect([vp.w, r.x + r.w <= z.scale.x + z.scale.w]).toEqual([vp.w, true]);
+    }
+  });
+
+  it('never shrinks the marker, and never exceeds the beat own peak', () => {
+    for (const vp of [...GATE_VIEWPORTS, WIDE]) {
+      const s = barHeadPulse(barOf(vp), vp);
+      expect([vp.w, s.x >= 1, s.x <= ARREST_PULSE.x]).toEqual([vp.w, true, true]);
+      expect([vp.w, s.y]).toEqual([vp.w, ARREST_PULSE.y]);
+    }
+  });
+
+  it('does not weaken the desktop pulse to pay for the phone', () => {
+    for (const vp of [DESKTOP, WIDE]) expect([vp.w, barHeadPulse(barOf(vp), vp).x]).toEqual([vp.w, ARREST_PULSE.x]);
+  });
+
+  /* The clamp is doing work, not sitting there: unclamped, this is the bug that
+     shipped — 402.4 on a 390px screen, so the swell was cut off by the edge. */
+  it('is what stops the phone marker running off the screen', () => {
+    const bar = barOf(PHONE);
+    const rest = barHead(bar);
+    const unclamped = rest.w * ARREST_PULSE.x;
+    const unclampedRight = rest.x + rest.w / 2 + unclamped / 2;
+    expect(unclampedRight).toBeGreaterThan(PHONE.w);
+    expect(barHeadPulse(bar, PHONE).x).toBeLessThan(ARREST_PULSE.x);
   });
 });

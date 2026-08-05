@@ -41,6 +41,7 @@ import {
   yearsAgo,
 } from '../lib/timeline.ts';
 import {
+  barHeadPulse,
   blip,
   fan,
   frame,
@@ -142,11 +143,12 @@ const blipPlate = $('blip-plate');
 const plateKickerEl = blipPlate.querySelector<HTMLElement>('.pk')!;
 const plateTitleEl = blipPlate.querySelector<HTMLElement>('.pt')!;
 const plateRuleEl = blipPlate.querySelector<HTMLElement>('.pr')!;
+/** In the plate's TOP slot, stacked on the kicker — the two swap, so neither costs the band height. */
+const againEl = blipPlate.querySelector<HTMLElement>('.again')!;
 const closeEl = $('closing-block');
 const closingLineEl = closeEl.querySelector<HTMLElement>('.closing')!;
 /** null while the epilogue is cut — see `finaleNote` in timeline.json. */
 const epilogueEl = closeEl.querySelector<HTMLElement>('.epilogue');
-const againEl = closeEl.querySelector<HTMLElement>('.again')!;
 
 /* ============================================================================
    GEOMETRY — recomputed ONLY here, never in the frame
@@ -160,6 +162,13 @@ let placed: Placed[] = [];
 let mobile = false;
 let B = finaleBeats(0);
 let BL: Blip;
+/**
+ * The arrest pulse's peak scale, SOLVED against the room the viewport gives the
+ * marker (`barHeadPulse`). At 390 px wide the head's centre sits 11 px from the
+ * glass, so an unclamped 2.6× ran 12.4 px off the screen and cut the arrest's only
+ * visible event in half. Written here, read in the frame.
+ */
+let arrestPulse = { x: 1, y: 1 };
 /**
  * Where each print starts fading in, in px from `RUN_END`. Solved in `relayout()`
  * and read in the frame — the ramp depends on the beats, which depend on the
@@ -247,6 +256,7 @@ function relayout() {
  * layout, and the plate carries the ending on its own.
  */
 function layoutBlip() {
+  arrestPulse = barHeadPulse(F.bar, { w: W });
   BL = blip(Z, F.bar);
   blipEl.style.display = BL.shown ? '' : 'none';
 
@@ -705,9 +715,13 @@ function drawFinale(f: number) {
      being SEEN — one pulse on that last pixel, bought with the visitor's own
      scroll and returning to rest, after which the instrument never moves again.
      A timer, a lock or a scroll-lock would all be answering a question the scale
-     contract answered at RUN_END. */
+     contract answered at RUN_END. The scale is `arrestPulse`, solved per resize
+     against the room the glass gives the marker — the widening is what a phone
+     cannot afford, and the thickening is what carries the beat there instead. */
   const pulse = Math.sin(Math.PI * clamp((f - B.drainEnd) / (B.arrestEnd - B.drainEnd), 0, 1));
-  barHead.style.transform = `translateY(${F.bar.h}px) scale(${1 + pulse * 1.6},${1 + pulse * 2.2})`;
+  const px = 1 + pulse * (arrestPulse.x - 1);
+  const py = 1 + pulse * (arrestPulse.y - 1);
+  barHead.style.transform = `translateY(${F.bar.h}px) scale(${px},${py})`;
 
   // The fan goes out BEFORE the heap comes in — see FLOOD_CLEAR.
   const fanOut = 1 - smooth(B.floodStart, B.floodStart + FLOOD_CLEAR, f);
@@ -734,23 +748,25 @@ function drawFinale(f: number) {
      the title, then the line. A single fade on the block would land all three at
      once and the title would arrive as a caption rather than as the label. */
   const P = B.floodEnd;
-  plateKickerEl.style.opacity = String(smooth(P, P + 140, f) * 0.55);
+  const kickerIn = smooth(P, P + 140, f);
   const title = smooth(P + 120, P + 270, f);
   plateTitleEl.style.opacity = String(title);
   plateRuleEl.style.opacity = String(title * 0.8);
   const lineIn = smooth(P + 250, P + 400, f);
 
-  /* LEFT HOLDING. The band was solved to hold the kicker, the title, the rule and
-     the LINE — the epilogue and `↑ again` are not in that budget, so the epilogue
-     takes the line's own slot instead of asking the band for height it does not
-     have. Sequential, never a crossfade: the line is fully out before the
-     epilogue is in, which is §9 staging rule 3 applied to two paragraphs instead
-     of to two blocks. The line has held for 1,100 px by then. */
-  const lineOut = smooth(B.endStart + 200, B.endStart + 420, f);
-  const ep = smooth(B.endStart + 420, B.endStart + 700, f);
-  closingLineEl.style.opacity = String(lineIn * (1 - lineOut));
-  if (epilogueEl) epilogueEl.style.opacity = String(ep * 0.62);
-  againEl.style.opacity = String(ep * 0.6);
+  /* LEFT HOLDING. The band holds two double-tenanted slots — `↑ again` shares the
+     kicker's, the epilogue shares the line's — and BOTH trade on the same two
+     ramps, so the plate transforms as one gesture rather than two. Sequential,
+     never a crossfade: the kicker and the line are fully out before the epilogue
+     and the link are in, which is §9 staging rule 3 applied inside a block. The
+     line has held for 1,100 px by then, and the band's height never moves,
+     because `blipBandHeight` solves both slots as a `max`. */
+  const swapOut = smooth(B.endStart + 200, B.endStart + 420, f);
+  const swapIn = smooth(B.endStart + 420, B.endStart + 700, f);
+  plateKickerEl.style.opacity = String(kickerIn * (1 - swapOut) * 0.55);
+  closingLineEl.style.opacity = String(lineIn * (1 - swapOut));
+  if (epilogueEl) epilogueEl.style.opacity = String(swapIn * 0.62);
+  againEl.style.opacity = String(swapIn * 0.6);
 }
 
 /* ============================================================================

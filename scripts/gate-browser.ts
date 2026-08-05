@@ -20,6 +20,18 @@
  *     real content (the clock, before this date) — checked directly against
  *     the DOM, not against the model's opinion of itself.
  *
+ * THE FINALE IS SWEPT TOO, since 2026-08-05. Until then this pass stopped at
+ * RUN_END and `snapshot()` collected only `.ar`/`#hud`/`#bar`/`#plate`, so
+ * 116,600→127,500 — the whole ending — was never once visited in a real browser
+ * and "zero collisions across 4 variants" was evidence about the run alone.
+ * That gap mattered most exactly here: `blipBandHeight()` solves the plate's
+ * band from a CHARACTER-ADVANCE PREDICTION, the band is then written as a fixed
+ * `height` in px, and `#blip-plate > *` is `flex: none` — so nothing in the box
+ * can absorb an under-estimate. Real wrapping that runs one line longer than the
+ * model predicted pushes the words straight out of the solved band and into the
+ * prints, which is the one failure §13 exists to catch: line wrapping is
+ * ultimately the browser's opinion, not the model's.
+ *
  *   npm run build && node scripts/gate-browser.ts
  *   node scripts/gate-browser.ts --verbose
  */
@@ -28,8 +40,9 @@ import { readFile, stat } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, type Page } from 'playwright';
-import { arrivals, CONSTANTS, milestoneY } from '../src/lib/timeline.ts';
-import { intersects, contains, place, zones, type Viewport } from '../src/lib/layout.ts';
+import { arrivals, CONSTANTS, finaleBeats, milestoneY } from '../src/lib/timeline.ts';
+import { flood } from '../src/lib/timeline.ts';
+import { blip, contains, fan, intersects, place, zones, type Viewport } from '../src/lib/layout.ts';
 
 const VERBOSE = process.argv.includes('--verbose');
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -96,12 +109,51 @@ function samplePoints(): number[] {
   return [...pts].filter((y) => y >= 0 && y <= CONSTANTS.RUN_END).sort((a, b) => a - b);
 }
 
+/**
+ * The finale's own sample points, PER VIEWPORT — because the beats are.
+ *
+ * `main.ts` sets `B = finaleBeats(max(0, last.y + last.dwell - RUN_END))`, and
+ * `last` comes out of `place()` at the live viewport, so the drain (and with it
+ * every beat after it) moves with the width. Sampling the finale off the fixed
+ * 1440×900 grid `samplePoints()` uses would land the "plate has just landed"
+ * probe somewhere else entirely at 390 — which is how a gate ends up green
+ * because it measured the gaps between the beats.
+ *
+ * Each beat boundary is sampled, plus the inner ramps `drawFinale()` writes by
+ * hand (the plate's three tenants off `floodEnd`, the left-holding swap off
+ * `endStart`) at their landed points, since a fade is only worth checking where
+ * it has arrived. The 100px stride underneath catches everything between.
+ */
+function finalePoints(vp: Viewport): number[] {
+  const placed = place(arrivals, zones(vp));
+  const last = placed[placed.length - 1]!;
+  const B = finaleBeats(Math.max(0, last.y + last.dwell - CONSTANTS.RUN_END));
+
+  const f = new Set<number>();
+  for (const v of Object.values(B)) f.add(Math.round(v));
+  // drawFinale()'s hand-written ramps, at the point each one is fully landed.
+  for (const d of [140, 270, 400]) f.add(Math.round(B.floodEnd + d));
+  for (const d of [200, 420, 700]) f.add(Math.round(B.endStart + d));
+  for (let y = 0; y <= CONSTANTS.FINALE; y += 100) f.add(y);
+
+  return [...f]
+    .map((y) => CONSTANTS.RUN_END + y)
+    .filter((y) => y >= CONSTANTS.RUN_END && y <= CONSTANTS.TOTAL)
+    .sort((a, b) => a - b);
+}
+
 interface DomRect { x: number; y: number; w: number; h: number }
 interface Snapshot {
   arrivals: { id: string; box: DomRect; text: DomRect }[];
   hud: DomRect | null;
   bar: DomRect | null;
   plate: DomRect | null;
+  /** `#blip-plate` — the band the flood was solved around. Never `#plate`. */
+  band: DomRect | null;
+  /** The band's visible tenants, each measured as the browser actually set it. */
+  bandParts: { cls: string; box: DomRect }[];
+  /** Visible record prints. The rect is the ROTATED AABB, which is what `blip()` fits. */
+  prints: { i: number; box: DomRect }[];
 }
 
 async function settle(page: Page) {
@@ -128,11 +180,40 @@ async function snapshot(page: Page): Promise<Snapshot> {
     const hud = document.getElementById('hud');
     const bar = document.getElementById('bar');
     const plate = document.getElementById('plate');
+
+    /* THE FINALE. A zero-area rect is not a thing on the glass: when `blip()`
+       returns `shown: false` the runtime sets `#blip` to `display: none`, and a
+       print inside it still computes opacity 1 while occupying nothing. Area,
+       not opacity, is what makes these worth measuring. */
+    const real = (r: DomRect) => r.w > 0 && r.h > 0;
+    const printsOut: { i: number; box: DomRect }[] = [];
+    for (const el of document.querySelectorAll<HTMLElement>('#blip .bc')) {
+      if (!visible(el)) continue;
+      const box = rectOf(el);
+      if (real(box)) printsOut.push({ i: Number(el.dataset.blipCell), box });
+    }
+    // `#blip-plate`, NOT `#plate` — `#plate` is the Boring Billion, which sits at
+    // opacity 0 through the whole finale. main.ts:136 warns about exactly this
+    // confusion, and it already cost Task 8 a good capture.
+    const bandEl = document.getElementById('blip-plate');
+    const bandParts: { cls: string; box: DomRect }[] = [];
+    if (bandEl) {
+      for (const el of bandEl.querySelectorAll<HTMLElement>('.pk, .pt, .pr, .again, .closing, .epilogue')) {
+        if (!visible(el)) continue;
+        const box = rectOf(el);
+        if (real(box)) bandParts.push({ cls: el.className.split(' ')[0] ?? el.tagName, box });
+      }
+    }
+    const bandBox = bandEl ? rectOf(bandEl) : null;
+
     return {
       arrivals: arrivalsOut,
       hud: hud && visible(hud) ? rectOf(hud) : null,
       bar: bar && visible(bar) ? rectOf(bar) : null,
       plate: plate && visible(plate) ? rectOf(plate) : null,
+      band: bandBox && real(bandBox) ? bandBox : null,
+      bandParts,
+      prints: printsOut,
     };
   });
 }
@@ -143,10 +224,14 @@ async function runVariant(page: Page, url: string, vp: Viewport, points: number[
   await page.waitForSelector('html.js', { timeout: 5000 });
 
   const z = zones(vp);
+  const BL = blip(z, fan(z).bar);
   const failures: string[] = [];
   const fail = (msg: string) => failures.push(msg);
   let samples = 0;
   let maxConcurrent = 0;
+  let finaleSamples = 0;
+  let maxPrints = 0;
+  let sawTitle = false;
 
   for (const y of points) {
     await page.evaluate((sy) => window.scrollTo(0, sy), y);
@@ -186,9 +271,57 @@ async function runVariant(page: Page, url: string, vp: Viewport, points: number[
 
     if (snap.bar && !contains(z.scale, snap.bar, 1))
       fail(`y=${y} #bar [${r(snap.bar)}] leaves the scale zone [${r(z.scale)}]`);
+
+    /* ---------- THE FINALE (design §4/§6) ----------
+       The model's own blip rules, re-asked of the DOM. gate-collision.ts proves
+       `blip()` is internally consistent; only this can prove the browser agreed
+       with it — and the band is the one rect on the page whose height is a
+       PREDICTION about text the browser had not yet wrapped. */
+    if (y > CONSTANTS.RUN_END) finaleSamples++;
+    maxPrints = Math.max(maxPrints, snap.prints.length);
+
+    if (snap.band) {
+      for (const p of snap.bandParts) {
+        if (p.cls === 'pt') sawTitle = true;
+        // The check this whole extension exists for: `flex: none` means nothing
+        // in the band can absorb a wrap the character-advance model missed, so
+        // the overflow lands in the prints instead.
+        if (!contains(snap.band, p.box, 1))
+          fail(`y=${y} #blip-plate .${p.cls} [${r(p.box)}] leaves the solved band [${r(snap.band)}]`);
+      }
+      if (intersects(snap.band, z.scale, 1))
+        fail(`y=${y} #blip-plate [${r(snap.band)}] enters the reserved scale zone [${r(z.scale)}]`);
+    }
+
+    for (const p of snap.prints) {
+      if (snap.band && intersects(p.box, snap.band, 1))
+        fail(`y=${y} print ${p.i} [${r(p.box)}] enters the band the words own`);
+      if (intersects(p.box, z.scale, 1))
+        fail(`y=${y} print ${p.i} [${r(p.box)}] enters the reserved scale zone [${r(z.scale)}]`);
+      /* print × print is DELIBERATELY NOT SWEPT. Prints shingle by design —
+         `BLIP_SHINGLE = 1.55` draws each one OVER its slot rather than inside
+         it, which is what makes the record read as a heap and not a contact
+         sheet. A future reader who "restores" a print × print check has found
+         the design, not a bug.
+         print × clock is NOT swept either — Dustin's ruling, 2026-08-04: the
+         clock zone is RELEASED at the finale (the HUD is at opacity 0 from
+         px 525 and the flood opens at 6,020), and only the BAR's zone stays
+         inviolable. gate-collision.ts:326-337 carries the same carve-out. */
+    }
   }
 
-  return { vp, samples, maxConcurrent, failures };
+  /* COVERAGE, ASSERTED RATHER THAN REPORTED. Before 2026-08-05 this pass stopped
+     at RUN_END, so a green run said nothing at all about the ending — and a
+     sweep that never arrives is indistinguishable from an ending with nothing
+     wrong with it. These two make that failure loud instead of invisible. */
+  if (!sawTitle)
+    fail(`the sweep never saw #blip-plate .pt — the finale was not reached (${finaleSamples} samples past RUN_END)`);
+  if (BL.shown && maxPrints !== flood.length)
+    fail(`the heap peaked at ${maxPrints} visible prints; the model solves ${flood.length} and says shown`);
+  if (!BL.shown && maxPrints > 0)
+    fail(`the model dropped the flood here, but ${maxPrints} prints rendered anyway`);
+
+  return { vp, samples, maxConcurrent, finaleSamples, maxPrints, failures };
 }
 
 const r2 = (n: number) => Math.round(n * 10) / 10;
@@ -271,7 +404,7 @@ async function main() {
     process.exit(1);
   }
 
-  const points = samplePoints();
+  const runPoints = samplePoints();
   const { url, close } = await serveDist();
   const browser = await chromium.launch();
   let failed = 0;
@@ -279,7 +412,9 @@ async function main() {
   try {
     for (const vp of VARIANTS) {
       const page = await browser.newPage();
-      const res = await runVariant(page, url, vp, points);
+      // The run's points are shared; the finale's are solved per viewport,
+      // because its beats are (see `finalePoints`).
+      const res = await runVariant(page, url, vp, [...runPoints, ...finalePoints(vp)]);
       await page.close();
 
       const label = `${vp.w}×${vp.h}`;
@@ -287,7 +422,10 @@ async function main() {
       console.log(
         `\n${label}  ${res.failures.length === 0 ? '✅ zero collisions' : `❌ ${res.failures.length} failures`}`,
       );
-      console.log(`  ${res.samples} real-browser scroll samples · max concurrent ${res.maxConcurrent}`);
+      console.log(
+        `  ${res.samples} real-browser scroll samples · max concurrent ${res.maxConcurrent}` +
+          ` · finale samples ${res.finaleSamples} · heap peak ${res.maxPrints}/${flood.length}`,
+      );
       if (res.failures.length) {
         const show = VERBOSE ? res.failures : res.failures.slice(0, 8);
         for (const f of show) console.log(`    ${f}`);

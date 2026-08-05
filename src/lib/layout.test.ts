@@ -4,9 +4,12 @@
  * cannot quietly move a zone and leave the sweep passing for the wrong reason.
  */
 import { describe, expect, it } from 'vitest';
-import { arrivals, CONSTANTS, fanRows, finaleBeats, FINALE_CFG, pxFromNow, withheld } from './timeline.ts';
+import { arrivals, CONSTANTS, fanRows, finaleBeats, FINALE_CFG, flood, pxFromNow, withheld } from './timeline.ts';
 import {
   ART_MIN_H,
+  blip,
+  BLIP_CELL_MIN,
+  BLIP_ROT_MAX,
   contains,
   fan,
   frame,
@@ -860,5 +863,83 @@ describe('the finale grows for the flood, and the scale contract does not move',
   it('starts the flood only after hold has finished', () => {
     const b = finaleBeats(0);
     expect(b.floodStart).toBe(b.holdEnd);
+  });
+});
+
+describe('the blip — the record, heaped (design §4)', () => {
+  const blipOf = (vp: { w: number; h: number }) => {
+    const z = zones(vp);
+    return { b: blip(z, fan(z).bar), z };
+  };
+
+  it('draws one cell per flood subject, chronological, and never repeats one', () => {
+    for (const vp of GATE_VIEWPORTS) {
+      const { b } = blipOf(vp);
+      expect([vp.w, b.shown]).toEqual([vp.w, true]);
+      expect(b.cells.map((c) => c.id)).toEqual(flood.map((f) => f.id));
+      expect(new Set(b.cells.map((c) => c.id)).size).toBe(b.cells.length);
+    }
+  });
+
+  it('keeps every cell inside one of the two fields — never in the plate band', () => {
+    for (const vp of GATE_VIEWPORTS) {
+      const { b } = blipOf(vp);
+      for (const c of b.cells) {
+        expect([vp.w, c.id, intersects(c.rect, b.band)]).toEqual([vp.w, c.id, false]);
+        const inAField = b.fields.some((f) => contains(f, c.rect));
+        expect([vp.w, c.id, inAField]).toEqual([vp.w, c.id, true]);
+      }
+    }
+  });
+
+  it('never enters the reserved scale zone — the bar is inviolable (§5 rule 1)', () => {
+    for (const vp of GATE_VIEWPORTS) {
+      const { b, z } = blipOf(vp);
+      for (const f of b.fields) expect([vp.w, intersects(f, z.scale)]).toEqual([vp.w, false]);
+    }
+  });
+
+  it('lets cells overlap each other — that is the whole amendment', () => {
+    const { b } = blipOf(DESKTOP);
+    let overlaps = 0;
+    for (let i = 0; i < b.cells.length; i++)
+      for (let j = i + 1; j < b.cells.length; j++)
+        if (intersects(b.cells[i]!.rect, b.cells[j]!.rect)) overlaps++;
+    expect(overlaps).toBeGreaterThan(0);
+  });
+
+  it('keeps rotation inside the constant, so the heap never reads as a scrapbook', () => {
+    const { b } = blipOf(DESKTOP);
+    for (const c of b.cells) expect(Math.abs(c.rot)).toBeLessThanOrEqual(BLIP_ROT_MAX);
+  });
+
+  it('closes the bracket onto the bar last pixel, from both outer corners', () => {
+    for (const vp of GATE_VIEWPORTS) {
+      const { b, z } = blipOf(vp);
+      const bar = fan(zones(vp)).bar;
+      expect(b.bracket).toHaveLength(2);
+      for (const l of b.bracket) {
+        expect(Math.round(l.x2)).toBe(Math.round(bar.x + bar.w / 2));
+        expect(Math.round(l.y2)).toBe(Math.round(bar.y + bar.h));
+      }
+    }
+  });
+
+  it('drops entirely at 200% text rather than shrinking to a smear (§10)', () => {
+    for (const vp of GATE_VIEWPORTS) {
+      const z = zones({ ...vp, textScale: 2 });
+      const b = blip(z, fan(z).bar);
+      if (!b.shown) {
+        expect([vp.w, b.cells.length, b.bracket.length]).toEqual([vp.w, 0, 0]);
+      } else {
+        expect([vp.w, b.solvedCell >= BLIP_CELL_MIN]).toEqual([vp.w, true]);
+      }
+    }
+  });
+
+  it('is deterministic — the same viewport solves to the same heap', () => {
+    const a = blipOf(DESKTOP).b;
+    const c = blipOf(DESKTOP).b;
+    expect(a.cells.map((x) => [x.id, x.rect, x.rot])).toEqual(c.cells.map((x) => [x.id, x.rect, x.rot]));
   });
 });

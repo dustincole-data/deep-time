@@ -59,26 +59,6 @@
     "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
-  "archaeopteryx": {
-    "file": "/art/archaeopteryx.webp",
-    "w": 700,
-    "h": 554,
-    "opaque": [
-      0.0914,
-      0.1155,
-      0.8186,
-      0.7708
-    ],
-    "alt": "a raven-sized dinosaur-like animal with sharp teeth in its jaws, a long bony tail trailing straight out behind with feathers running down either side of it, and broad rounded feathered wings — its plumage a deep iridescent blue-green shot with violet, like the sheen on a magpie's wing, with pale cream bars across the flight feathers",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "light"
-    },
-    "contrast": 8.98,
-    "contrastFullSize": 9.54,
-    "gatedOn": "shipped",
-    "referenceCheckedAgainst": "*Archaeopteryx lithographica* Berlin specimen HMN MB.Av.101 and the Thermopolis specimen; Carney et al. 2012, *Nat. Commun.* — melanosome evidence for dark plumage"
-  },
   "stromatolites": {
     "file": "/art/stromatolites.webp",
     "w": 630,
@@ -278,26 +258,6 @@
     "contrastFullSize": 4.34,
     "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
-  },
-  "triassic-jurassic-extinction": {
-    "file": "/art/triassic-jurassic-extinction.webp",
-    "w": 700,
-    "h": 342,
-    "opaque": [
-      0.09,
-      0.1842,
-      0.8214,
-      0.6316
-    ],
-    "alt": "a phytosaur — a long low four-legged reptile whose snout is drawn out into a slender straight rod lined with small teeth, ending in a smooth solid rounded tip like the blunt end of a wooden spoon handle; set on top of the skull, directly between and just in front of the eyes, is a raised dome like a small volcano, and the two nostril openings sit on the summit of that dome, far back from the snout; four short legs, a long heavy tail, and a warm sandy bronze hide with soft darker bronze banding along the back; the eye is a small amber bead",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "light"
-    },
-    "contrast": 5.34,
-    "contrastFullSize": 6.05,
-    "gatedOn": "shipped",
-    "referenceCheckedAgainst": "Phytosaur skull and skeletal reconstructions — *Smilosuchus*, *Rutiodon*; Stocker & Butler 2013, *Geol. Soc. Lond. Spec. Publ.* 379"
   },
   "steam-and-acid-rain": {
     "file": "/art/steam-and-acid-rain.webp",
@@ -979,6 +939,26 @@
     "gatedOn": "shipped",
     "referenceCheckedAgainst": "Han & Runnegar 1992, *Science* — *Grypania spiralis*, Negaunee Iron Formation"
   },
+  "archaeopteryx": {
+    "file": "/art/archaeopteryx.webp",
+    "w": 700,
+    "h": 554,
+    "opaque": [
+      0.0914,
+      0.1155,
+      0.8186,
+      0.7708
+    ],
+    "alt": "a raven-sized dinosaur-like animal with sharp teeth in its jaws, a long bony tail trailing straight out behind with feathers running down either side of it, and broad rounded feathered wings — its plumage a deep iridescent blue-green shot with violet, like the sheen on a magpie's wing, with pale cream bars across the flight feathers",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "light"
+    },
+    "contrast": 8.98,
+    "contrastFullSize": 9.54,
+    "gatedOn": "shipped",
+    "referenceCheckedAgainst": "*Archaeopteryx lithographica* Berlin specimen HMN MB.Av.101 and the Thermopolis specimen; Carney et al. 2012, *Nat. Commun.* — melanosome evidence for dark plumage"
+  },
   "plants-reach-land": {
     "file": "/art/plants-reach-land.webp",
     "w": 680,
@@ -998,6 +978,26 @@
     "contrastFullSize": 6.31,
     "gatedOn": "shipped",
     "referenceCheckedAgainst": "Rubinstein et al. 2010, *New Phytol.* — Ordovician cryptospore tetrads"
+  },
+  "triassic-jurassic-extinction": {
+    "file": "/art/triassic-jurassic-extinction.webp",
+    "w": 700,
+    "h": 342,
+    "opaque": [
+      0.09,
+      0.1842,
+      0.8214,
+      0.6316
+    ],
+    "alt": "a phytosaur — a long low four-legged reptile whose snout is drawn out into a slender straight rod lined with small teeth, ending in a smooth solid rounded tip like the blunt end of a wooden spoon handle; set on top of the skull, directly between and just in front of the eyes, is a raised dome like a small volcano, and the two nostril openings sit on the summit of that dome, far back from the snout; four short legs, a long heavy tail, and a warm sandy bronze hide with soft darker bronze banding along the back; the eye is a small amber bead",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "light"
+    },
+    "contrast": 5.34,
+    "contrastFullSize": 6.05,
+    "gatedOn": "shipped",
+    "referenceCheckedAgainst": "Phytosaur skull and skeletal reconstructions — *Smilosuchus*, *Rutiodon*; Stocker & Butler 2013, *Geol. Soc. Lond. Spec. Publ.* 379"
   },
   "chicxulub": {
     "file": "/art/chicxulub.webp",

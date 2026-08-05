@@ -148,8 +148,10 @@ const MANIFEST: ManifestEntry[] = [
     // Sheet 2 — the first real paid generation, 2026-07-31, approved batch.
     // 3 of 4 verified; Tiktaalik drew as a fully-legged salamander despite the
     // negative and needs a redo (see its `negative` field in timeline.json).
+    // Archaeopteryx's quadrant is dropped too: superseded by sheet 19, which
+    // fixed the hole §11 point 4 caught and gave it its own colour clause.
     file: 'art/source/sheet-02-tiktaalik-archaeopteryx-stromatolite-dimetrodon.png',
-    quadrants: ['', 'archaeopteryx', 'stromatolites', 'dimetrodon'],
+    quadrants: ['', '', 'stromatolites', 'dimetrodon'],
     isPlanet: false,
   },
   {
@@ -189,8 +191,10 @@ const MANIFEST: ManifestEntry[] = [
     // that continental collision makes (the Grenville orogeny, ~1.1–0.9 Ga, is
     // Rodinia's assembly) rather than the shape of the supercontinent.
     // Tiktaalik's quadrant is dropped: superseded by sheet 15's round seven.
+    // The phytosaur's is dropped as well: superseded by sheet 20, which fixed
+    // the same §11 point 4 hole and put the nostrils on a raised dome.
     file: 'art/source/sheet-07-tiktaalik-gneiss-phytosaur-acidrock.png',
-    quadrants: ['', 'rodinia', 'triassic-jurassic-extinction', 'steam-and-acid-rain'],
+    quadrants: ['', 'rodinia', '', 'steam-and-acid-rain'],
     isPlanet: false,
   },
   {
@@ -351,6 +355,39 @@ const MANIFEST: ManifestEntry[] = [
      knuckle-walking negative, writing's wedge-grid re-roll) is unchanged and
      recoverable from this file's history. */
 ];
+
+/**
+ * A subject redrawn on a later sheet has its earlier quadrant BLANKED — that is
+ * how Tiktaalik (sheet 15), Tyrannosaurus (17) and Grypania (18) supersede the
+ * sheets they were first drawn on. Nothing enforced it. `1cf96cc` landed three
+ * redraws and blanked one of them (`plants-reach-land` at sheet 15), so
+ * `archaeopteryx` and `triassic-jurassic-extinction` went on being baked from
+ * BOTH the superseded sheet and the new one, and every write below — the WebP
+ * and the `art[id]` entry — is last-wins over MANIFEST order.
+ *
+ * The right pixels then ship only by accident of that order. Move a sheet,
+ * insert one before 19/20, or stop a bake early, and those two subjects
+ * silently revert to art §11 already rejected (Archaeopteryx with 2.1% of its
+ * own area punched out) with ZERO source diff and nothing to review. It was
+ * caught as a "non-deterministic bake" 2026-08-05 for exactly that reason.
+ */
+function assertNoDuplicateSubjects() {
+  const firstSheet = new Map<string, string>();
+  const dupes: string[] = [];
+  for (const entry of MANIFEST) {
+    for (const id of entry.quadrants) {
+      if (!id) continue;
+      const first = firstSheet.get(id);
+      if (first) dupes.push(`${id} — baked from ${first} AND ${entry.file}`);
+      else firstSheet.set(id, entry.file);
+    }
+  }
+  if (dupes.length) {
+    throw new Error(
+      `MANIFEST bakes ${dupes.length} subject(s) twice; blank the superseded quadrant:\n  ${dupes.join('\n  ')}`,
+    );
+  }
+}
 
 const DESKTOP = { w: 1440, h: 900 };
 const GATE = 3;
@@ -832,6 +869,7 @@ async function bakeRecordInPage(args: { dataUrl: string; maxEdge: number }) {
 }
 
 async function main() {
+  assertNoDuplicateSubjects();
   await mkdir(OUT_DIR, { recursive: true });
   await mkdir(RECORD_OUT_DIR, { recursive: true });
   const browser = await chromium.launch();

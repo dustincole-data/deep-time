@@ -21,8 +21,9 @@
  *             boundary, and every visible rect is compared with every other.
  *             This is the pass that catches a mistake in `frame()` itself.
  */
-import { arrivals, CONSTANTS, finaleBeats } from '../src/lib/timeline.ts';
+import { arrivals, CONSTANTS, finaleBeats, flood } from '../src/lib/timeline.ts';
 import {
+  blip,
   contains,
   fan,
   frame,
@@ -292,6 +293,45 @@ function run(vp: Viewport): Result {
   if (!contains(z.scale, F.bar))
     fail('fan × scale bar', `the bar ${fmtRect(F.bar)} is outside its own reserved zone ${fmtRect(z.scale)}`);
 
+  /* THE BLIP (design §4). The amendment is scoped, and this is where the scope is
+     enforced: cell × cell is deliberately NOT swept — that is the ONE sanctioned
+     image-over-image exception — and everything else still is. */
+  const BL = blip(z, F.bar);
+  if (BL.shown) {
+    if (BL.cells.length !== flood.length)
+      fail('blip geometry', `the blip has ${BL.cells.length} cells for ${flood.length} subjects`);
+
+    const ids = new Set(BL.cells.map((c) => c.id));
+    if (ids.size !== BL.cells.length) fail('blip geometry', 'a flood subject is drawn more than once');
+
+    for (const c of BL.cells) {
+      if (!BL.fields.some((f) => contains(f, c.rect)))
+        fail('blip containment', `cell ${c.id} ${fmtRect(c.rect)} is outside both fields`);
+      // text × image is STILL a gate — the carve-out is image × image only.
+      if (intersects(c.rect, BL.band))
+        fail('blip × plate', `cell ${c.id} ${fmtRect(c.rect)} enters the band the words own`);
+    }
+    for (const f of BL.fields) {
+      if (intersects(f, z.scale))
+        fail('blip × scale bar', `a blip field ${fmtRect(f)} enters the reserved scale zone`);
+      /* blip × clock is DELIBERATELY NOT swept — Dustin's ruling, 2026-08-04
+         (see layout.ts, "THE CLOCK ZONE IS RELEASED AT THE FINALE; THE BAR'S
+         ZONE NEVER IS"). Design §4 required the mass to bleed off the top,
+         bottom and left and be clipped by the frame — the bottom-left IS the
+         clock zone — while §4's table said reserved zones stay clear; the two
+         contradicted each other. Dustin's ruling: at the finale the reserved-
+         zone rule covers the BAR alone. The clock zone protects a live
+         readout, and there is nothing there to collide with — #hud is at
+         opacity 0 from px 525 of the finale and the flood does not start
+         until px 6,020. Precedent already exists: fan()'s closing block sits
+         inside z.clock unswept today, as do 11–12 fan rows on mobile. A
+         future reader who "restores" a blip × clock check has found the
+         ruling, not a bug — do not add one back. */
+    }
+  } else if (BL.cells.length || BL.bracket.length) {
+    fail('blip geometry', 'the blip is not shown but still carries geometry');
+  }
+
   const fanBoxes: [string, Rect][] = [
     ...F.rows.map((r) => [`row ${r.i} ${r.id}`, r.box] as [string, Rect]),
     ['seam caption', F.seamCaption],
@@ -347,6 +387,9 @@ function run(vp: Viewport): Result {
       'widest row': Math.round(F.widestRow),
       'free column': Math.round(F.freeColumn),
       'closing placement': F.closingPlacement === 'beside' ? 1 : 0,
+      'blip cell': Math.round(BL.solvedCell * 10) / 10,
+      'blip shown': BL.shown ? 1 : 0,
+      'blip cells': BL.cells.length,
     },
   };
 }

@@ -695,6 +695,8 @@ const FLOOD_PITCH_FIRST = 240;
 const FLOOD_PITCH_LAST = 14;
 /** Last opacity written per print: once the heap is up this saves 50 paint invalidations a frame. */
 const cellVis = new Array<number>(blipCells.length).fill(-1);
+/** Whether `↑ again` is currently reachable. `null` so the first finale frame always writes. */
+let againLive: boolean | null = null;
 
 function drawFinale(f: number) {
   for (let i = 0; i < fanRowEls.length; i++) {
@@ -767,6 +769,22 @@ function drawFinale(f: number) {
   closingLineEl.style.opacity = String(lineIn * (1 - swapOut));
   if (epilogueEl) epilogueEl.style.opacity = String(swapIn * 0.62);
   againEl.style.opacity = String(swapIn * 0.6);
+  /* HIDDEN MEANS UNREACHABLE. `↑ again` is a real link to `#top`, which no element
+     answers, so it takes the page to pixel 0 of 127,500 — the whole scroll, undone.
+     It is at opacity 0 for the first 9,815px of the finale, and this task moved it
+     from the bottom-left corner to the middle of the screen, on top of the flood.
+     Opacity hides neither hit-testing nor Tab focus, and the outline `:focus-visible`
+     would draw cannot render at opacity 0 — so an invisible control sat over the
+     pictures, one stray click or Tab-Enter from destroying the only moment the site
+     exists for. `inert` removes the pointer target, the focus stop and the a11y-tree
+     entry together, which is why `#finale` itself is held that way before RUN_END.
+     Guarded on inequality, like every other write in this frame. Never touched in the
+     no-JS path, where the link renders visible and must stay clickable. */
+  const againReachable = swapIn > 0;
+  if (againReachable !== againLive) {
+    againEl.toggleAttribute('inert', !againReachable);
+    againLive = againReachable;
+  }
 }
 
 /* ============================================================================

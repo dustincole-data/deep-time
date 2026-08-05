@@ -275,10 +275,19 @@ function run(vp: Viewport): Result {
   const B = finaleBeats(overrun);
   const marks = [
     ['drain', 0, B.drainEnd],
-    ['cascade', B.drainEnd, B.cascadeEnd],
+    // The arrest, the flood and the plate were added with the rebuilt ending and were
+    // NOT swept until this was noticed: `cascade` had been re-spanned from `drainEnd`,
+    // so it covered the arrest and could never catch it collapsing. Each of the three
+    // divides by its own length at runtime — a zeroed arrest makes `main.ts`'s pulse
+    // `0/0`, and `scale(NaN,NaN)` is rejected by the CSS parser WHOLE, taking the
+    // marker's `translateY` with it and throwing the head to the top of the bar.
+    ['arrest', B.drainEnd, B.arrestEnd],
+    ['cascade', B.arrestEnd, B.cascadeEnd],
     ['breath', B.cascadeEnd, B.breathEnd],
     ['the ten', B.tenStart, B.tenEnd],
     ['hold', B.tenEnd, B.holdEnd],
+    ['flood', B.floodStart, B.floodEnd],
+    ['plate', B.floodEnd, B.plateEnd],
     ['the line', B.lineStart, B.lineEnd],
     ['left holding', B.endStart, B.total],
   ] as const;

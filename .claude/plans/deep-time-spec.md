@@ -754,6 +754,7 @@ aria-label="True-scale bar: 34 percent of Earth's history passed."
 - **Public domain or CC0 only**, verified per image, with attribution recorded in `art.json` beside the `source` field every milestone already carries. A licence audit is a ship gate.
 - **No generation. No retouching beyond crop and resize**, and no colour grading that would misrepresent an object.
 - **Rectangular, no alpha.** These are prints, not cut-outs — so the 3:1 boundary gate does not apply to them, having no keyed boundary to measure across.
+- **[§12](#12--stack-budget-degradation)'s 2× draw cap does not bind them either, and the number is recorded rather than met.** *Added 2026-08-05.* The prints bake at a **160 px long edge** and draw **2.36× that at 1440×900, 3.55× at 1920, 5.34× at 2560**, and 5.37× on a DPR-3 phone. §12 carries the full sweep, the mechanism (`.blip` solves from the frame, so its box grows where ruling E stopped the stage from growing), what conformance would cost against the 80 MB decoded gate, and Dustin's ruling that the bake stays at 160. **Same shape as the two rulings below** — where a gate applies, not how hard it bites. **The prints are still held to everything the record register's own clauses say**: public domain or CC0, no retouching beyond crop and resize, no colour grading.
 
 **Why a second register is legitimate here**, when [§15](#15--settled-do-not-relitigate) cut procedural silhouettes for being one: painted plates exist because nobody photographed a trilobite, and every scroll subject is therefore a *reconstruction*. Recorded history is the opposite case — the object survives. [§8](#8--the-copy-deck) already rules that *"where there is nothing real to paint, say the words instead of painting a fake"*; the record register is that rule inverted. **Where there is something real, do not paint a fake of it** — a site whose first non-negotiable is accuracy cannot substitute invention for available evidence. The register flips on the pixel the clock arrests, so *reconstruction → record* lands with *time stops*.
 
@@ -972,11 +973,44 @@ The decoded figure is the one that matters — a phone dies on resident bitmaps,
 - Native `loading="lazy"` is **not** used and would not work: arrivals are pinned into viewport slots during dwell, so the viewport heuristic sees most of them as near-visible and fetches everything at once anyway, in DOM order rather than scroll order.
 - `navigator.connection.saveData` → fetch on a 6,000 px lookahead instead of all at once. One branch, one flag.
 
-**No asset is ever drawn larger than 2× its intrinsic size in device pixels** (`maxDrawCSS = 2 × intrinsicPx / devicePixelRatio`). 2× is chosen for this style specifically — the recipe forbids outlines and line art, so there is no hard edge to alias. The art box is a maximum, not a target.
+**No painted asset is ever drawn larger than 2× its intrinsic size in device pixels** (`maxDrawCSS = 2 × intrinsicPx / devicePixelRatio`). 2× is chosen for this style specifically — the recipe forbids outlines and line art, so there is no hard edge to alias. The art box is a maximum, not a target. **The word *painted* is load-bearing and was added 2026-08-05**; the record register is measured against this number and knowingly over it, below.
 
 ~~**Held at the three gate viewports, and only there.** The art box is derived from the viewport, so it keeps growing on a monitor wider than 1440×900 while the intrinsic does not — measured 2026-08-04, six subjects already drew past 2× at 2560×1440 *before* the 700 px cap, and the cap deepens that. This is knowingly not closed.~~
 
-**CLOSED 2026-08-04 by [§5](#5--the-no-collision-layout-contract)'s ruling E, and not by moving a budget.** The scar existed because the art box grew with the viewport while the intrinsic did not. The stage now stops growing at 1440×900, so **the art box a subject can be given is bounded at every width** and the 2× rule holds everywhere rather than only where it is asserted. Ruling F caps it further. The alternative this paragraph used to warn about — sizing every asset for the widest monitor anyone might own — is exactly what is no longer needed, and neither budget gate moved.
+**CLOSED 2026-08-04 by [§5](#5--the-no-collision-layout-contract)'s ruling E, and not by moving a budget.** The scar existed because the art box grew with the viewport while the intrinsic did not. The stage now stops growing at 1440×900, so **the art box a *painted* subject can be given is bounded at every width** and the 2× rule holds everywhere rather than only where it is asserted. Ruling F caps it further. The alternative this paragraph used to warn about — sizing every asset for the widest monitor anyone might own — is exactly what is no longer needed, and neither budget gate moved. **This closure is about the painted register only, and it always was** — it is ruling E's stage that bounds the box, and the flood does not sit on the stage.
+
+### The record register is over the 2× cap — a scope ruling, not a softened gate
+
+**Added 2026-08-05, after the finale shipped.** The cap above is a rule about the painted register, and the flood does not meet it. Recording the number rather than quietly asserting the rule is the whole point of writing it down: this is exactly the shape of [§11](#11--art)'s two existing scope rulings — the 3:1 boundary gate not applying to prints that have no keyed boundary, and the withheld ten being gated at full size — *"a scope ruling about where the gate applies, not a softening of it."*
+
+**Why the box grows when ruling E says it cannot.** `.blip` is solved from the **frame**, not from `z.stage`, and that is correct: [redesign §4](deep-time-finale-redesign-design.md) requires the flood to run off three edges of the screen, and a rect strictly inside `z.stage` can never be clipped by the frame — at 1920 the stage leaves a 324 px gap on the left. So the flood's draw box tracks the monitor while its 160 px intrinsic does not, which is precisely the mechanism ruling E retired for the scroll. Swept over the 50 shipped prints, `object-fit: cover`, in the device pixels the rule names:
+
+| viewport | DPR | max draw | median | over 2× |
+|---|---:|---:|---:|---:|
+| **1440×900** — the frozen solve | 1 | **2.36×** | 1.52× | 4 of 50 |
+| **1920×1080** | 1 | **3.55×** | 1.99× | 24 of 50 |
+| **2560×1440** | 1 | **5.34×** | 2.96× | 47 of 50 |
+| 3440×1440 | 1 | 4.74× | 2.85× | 45 of 50 |
+| 3840×2160 | 1 | 9.38× | 4.92× | 50 of 50 |
+| **390×844** | 3 | **5.37×** | 2.73× | 43 of 50 |
+| 390×780 | 3 | 4.30× | 2.37× | 44 of 50 |
+| 390×844 | 2 | 3.58× | 1.82× | 16 of 50 |
+
+**It is not a wide-monitor problem — it is a register problem.** A phone is over the cap by more than 1440×900 is, because the rule is written in device pixels and a DPR-3 screen triples a CSS box that is itself under 2×. The painted register has no such exposure at any of these: its largest art box is 481 device px against a 700 px intrinsic (`bake-art.ts`), i.e. **0.69×**, never even reaching 1:1.
+
+**Conformance is affordable at the frozen solve viewport and nowhere else, inside the gate this section calls decisive.** Draw factor scales as `160 / edge` and decoded memory as `edge²`, so the two constraints pull against each other directly:
+
+| to meet 2× at | needs a bake of | decoded total |
+|---|---:|---:|
+| 1440×900 | 189 px | 76.96 / 80 MB ✅ |
+| 1920×1080 | 284 px | 83.16 / 80 MB ❌ |
+| 2560×1440 | 427 px | 97.17 / 80 MB ❌ |
+
+**Dustin ruled the bake stays at 160 px (2026-08-05)**, having priced 240 px at **79.98 of the 80 MB gate** — the whole of the remaining headroom — for a 1.5× gain that is still 2.1× upscaled at 1920: *"the heap is a mass seen at a glance, not a gallery."* 1440×900 is the frozen solve viewport and reads acceptably there. **The 189 px option was not on the table when that ruling was made** and is recorded here as a fact, not as a proposal; it buys conformance at one width and none of the others, for 1.4 MB of the decoded gate.
+
+**What the 2× number was protecting is not what the flood draws, and that cuts both ways.** The cap is justified above *"for this style specifically — the recipe forbids outlines and line art, so there is no hard edge to alias."* A photograph of a bronze awl has hard edges. So the softness is real, and it is bought deliberately: the register's claim — *this is what survives* — is carried by the count and by the accumulation, and every print is one tile in a heap of fifty inside a rect the design defines as a mass. **If a print is ever meant to be read as an object rather than as part of that mass, this carve-out is void and the bake, not the prose, is the fix.**
+
+**Scope, so this cannot leak.** The carve-out covers the record register inside `.blip` and nothing else. Every painted asset — the 51 scroll subjects and the four planets — is still held to 2×, at every viewport, and a painted subject found over it is a bug, not a precedent.
 
 ### The numeric budget — gates, not targets
 

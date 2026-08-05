@@ -124,10 +124,17 @@ const SCROLL_MAX_EDGE = 700;
 
 /**
  * The record register's cap (§11). These are prints, not cut-outs — no
- * keying, no halo — and they only ever draw at blip-cell size, so 160 clears
- * §12's 2× draw rule without paying for pixels nothing can show. §12
- * projected the record register at ~4.2 MB decoded for ~50 images at this
- * edge, folded into the two totals `main()` prints and asserts below.
+ * keying, no halo. §12 projected the record register at ~4.2 MB decoded for
+ * ~50 images at this edge (measured: 3.53 MB), folded into the two totals
+ * `main()` prints and asserts below.
+ *
+ * CORRECTED 2026-08-05: this comment used to claim 160 "clears §12's 2× draw
+ * rule". It does not, at any desktop width — the prints draw 2.36× at
+ * 1440×900, 3.55× at 1920, 5.34× at 2560, because `.blip` is solved from the
+ * FRAME and its box grows with the monitor. **160 is chosen by the 80 MB
+ * decoded gate, not by the draw box**, and §12 now carries the sweep and the
+ * scope ruling that admits it. Raising this constant is a budget decision
+ * first: 240 costs 79.98 of the 80 MB, 320 costs 86.16 and fails outright.
  */
 const FLOOD_MAX_EDGE = 160;
 

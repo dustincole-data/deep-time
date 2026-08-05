@@ -192,7 +192,9 @@ A record image bakes to roughly **83 KB decoded** and **~5 KB transfer** at a 16
 
 **Neither case moves the decoded gate.** Dropping the ten's now-unreferenced art is enough on its own to keep transfer inside the gate it already has — so the honest statement is that this design costs **no budget change at all** if question 2 goes that way, and one 0.1 MB transfer bump if it does not.
 
-- **Decoded does not move**, and §12 is explicit that decoded is the disease and transfer the symptom. The flood bakes at a **160 px long edge**, which is where it draws.
+- **Decoded does not move**, and §12 is explicit that decoded is the disease and transfer the symptom. The flood bakes at a **160 px long edge**. ~~which is where it draws.~~
+
+  > **AMENDED 2026-08-05, from the built page. The struck clause is false at every desktop width.** The prints draw **2.36× their intrinsic at 1440×900, 3.55× at 1920, 5.34× at 2560** — and 5.37× on a DPR-3 phone, because §12's cap is written in device pixels. This design is the cause and the cause is correct: §4 solves `.blip` from the **frame** so the flood can run off three edges, which is exactly the growth ruling E removed from the stage. **Nothing about the budget changes** — 160 px is what the 80 MB decoded gate can afford, and it is the number Dustin ruled on 2026-08-05. What changes is the claim: the bake edge is chosen by the decoded gate, **not** by the draw box, and §12 now carries the sweep, the cost of conformance, and the scope ruling that admits it.
 - **Record images carry no alpha**, so they compress harder than the cut-outs and cost less transfer per pixel.
 - **The withheld ten's painted art loses its only consumer.** It was generated for the stamp (§7, 2026-08-02) and the stamp is deleted; the three of the ten that fall inside 12 ka get record images instead. Dropping those ten assets frees **~2.6 MB decoded and ~150 KB transfer** — most of what the flood costs. **This is Dustin's call: it is art he approved and paid for.** If it stays, it stays as an unreferenced asset and the transfer gate needs 3.75 rather than 3.6.
 

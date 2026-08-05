@@ -18,17 +18,12 @@ import {
   place,
   sameRect,
   showsArt,
-  stampFill,
   showsLine,
   textHeight,
   windowsOverlap,
   zones,
   type Rect,
 } from './layout.ts';
-import artManifest from '../data/art.json' with { type: 'json' };
-
-interface ArtEntry { w: number; h: number; opaque: [number, number, number, number] }
-const ART = artManifest as unknown as Record<string, ArtEntry | undefined>;
 
 const DESKTOP = { w: 1440, h: 900 };
 const PHONE = { w: 390, h: 844 };
@@ -505,79 +500,6 @@ describe('the finale (§9)', () => {
   });
 });
 
-describe('the stamp — the whole human era, crammed (§9)', () => {
-  it('is ten cells, chronological, in the same order as the ten rows', () => {
-    for (const vp of GATE_VIEWPORTS) {
-      const f = fan(zones(vp));
-      expect([vp.w, f.stamp.shown]).toEqual([vp.w, true]);
-      expect(f.stamp.cells.map((c) => c.id)).toEqual(withheld.map((w) => w.id));
-    }
-  });
-
-  it('tiles edge-to-edge — the jam is the zero gutter, never an overlap', () => {
-    // This is the whole reason the cram was taken over the pile (§15): the
-    // site's last screen still obeys the rule it made a ship gate.
-    for (const vp of GATE_VIEWPORTS) {
-      const { cells, box, cell } = fan(zones(vp)).stamp;
-      for (const c of cells) expect([vp.w, c.id, contains(box, c.rect)]).toEqual([vp.w, c.id, true]);
-      for (let i = 0; i < cells.length; i++) {
-        for (let j = i + 1; j < cells.length; j++) {
-          expect([vp.w, cells[i]!.id, cells[j]!.id, intersects(cells[i]!.rect, cells[j]!.rect)])
-            .toEqual([vp.w, cells[i]!.id, cells[j]!.id, false]);
-        }
-      }
-      // Tiled, not merely non-overlapping: the ten cells account for the block
-      // exactly, so there is no gap anywhere inside it.
-      const area = cells.reduce((s, c) => s + c.rect.w * c.rect.h, 0);
-      expect(area).toBeCloseTo(box.w * box.h, 6);
-      expect(box.w).toBeCloseTo(cell * 5, 6);
-      expect(box.h).toBeCloseTo(cell * 2, 6);
-    }
-  });
-
-  it('is never wider than one fan row is long', () => {
-    // §9's claim in the one number that can be checked: the whole human era is
-    // smaller than a single label. It is also what stops the block growing into
-    // a poster on a wide monitor — past a point, width buys the free column.
-    for (const vp of [...GATE_VIEWPORTS, { w: 2560, h: 1440 }]) {
-      const f = fan(zones(vp));
-      expect([vp.w, f.stamp.box.w <= f.widestRow + 1e-6]).toEqual([vp.w, true]);
-    }
-  });
-
-  it('brackets to the bar last pixel — the one with no tick', () => {
-    for (const vp of GATE_VIEWPORTS) {
-      const f = fan(zones(vp));
-      expect(f.stamp.bracket).toHaveLength(2);
-      for (const b of f.stamp.bracket) {
-        expect([vp.w, b.x2]).toEqual([vp.w, f.bar.x - 2]);
-        // The bar's last pixel is where the ten rows already converge.
-        expect(b.y2).toBeCloseTo(f.rows[39]!.leader.y2, 6);
-      }
-    }
-  });
-
-  it('drops out entirely at 200% text, rather than shrinking to a smudge', () => {
-    // §10: text costs art, never legibility. The closing block doubles and takes
-    // the room the stamp was solved into, so the stamp goes — and leaves nothing
-    // behind for the runtime to place.
-    for (const vp of GATE_VIEWPORTS) {
-      const s = fan(zones({ ...vp, textScale: 2 })).stamp;
-      expect([vp.w, s.shown]).toEqual([vp.w, false]);
-      expect([vp.w, s.cells.length, s.bracket.length, s.box.w, s.box.h]).toEqual([vp.w, 0, 0, 0, 0]);
-    }
-  });
-
-  it('shares the screen with the fan only where there is a free column', () => {
-    // Same ruling the closing block takes, and it must resolve the same way:
-    // a phone has no free column, so there the two are sequential.
-    for (const vp of GATE_VIEWPORTS) {
-      const f = fan(zones(vp));
-      expect([vp.w, f.stamp.placement]).toEqual([vp.w, f.closingPlacement]);
-    }
-  });
-});
-
 describe('the copy spends the constants, exactly (§8, §13)', () => {
   // "A true-scale site cannot round its own punchline." Two of these numbers were
   // wrong in an earlier prototype; nothing should be able to drift again.
@@ -723,20 +645,6 @@ describe('the solve is frozen at 1440×900 and centred above it (ruling E)', () 
     }
   });
 
-  it('closes the hole the ending used to open through its own middle', () => {
-    // The fan is right-anchored to the bar and the closing block used to be
-    // left-anchored to the viewport, so the two ends pulled apart as the monitor
-    // grew — 0px at 1440×900, 422px at 1920×1080. It must not grow with the screen.
-    const gapAt = (vp: { w: number; h: number }) => {
-      const f = fan(zones(vp));
-      return f.stamp.box.x - (f.closing.x + f.closing.w);
-    };
-    const base = gapAt(DESKTOP);
-    for (const vp of WIDE) {
-      expect([vp.w, Math.abs(gapAt(vp) - base) < 40]).toEqual([vp.w, true]);
-    }
-  });
-
   it('leaves the bar itself on the right edge, unbroken (§9, §15)', () => {
     // The clamp moves the ending's TEXT inward; it must never move the bar. §9
     // keeps it the same object at the same edge from 4.60 Ga to the last frame,
@@ -786,49 +694,6 @@ describe('a lone card cannot outgrow a banded one without limit (ruling F)', () 
         const v = frame(P, p.y).find((x) => x.id === p.id);
         if (v?.art) expect([vp.w, p.id, contains(v.box, v.art)]).toEqual([vp.w, p.id, true]);
       }
-    }
-  });
-});
-
-describe('a stamp cell crops toward the head, not through it (§9 rule 8)', () => {
-  const ten = fanRows.filter((r) => r.ten).filter((r) => ART[r.id]);
-
-  it('fills the cell on the subject, so its short axis is exact', () => {
-    for (const r of ten) {
-      const e = ART[r.id]!;
-      const f = stampFill(e.opaque, e.w, e.h);
-      const [, , fw, fh] = e.opaque;
-      // One axis fills the cell exactly; neither may come up short of it.
-      expect([r.id, Math.min(fw * f.w, fh * f.h)]).toEqual([r.id, expect.closeTo(1, 6)]);
-    }
-  });
-
-  it('keeps the top of a figure when the cell has to clip it', () => {
-    let clipped = 0;
-    for (const r of ten) {
-      const e = ART[r.id]!;
-      const f = stampFill(e.opaque, e.w, e.h);
-      const [, fy, , fh] = e.opaque;
-      const cutTop = -(f.t + fy * f.h);
-      const cutBot = f.t + (fy + fh) * f.h - 1;
-      if (cutTop + cutBot < 1e-6) continue;
-      clipped++;
-      // Whatever is lost, more of it comes off the feet than off the head.
-      expect([r.id, cutTop <= cutBot + 1e-9]).toEqual([r.id, true]);
-    }
-    // ardipithecus alone overflows by 94%; if nothing clips, the test is vacuous.
-    expect(clipped).toBeGreaterThan(0);
-  });
-
-  it('never leaves a gap: the subject always covers the whole cell', () => {
-    for (const r of ten) {
-      const e = ART[r.id]!;
-      const f = stampFill(e.opaque, e.w, e.h);
-      const [fx, fy, fw, fh] = e.opaque;
-      const l = f.l + fx * f.w;
-      const t = f.t + fy * f.h;
-      expect([r.id, l <= 1e-9, t <= 1e-9]).toEqual([r.id, true, true]);
-      expect([r.id, l + fw * f.w >= 1 - 1e-9, t + fh * f.h >= 1 - 1e-9]).toEqual([r.id, true, true]);
     }
   });
 });

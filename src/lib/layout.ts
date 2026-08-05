@@ -1022,52 +1022,10 @@ export interface FanRow extends FanRowData {
   leader: { x1: number; y1: number; x2: number; y2: number };
 }
 
-/**
- * THE STAMP (§9) — the whole human era, crammed.
- *
- * Ten pictures tiled edge-to-edge with NO gutter. The jam is bought with the
- * zero gap and the small cell, never with overlap: each subject is contained
- * inside its own cell, so §5 survives this screen verbatim and the collision
- * gate needs no finale exemption. (The overlapping pile was the alternative and
- * was rejected on exactly that cost — §15.)
- */
-export interface StampCell {
-  id: string;
-  /** 0-9, chronological — cell 0 is Ardipithecus, cell 9 the industrial revolution. */
-  i: number;
-  rect: Rect;
-}
-
-export interface Stamp {
-  /**
-   * False when the solved cell falls under `STAMP_CELL_MIN` — at 200% text the
-   * closing block takes the room the block was solved into. Text costs art (§10),
-   * so the block goes and the ten rows carry the ending on their own. When false,
-   * `box` has no area and `cells` / `bracket` are empty.
-   */
-  shown: boolean;
-  /** The whole block. The cells tile it exactly. */
-  box: Rect;
-  cell: number;
-  /** What the cell solved to before the floor was applied — what the gate reports. */
-  solvedCell: number;
-  cells: StampCell[];
-  /** Two hairlines from the block's right corners to the bar's last pixel, closing to a point. */
-  bracket: { x1: number; y1: number; x2: number; y2: number }[];
-  /**
-   * `beside` — it shares the screen with the fan, in the free column (desktop).
-   * `after` — the phone has no free column, so it takes the screen the fan gives
-   * up (§9 staging rule 4). Same ruling that already places the closing block.
-   */
-  placement: 'beside' | 'after';
-}
-
 export interface Fan {
   /** The true-scale bar. Inside the reserved scale zone, and the same rect the run draws. */
   bar: Rect;
   rows: FanRow[];
-  /** The withheld ten, crammed (§9). */
-  stamp: Stamp;
   /** The gap the withheld ten sit below — what you scrolled past, and what was withheld. */
   seamY: number;
   seamCaption: Rect;
@@ -1131,76 +1089,6 @@ const ROW_PAD_LEFT = 7;
 const CLOSING_CLEARANCE = 34;
 /** Below this much free column, "beside" is not available at this width (§9). */
 const CLOSING_BESIDE_MIN = 190;
-/** The stamp is 5 × 2 (§9). Ten cells, chronological, reading order. */
-const STAMP_COLS = 5;
-const STAMP_ROWS = 2;
-/**
- * Below this, the stamp is not drawn at all.
- *
- * §10 already rules on exactly this case — "text at 200% costs art, never
- * legibility" — and the stamp is art. At 200% text the closing block doubles in
- * height and takes the room the block was solved into, so the block goes, the
- * same way an arrival's picture goes below `ART_MIN_H` and the same way ruling A
- * drops the description line. A ten-picture jam at 12 px a cell is not a smaller
- * version of the argument, it is a smudge; the ten rows above it still carry
- * every name and date, which is the half §8 calls load-bearing.
- */
-export const STAMP_CELL_MIN = 28;
-
-/**
- * How much of a stamp subject's VERTICAL overflow is taken off the top.
- *
- * §9 rule 8 fills each cell with the subject rather than the asset, so the
- * subject's short axis fills the square exactly and its long axis overflows and
- * is clipped. Splitting that overflow evenly — which is what centring does —
- * cuts the same amount off the head as off the feet, and measured 2026-08-04
- * `ardipithecus` overflows its cell by 94%, so an even split took 24% off each
- * end of a standing figure and removed its head. Four of the ten are
- * reconstructions of faces and figures (§11); the thing the finale is FOR is
- * that a visitor recognises us in the block, and a headless figure is not a
- * smaller version of that argument any more than a 12 px cell is.
- *
- * Heads sit at the top of a figure, so the crop keeps the top: an eighth of the
- * overflow comes off the head, the rest off the feet. HORIZONTAL overflow stays
- * centred — subjects are horizontally centred already and there is no
- * equivalent of a head on that axis. Nothing here can touch §5: the cell still
- * clips, so a picture moved inside its square still cannot reach a neighbour.
- */
-const STAMP_CROP_TOP = 0.125;
-
-/**
- * One stamp cell's fill, as multiples of the cell (§9 rule 8). Pure, so the
- * page can solve all four numbers at build and the runtime only places a square.
- *
- * `opaque` is the subject's own box inside the asset, recorded at bake time as
- * fractions of the asset — the halo margin is 18–30% of the canvas, so sizing
- * by the canvas would leave the subject covering ~70% of its cell and turn the
- * jam into a row of icons.
- */
-export function stampFill(
-  opaque: readonly [number, number, number, number],
-  assetW: number,
-  assetH: number,
-): { w: number; h: number; l: number; t: number } {
-  const [fx, fy, fw, fh] = opaque;
-  // The subject's SHORT side fills the cell exactly; the long side overflows.
-  const base = Math.min(fw * assetW, fh * assetH);
-  const w = assetW / base;
-  const h = assetH / base;
-  // The subject, measured in cells. Exactly one of these is 1; the other is ≥1.
-  const subjH = fh * h;
-  return {
-    w,
-    h,
-    // Horizontal: centred, as before.
-    l: 0.5 - (fx + fw / 2) * w,
-    // Vertical: the subject's top edge sits this far above the cell's, which is
-    // STAMP_CROP_TOP of whatever overflows. At zero overflow this is identical
-    // to centring, so the six cells that do not overflow vertically are untouched.
-    t: -(subjH - 1) * STAMP_CROP_TOP - fy * h,
-  };
-}
-
 /** `.fd` — the date, then `.fn` — the name. One row, right-anchored. */
 function fanRowWidth(r: FanRowData, fs: number): number {
   const date: TypeSpec = { size: fs, lineHeight: 1.25, tracking: 0.04, upper: false, weight: 1 };
@@ -1279,10 +1167,10 @@ export function fan(z: Zones): Fan {
   const closingPlacement: 'beside' | 'after' = freeColumn < CLOSING_BESIDE_MIN ? 'after' : 'beside';
   /* RULING E, applied to the ending. The fan is right-anchored to the bar and
      the closing block was left-anchored to the viewport, so the two ends pulled
-     apart as the monitor grew: measured 2026-08-04, the gap between the closing
-     block's right edge and the stamp's left ran 0 px at 1440×900 and 422 px at
-     1920×1080 — a hole INSIDE the composition, which is what read as "huge
-     empty space" rather than any fault of the stamp.
+     apart as the monitor grew: measured 2026-08-04, the gap through the middle
+     of the ending ran 0 px at 1440×900 and 422 px at 1920×1080 — a hole INSIDE
+     the composition, which is what read as "huge empty space" rather than any
+     fault of the composition itself.
 
      The bar is not clamped: §9 keeps it the same object at the same right edge,
      unbroken, and moving it is what §15 forbids. So the finale freezes the SPAN
@@ -1309,84 +1197,9 @@ export function fan(z: Zones): Fan {
 
   const closing: Rect = { x: closeLeft, y: h - closeBottom - closeH, w: closeW, h: closeH };
 
-  /* THE STAMP (§9 staging rules 3 and 4) — a solved rect, not a chosen one.
-     It hangs off the same 'beside' / 'after' ruling the closing block already
-     takes, because it is the same question asked twice: is there a free column
-     at this width, or does the fan have to give the screen up?
-
-       beside (desktop) — the stamp sits in the free column, right-anchored to
-         the column's right edge, which is exactly where the fan's widest row
-         stops being in the way.
-       after  (phone)   — the free column is 3 px, so there is no such place.
-         The stamp takes the fan's own column instead, and the fan is gone by
-         then: it fades at the end of `the ten` and the stamp holds alone.
-
-     Its bottom is CLOSING_CLEARANCE above the closing block at BOTH placements,
-     so the two never share space even though they never share a beat either.
-     Geometry that is true regardless of time is what keeps the gate honest —
-     the sweep reads rects, not beats.
-
-     THE CELL IS CAPPED BY THE FAN'S OWN WIDEST ROW. §9's claim is that the
-     whole human era is "smaller than one fan row is long", so that is the
-     number the cap is made of rather than a taste. It also means the stamp
-     cannot quietly grow into a poster on a wide monitor: past a point, extra
-     width buys the free column, not the block. */
-  const stampPlacement: 'beside' | 'after' = closingPlacement;
-  const stampRight = stampPlacement === 'beside' ? rowRight - widestRow - CLOSING_CLEARANCE : rowRight;
-  const stampBottom = closing.y - CLOSING_CLEARANCE;
-  const solvedCell = Math.max(
-    0,
-    Math.min(
-      (stampRight - closeLeft) / STAMP_COLS,
-      (stampBottom - rowTop) / STAMP_ROWS,
-      widestRow / STAMP_COLS,
-    ),
-  );
-  const stampShown = solvedCell >= STAMP_CELL_MIN;
-  const cell = stampShown ? solvedCell : 0;
-  const stampBox: Rect = {
-    x: stampRight - cell * STAMP_COLS,
-    y: stampBottom - cell * STAMP_ROWS,
-    w: cell * STAMP_COLS,
-    h: cell * STAMP_ROWS,
-  };
-  const stamp: Stamp = {
-    shown: stampShown,
-    box: stampBox,
-    cell,
-    solvedCell,
-    // Chronological, reading order — the same order as the ten rows above it,
-    // so a visitor can tie a row to a cell without being told to (§9 rule 2).
-    cells: !stampShown ? [] : fanRows
-      .filter((r) => r.ten)
-      .map((r, i) => ({
-        id: r.id,
-        i,
-        rect: {
-          x: stampBox.x + (i % STAMP_COLS) * cell,
-          y: stampBox.y + Math.floor(i / STAMP_COLS) * cell,
-          w: cell,
-          h: cell,
-        },
-      })),
-    // The bracket closes to the bar's last pixel — the one the ten land on, and
-    // the one with no tick. It states the relationship geometrically instead of
-    // in words, which is the same move the leader lines already make.
-    bracket: !stampShown
-      ? []
-      : [stampBox.y, stampBox.y + stampBox.h].map((y1) => ({
-          x1: stampBox.x + stampBox.w,
-          y1,
-          x2: bar.x - 2,
-          y2: barBot,
-        })),
-    placement: stampPlacement,
-  };
-
   return {
     bar,
     rows,
-    stamp,
     seamY,
     seamCaption,
     closing,

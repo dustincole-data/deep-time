@@ -121,18 +121,6 @@ const leaderEls: SVGLineElement[] = fanRowEls.map(() => {
 const seamCapEl = $('seam-caption');
 const closeEl = $('closing-block');
 
-// The stamp (§9) — the withheld ten, crammed. Ten cells and a two-line bracket.
-const stampEl = $('stamp');
-const stampEls = [...stampEl.querySelectorAll<HTMLElement>('[data-stamp-cell]')];
-const bracketSvg = $<SVGSVGElement & HTMLElement>('stamp-bracket');
-const bracketEls: SVGLineElement[] = [0, 1].map(() => {
-  const ln = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  ln.setAttribute('stroke', '#ffd9a0');
-  ln.setAttribute('stroke-width', '1');
-  bracketSvg.appendChild(ln);
-  return ln;
-});
-
 /* ============================================================================
    GEOMETRY — recomputed ONLY here, never in the frame
    ========================================================================= */
@@ -246,28 +234,6 @@ function layoutFan() {
   closeEl.style.width = `${F.closing.w}px`;
   closeEl.style.bottom = `${H - (F.closing.y + F.closing.h)}px`;
   finaleEl.classList.toggle('after', F.closingPlacement === 'after');
-
-  // The stamp (§9): cells edge-to-edge, no gutter. `object-fit: contain` keeps
-  // each picture inside its own cell, so the jam never becomes an overlap.
-  const S = F.stamp;
-  // Text costs art (§10): at 200% the closing block takes the room and the
-  // block drops out entirely. The ten rows still carry every name and date.
-  stampEl.style.display = S.shown ? 'block' : 'none';
-  if (!S.shown) return;
-  stampEls.forEach((el, i) => {
-    const c = S.cells[i]!;
-    el.style.left = `${c.rect.x}px`;
-    el.style.top = `${c.rect.y}px`;
-    el.style.width = `${c.rect.w}px`;
-    el.style.height = `${c.rect.h}px`;
-  });
-  bracketEls.forEach((ln, i) => {
-    const b = S.bracket[i]!;
-    ln.setAttribute('x1', String(b.x1));
-    ln.setAttribute('y1', String(b.y1));
-    ln.setAttribute('x2', String(b.x2));
-    ln.setAttribute('y2', String(b.y2));
-  });
 }
 
 /* ============================================================================
@@ -604,49 +570,16 @@ function drawFinale(f: number) {
   // is precisely the overlap the layout contract bans (§9 staging rule 3).
   const after = F.closingPlacement === 'after';
   if (after) {
-    /* §9 staging rule 4 — a phone's free column is 3 px, so the stamp and the
-       fan cannot be on screen together and the overlap is avoided by ORDER
-       rather than by an exemption. The fan gives the screen up at the end of
-       `the ten`, one beat earlier than it already does for the closing block. */
+    // A phone's free column is 3 px, so the fan and the line cannot be on
+    // screen together; the overlap is avoided by ORDER, not by an exemption.
+    // The fan gives the screen up at the end of `the ten`, well before the
+    // line needs the column.
     const fanOut = 1 - smooth(B.tenEnd - 240, B.tenEnd - 20, f);
     for (const el of fanRowEls) el.style.opacity = String(Number(el.style.opacity) * fanOut);
     leaderSvg.style.opacity = String(fanOut);
     seamCapEl.style.opacity = String(Number(seamCapEl.style.opacity) * fanOut);
   }
 
-  /* THE STAMP (§9 staging rule 6) — the block ASSEMBLES rather than appearing,
-     which is the difference between an avalanche and a photograph and the same
-     argument rule 2 already makes for the rows.
-
-     Desktop runs it in lockstep with the ten rows: same start, same 42 px
-     pitch, so each row and its picture land together and the tie between them
-     needs no explaining. A phone cannot — the fan is still clearing that column
-     — so there the run waits for the fan and takes the first half of `hold`, at
-     a tighter pitch so a real hold survives it. The two empty beats §15 defends
-     are untouched: `breath` is whole at both, and `hold` still ends in stillness
-     with the full block on screen. */
-  const stampStart = after ? B.tenEnd - 20 : B.tenStart + 60;
-  const stampPitch = after ? 20 : 42;
-  for (let i = 0; i < stampEls.length; i++) {
-    const a = stampStart + i * stampPitch;
-    stampEls[i]!.style.opacity = String(smooth(a, a + 110, f));
-  }
-  // The bracket measures the block, so it has nothing to measure until the
-  // block is whole. It closes once the last cell has landed.
-  const stampDone = stampStart + (stampEls.length - 1) * stampPitch + 110;
-  const bracketIn = smooth(stampDone, stampDone + 180, f) * 0.55;
-  /* The stamp's own exit, which is NOT the fan's. On desktop it never leaves —
-     the geometry already keeps it clear of the closing block, so the visitor
-     reads the sentence with the block still above it, which is the better of
-     the two readings and costs nothing. On a phone it must go, because the line
-     needs the column; but it goes LATE and fast, because everything between the
-     last cell landing and this fade is the sit-back, and a phone has only 700 px
-     of `hold` to find it in. Measured: the block completes at 270 px before the
-     fade starts — a real half-second of stillness with the full jam on screen,
-     where reusing the closing block's own 260 px lead-in left 74 px. */
-  const stampOut = after ? 1 - smooth(B.lineStart - 170, B.lineStart - 40, f) : 1;
-  stampEl.style.opacity = String(stampOut);
-  bracketSvg.style.opacity = String(bracketIn * stampOut);
   closeEl.style.opacity = String(smooth(B.lineStart, B.lineStart + 320, f));
   closeEl.classList.toggle('ep', f >= B.endStart);
 }

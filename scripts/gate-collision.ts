@@ -292,48 +292,10 @@ function run(vp: Viewport): Result {
   if (!contains(z.scale, F.bar))
     fail('fan × scale bar', `the bar ${fmtRect(F.bar)} is outside its own reserved zone ${fmtRect(z.scale)}`);
 
-  /* THE STAMP (§9). Swept as rects like everything else, and deliberately NOT
-     given an exemption: the cram was chosen over the pile precisely so that the
-     site's own last screen still obeys the rule it made a ship gate. Every cell
-     is checked against every other cell, against the fan, and against the two
-     reserved zones — if the ten ever overlap, that is a bug here, not a style. */
-  const S = F.stamp;
-  if (S.shown) {
-    if (S.cells.length !== 10) fail('stamp geometry', `the stamp has ${S.cells.length} cells, not 10`);
-    for (const c of S.cells) {
-      if (!contains(S.box, c.rect))
-        fail('stamp geometry', `cell ${c.i} ${c.id} ${fmtRect(c.rect)} is outside the block ${fmtRect(S.box)}`);
-    }
-    // Edge-to-edge is the point, so this asserts the cells TILE: they must touch
-    // and never intersect. `intersects` already treats a shared edge as no overlap.
-    for (let i = 0; i < S.cells.length; i++) {
-      for (let j = i + 1; j < S.cells.length; j++) {
-        if (intersects(S.cells[i]!.rect, S.cells[j]!.rect))
-          fail('stamp cell × stamp cell', `${S.cells[i]!.id} and ${S.cells[j]!.id} overlap`);
-      }
-    }
-    // Inside the stage at every placement, and never in a reserved zone.
-    if (intersects(S.box, z.scale))
-      fail('stamp × scale bar', `the stamp ${fmtRect(S.box)} enters the reserved scale zone`);
-    if (intersects(S.box, z.clock))
-      fail('stamp × clock', `the stamp ${fmtRect(S.box)} enters the reserved clock zone`);
-  } else if (S.cells.length || S.bracket.length || S.box.w || S.box.h) {
-    // A dropped stamp must leave nothing behind for the runtime to place.
-    fail('stamp geometry', 'the stamp is not shown but still carries geometry');
-  }
-
   const fanBoxes: [string, Rect][] = [
     ...F.rows.map((r) => [`row ${r.i} ${r.id}`, r.box] as [string, Rect]),
     ['seam caption', F.seamCaption],
   ];
-  /* §9 staging rule 4, and the same ruling the closing block takes one line
-     below: `beside` means the stamp shares the screen with the fan and must be
-     swept against it; `after` means the phone's free column cannot hold both,
-     so the fan goes fully OUT before the stamp comes in and the two never
-     co-exist. Sequential is how the overlap is avoided, not an exemption from
-     it — which is why the stamp is still swept against the reserved zones above
-     and its own cells are still tiled against each other. */
-  if (S.shown && S.placement === 'beside') fanBoxes.push(['stamp', S.box]);
   // §9 staging rule 3: when the free column cannot hold a sentence, the fan goes
   // fully OUT before the line comes in — sequential, so they never co-exist.
   if (F.closingPlacement === 'beside') fanBoxes.push(['closing block', F.closing]);
@@ -351,9 +313,7 @@ function run(vp: Viewport): Result {
         ? 'fan row × fan row'
         : bn === 'seam caption' || an === 'seam caption'
           ? 'fan row × seam caption'
-          : bn === 'stamp' || an === 'stamp'
-            ? 'fan × stamp'
-            : 'fan row × closing block';
+          : 'fan row × closing block';
       fail(key, `${an} ${fmtRect(ar)} × ${bn} ${fmtRect(br)}`);
     }
   }
@@ -387,8 +347,6 @@ function run(vp: Viewport): Result {
       'widest row': Math.round(F.widestRow),
       'free column': Math.round(F.freeColumn),
       'closing placement': F.closingPlacement === 'beside' ? 1 : 0,
-      'stamp cell': Math.round(F.stamp.solvedCell * 10) / 10,
-      'stamp shown': F.stamp.shown ? 1 : 0,
     },
   };
 }

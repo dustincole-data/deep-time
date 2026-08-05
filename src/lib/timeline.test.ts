@@ -227,9 +227,10 @@ describe('the withheld ten (§7)', () => {
   });
 
   it('is chronological and never carries a line', () => {
-    // §7 revised 2026-08-02: the ten DO carry art now, for the finale stamp.
-    // The line ruling is untouched — the cram has no room for one, and the ten
-    // are meant to arrive as a mass rather than be read one at a time.
+    // §7 revised 2026-08-02: the ten DO carry §11's three art-recipe clauses
+    // now (see the test below). The line ruling is untouched regardless of
+    // whether anything currently bakes or draws that art — the ten are still
+    // meant to arrive as a mass rather than be read one at a time.
     for (let i = 0; i < withheld.length - 1; i++) {
       expect(withheld[i]!.yearsAgo).toBeGreaterThan(withheld[i + 1]!.yearsAgo);
     }

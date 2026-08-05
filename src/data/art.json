@@ -1019,204 +1019,404 @@
     "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
-  "ardipithecus": {
-    "file": "/art/ardipithecus.webp",
-    "w": 154,
-    "h": 256,
-    "opaque": [
-      0.1494,
-      0.0898,
-      0.7013,
-      0.8203
-    ],
-    "alt": "",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "light"
-    },
-    "contrast": 3.05,
-    "contrastFullSize": 5.21,
-    "gatedOn": "fullSize",
-    "referenceCheckedAgainst": null
+  "record/gobekli-tepe": {
+    "file": "/art/record/gobekli-tepe.webp",
+    "w": 100,
+    "h": 160,
+    "alt": "Göbekli Tepe",
+    "licence": "PD",
+    "credit": "Photograph: Erkcan, Wikimedia Commons"
   },
-  "first-stone-tools": {
-    "file": "/art/first-stone-tools.webp",
-    "w": 256,
-    "h": 245,
-    "opaque": [
-      0.0898,
-      0.0939,
-      0.8203,
-      0.8163
-    ],
-    "alt": "",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "light"
-    },
-    "contrast": 1.79,
-    "contrastFullSize": 3.59,
-    "gatedOn": "fullSize",
-    "referenceCheckedAgainst": null
+  "record/jomon-pottery": {
+    "file": "/art/record/jomon-pottery.webp",
+    "w": 147,
+    "h": 160,
+    "alt": "The First Pottery",
+    "licence": "PD",
+    "credit": "Photograph: User:PHG, Wikimedia Commons"
   },
-  "first-homo": {
-    "file": "/art/first-homo.webp",
-    "w": 241,
-    "h": 256,
-    "opaque": [
-      0.0954,
-      0.0898,
-      0.8091,
-      0.8203
-    ],
-    "alt": "",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "light"
-    },
-    "contrast": 1.95,
-    "contrastFullSize": 3.69,
-    "gatedOn": "fullSize",
-    "referenceCheckedAgainst": null
+  "record/tower-of-jericho": {
+    "file": "/art/record/tower-of-jericho.webp",
+    "w": 160,
+    "h": 120,
+    "alt": "The Tower of Jericho",
+    "licence": "PD",
+    "credit": "Photograph: Reinhard Dietrich, Wikimedia Commons"
   },
-  "homo-erectus": {
-    "file": "/art/homo-erectus.webp",
-    "w": 242,
-    "h": 256,
-    "opaque": [
-      0.095,
-      0.0898,
-      0.8099,
-      0.8203
-    ],
-    "alt": "",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "light"
-    },
-    "contrast": 1.7,
-    "contrastFullSize": 3.65,
-    "gatedOn": "fullSize",
-    "referenceCheckedAgainst": null
+  "record/catalhoyuk-mural": {
+    "file": "/art/record/catalhoyuk-mural.webp",
+    "w": 160,
+    "h": 95,
+    "alt": "Çatalhöyük",
+    "licence": "PD",
+    "credit": "Photographer unknown; reproduced in B. Brentjes, 'Das Leopardenfell im Alten Orient,' Das Pelzgewerbe XVI (1965), after Mellaart 1962; Wikimedia Commons"
   },
-  "fire-kept": {
-    "file": "/art/fire-kept.webp",
-    "w": 234,
-    "h": 256,
-    "opaque": [
-      0.0983,
-      0.0898,
-      0.8034,
-      0.8203
-    ],
-    "alt": "",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "light"
-    },
-    "contrast": 1.68,
-    "contrastFullSize": 3.91,
-    "gatedOn": "fullSize",
-    "referenceCheckedAgainst": null
+  "record/flint-sickle": {
+    "file": "/art/record/flint-sickle.webp",
+    "w": 99,
+    "h": 160,
+    "alt": "Early Farming: The Flint Sickle",
+    "licence": "CC0",
+    "credit": "Metropolitan Museum of Art, Rogers Fund; CC0 (Wikimedia Commons)"
   },
-  "homo-sapiens": {
-    "file": "/art/homo-sapiens.webp",
-    "w": 210,
-    "h": 256,
-    "opaque": [
-      0.1095,
-      0.0898,
-      0.781,
-      0.8203
-    ],
-    "alt": "",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "dark"
-    },
-    "contrast": 6.2,
-    "contrastFullSize": 5.47,
-    "gatedOn": "fullSize",
-    "referenceCheckedAgainst": null
+  "record/copper-awl": {
+    "file": "/art/record/copper-awl.webp",
+    "w": 160,
+    "h": 62,
+    "alt": "Copper Smelting",
+    "licence": "CC0",
+    "credit": "Metropolitan Museum of Art; CC0 (Wikimedia Commons)"
   },
-  "oldest-known-picture": {
-    "file": "/art/oldest-known-picture.webp",
-    "w": 256,
-    "h": 183,
-    "opaque": [
-      0.0898,
-      0.1257,
-      0.8203,
-      0.7486
-    ],
-    "alt": "",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "light"
-    },
-    "contrast": 3,
-    "contrastFullSize": 6.57,
-    "gatedOn": "fullSize",
-    "referenceCheckedAgainst": null
+  "record/narmer-palette": {
+    "file": "/art/record/narmer-palette.webp",
+    "w": 108,
+    "h": 160,
+    "alt": "The Narmer Palette",
+    "licence": "PD",
+    "credit": "Photographer unknown (PD-old-100, 2D reproduction of an ancient artefact)"
   },
-  "farming": {
-    "file": "/art/farming.webp",
-    "w": 221,
-    "h": 256,
-    "opaque": [
-      0.1086,
-      0.0938,
-      0.7828,
-      0.8164
-    ],
-    "alt": "",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "dark"
-    },
-    "contrast": 7.94,
-    "contrastFullSize": 4.27,
-    "gatedOn": "fullSize",
-    "referenceCheckedAgainst": null
+  "record/great-pyramid-giza": {
+    "file": "/art/record/great-pyramid-giza.webp",
+    "w": 160,
+    "h": 117,
+    "alt": "The Great Pyramid of Giza",
+    "licence": "PD",
+    "credit": "Eduard Spelterini (1852-1931); scanned from Über den Wolken, Brunner & Co, Zürich 1928"
   },
-  "industrial-revolution": {
-    "file": "/art/industrial-revolution.webp",
-    "w": 208,
-    "h": 256,
-    "opaque": [
-      0.1106,
-      0.0898,
-      0.7837,
-      0.8203
-    ],
-    "alt": "",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "dark"
-    },
-    "contrast": 5.38,
-    "contrastFullSize": 3.83,
-    "gatedOn": "fullSize",
-    "referenceCheckedAgainst": null
+  "record/stonehenge": {
+    "file": "/art/record/stonehenge.webp",
+    "w": 160,
+    "h": 120,
+    "alt": "Stonehenge",
+    "licence": "PD",
+    "credit": "Photograph: uploader Hasso~commonswiki (credited per Commons copyright assumption), Wikimedia Commons"
   },
-  "writing": {
-    "file": "/art/writing.webp",
-    "w": 251,
-    "h": 256,
-    "opaque": [
-      0.0916,
-      0.0898,
-      0.8167,
-      0.8203
-    ],
-    "alt": "",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "dark"
-    },
-    "contrast": 8.39,
-    "contrastFullSize": 6.87,
-    "gatedOn": "fullSize",
-    "referenceCheckedAgainst": null
+  "record/cuneiform-tablet-akkadian": {
+    "file": "/art/record/cuneiform-tablet-akkadian.webp",
+    "w": 145,
+    "h": 160,
+    "alt": "Cuneiform Tablet",
+    "licence": "PD",
+    "credit": "The Letterform Archive; translation assistance by Manuel Molina"
+  },
+  "record/code-of-hammurabi": {
+    "file": "/art/record/code-of-hammurabi.webp",
+    "w": 120,
+    "h": 160,
+    "alt": "The Code of Hammurabi",
+    "licence": "PD",
+    "credit": "Rmashhadi, Wikimedia Commons (released into the public domain)"
+  },
+  "record/shang-oracle-bone": {
+    "file": "/art/record/shang-oracle-bone.webp",
+    "w": 107,
+    "h": 160,
+    "alt": "Shang Dynasty Oracle Bone",
+    "licence": "CC0",
+    "credit": "Gary Todd"
+  },
+  "record/chinese-bronze-zun-inscription": {
+    "file": "/art/record/chinese-bronze-zun-inscription.webp",
+    "w": 160,
+    "h": 107,
+    "alt": "Inscribed Bronze Zun Vessel",
+    "licence": "CC0",
+    "credit": "Gary Todd"
+  },
+  "record/lydian-gold-stater-croesus": {
+    "file": "/art/record/lydian-gold-stater-croesus.webp",
+    "w": 160,
+    "h": 120,
+    "alt": "Lydian Gold Stater",
+    "licence": "CC0",
+    "credit": "The Metropolitan Museum of Art (Open Access)"
+  },
+  "record/parthenon-colonnade": {
+    "file": "/art/record/parthenon-colonnade.webp",
+    "w": 160,
+    "h": 107,
+    "alt": "The Parthenon",
+    "licence": "CC0",
+    "credit": "Jebulon, Wikimedia Commons"
+  },
+  "record/terracotta-army-warrior": {
+    "file": "/art/record/terracotta-army-warrior.webp",
+    "w": 107,
+    "h": 160,
+    "alt": "The Terracotta Army",
+    "licence": "CC0",
+    "credit": "Gary Lee Todd, Ph.D., Wikimedia Commons"
+  },
+  "record/rosetta-stone": {
+    "file": "/art/record/rosetta-stone.webp",
+    "w": 112,
+    "h": 160,
+    "alt": "The Rosetta Stone",
+    "licence": "PD",
+    "credit": "Unknown author"
+  },
+  "record/fangmatan-paper-map": {
+    "file": "/art/record/fangmatan-paper-map.webp",
+    "w": 160,
+    "h": 129,
+    "alt": "Paper in Han China",
+    "licence": "PD",
+    "credit": "Unknown photographer (PD-old, artefact photograph)"
+  },
+  "record/great-stupa-sanchi": {
+    "file": "/art/record/great-stupa-sanchi.webp",
+    "w": 160,
+    "h": 80,
+    "alt": "The Great Stupa at Sanchi",
+    "licence": "CC0",
+    "credit": "RohitChohan25, Wikimedia Commons"
+  },
+  "record/colosseum-interior": {
+    "file": "/art/record/colosseum-interior.webp",
+    "w": 160,
+    "h": 104,
+    "alt": "The Colosseum",
+    "licence": "CC0",
+    "credit": "Wilfredor, Wikimedia Commons"
+  },
+  "record/nazca-monkey-geoglyph": {
+    "file": "/art/record/nazca-monkey-geoglyph.webp",
+    "w": 151,
+    "h": 160,
+    "alt": "The Nazca Lines",
+    "licence": "PD",
+    "credit": "Maria Reiche, 1953 (dedicated to the public domain by the photographer)"
+  },
+  "record/maya-stela-glyphs": {
+    "file": "/art/record/maya-stela-glyphs.webp",
+    "w": 160,
+    "h": 155,
+    "alt": "Maya Glyphs",
+    "licence": "CC0",
+    "credit": "The Metropolitan Museum of Art (Open Access)"
+  },
+  "record/hagia-sophia": {
+    "file": "/art/record/hagia-sophia.webp",
+    "w": 160,
+    "h": 117,
+    "alt": "Hagia Sophia",
+    "licence": "PD",
+    "credit": "Detroit Publishing Co. photochrom print, c. 1897; Library of Congress via Wikimedia Commons"
+  },
+  "record/bayeux-tapestry": {
+    "file": "/art/record/bayeux-tapestry.webp",
+    "w": 103,
+    "h": 160,
+    "alt": "The Bayeux Tapestry (detail: Archbishop Stigand)",
+    "licence": "PD",
+    "credit": "Unknown embroiderers; photograph by Myrabella, Wikimedia Commons"
+  },
+  "record/sankore-mosque-timbuktu": {
+    "file": "/art/record/sankore-mosque-timbuktu.webp",
+    "w": 160,
+    "h": 102,
+    "alt": "Sankore Mosque, Timbuktu",
+    "licence": "PD",
+    "credit": "Photograph by Edmond Fortier (1862-1928), 1905-1906; Wikimedia Commons"
+  },
+  "record/angkor-wat": {
+    "file": "/art/record/angkor-wat.webp",
+    "w": 160,
+    "h": 124,
+    "alt": "Angkor Wat",
+    "licence": "PD",
+    "credit": "Photograph by Emile Gsell (1838-1879), 1866; Wikimedia Commons"
+  },
+  "record/great-zimbabwe": {
+    "file": "/art/record/great-zimbabwe.webp",
+    "w": 160,
+    "h": 111,
+    "alt": "Great Zimbabwe (Great Enclosure outer wall)",
+    "licence": "PD",
+    "credit": "David Randall-MacIver, 1906 excavation photograph; Wikimedia Commons"
+  },
+  "record/yuan-bronze-hand-gun": {
+    "file": "/art/record/yuan-bronze-hand-gun.webp",
+    "w": 160,
+    "h": 120,
+    "alt": "Yuan-dynasty bronze hand-gun",
+    "licence": "CC0",
+    "credit": "Photograph by Gary Todd, Wikimedia Commons"
+  },
+  "record/machu-picchu": {
+    "file": "/art/record/machu-picchu.webp",
+    "w": 160,
+    "h": 100,
+    "alt": "Machu Picchu",
+    "licence": "PD",
+    "credit": "Photograph by Hiram Bingham III, 1912 (Yale Peruvian Expedition / National Geographic); Wikimedia Commons"
+  },
+  "record/gutenberg-bible": {
+    "file": "/art/record/gutenberg-bible.webp",
+    "w": 120,
+    "h": 160,
+    "alt": "The Gutenberg Bible",
+    "licence": "PD",
+    "credit": "Johann Gutenberg (printer); digitization: World Digital Library, Library of Congress"
+  },
+  "record/mona-lisa": {
+    "file": "/art/record/mona-lisa.webp",
+    "w": 107,
+    "h": 160,
+    "alt": "The Mona Lisa",
+    "licence": "PD",
+    "credit": "Leonardo da Vinci; digital reproduction: C2RMF (Centre de recherche et de restauration des musees de France)"
+  },
+  "record/taj-mahal": {
+    "file": "/art/record/taj-mahal.webp",
+    "w": 160,
+    "h": 138,
+    "alt": "The Taj Mahal",
+    "licence": "CC0",
+    "credit": "Photograph, 1865; J. Paul Getty Museum, Open Content Program"
+  },
+  "record/girl-with-a-pearl-earring": {
+    "file": "/art/record/girl-with-a-pearl-earring.webp",
+    "w": 137,
+    "h": 160,
+    "alt": "Girl with a Pearl Earring",
+    "licence": "PD",
+    "credit": "Johannes Vermeer; image: Mauritshuis"
+  },
+  "record/newtons-principia": {
+    "file": "/art/record/newtons-principia.webp",
+    "w": 160,
+    "h": 106,
+    "alt": "Newton's Principia (annotated first edition)",
+    "licence": "CC0",
+    "credit": "Photograph: Andrew Dunn (andrewdunnphoto.com); book: Wren Library, Trinity College, Cambridge"
+  },
+  "record/jenner-cowpock-print": {
+    "file": "/art/record/jenner-cowpock-print.webp",
+    "w": 160,
+    "h": 128,
+    "alt": "\"The Cow-Pock\" - Gillray's Satire on Vaccination",
+    "licence": "PD",
+    "credit": "James Gillray; Library of Congress"
+  },
+  "record/first-photograph": {
+    "file": "/art/record/first-photograph.webp",
+    "w": 160,
+    "h": 111,
+    "alt": "The First Photograph",
+    "licence": "PD",
+    "credit": "Nicephore Niepce (creator); enhanced reproduction by Helmut Gernsheim, ca. 1952, via University of Minnesota / Harry Ransom Center"
+  },
+  "record/stephensons-rocket": {
+    "file": "/art/record/stephensons-rocket.webp",
+    "w": 160,
+    "h": 152,
+    "alt": "Stephenson's Rocket",
+    "licence": "PD",
+    "credit": "Unknown engraver; Popular Science Monthly, vol. 12 (1877-78), via Wikimedia Commons"
+  },
+  "record/great-wave-off-kanagawa": {
+    "file": "/art/record/great-wave-off-kanagawa.webp",
+    "w": 160,
+    "h": 108,
+    "alt": "The Great Wave off Kanagawa",
+    "licence": "PD",
+    "credit": "Katsushika Hokusai; Metropolitan Museum of Art"
+  },
+  "record/morse-telegraph": {
+    "file": "/art/record/morse-telegraph.webp",
+    "w": 160,
+    "h": 112,
+    "alt": "The Telegraph",
+    "licence": "PD",
+    "credit": "Unknown engraver; Popular Science Monthly, vol. 3 (1872-73), via Wikimedia Commons"
+  },
+  "record/penny-black": {
+    "file": "/art/record/penny-black.webp",
+    "w": 136,
+    "h": 160,
+    "alt": "The Penny Black",
+    "licence": "PD",
+    "credit": "William Wyon (Royal Mint engraver, design); Metropolitan Museum of Art, via Wikimedia Commons"
+  },
+  "record/bell-telephone": {
+    "file": "/art/record/bell-telephone.webp",
+    "w": 85,
+    "h": 160,
+    "alt": "The Telephone",
+    "licence": "PD",
+    "credit": "Unknown engraver; Popular Science Monthly, vol. 12 (1877-78), via Wikimedia Commons"
+  },
+  "record/brooklyn-bridge": {
+    "file": "/art/record/brooklyn-bridge.webp",
+    "w": 160,
+    "h": 107,
+    "alt": "The Brooklyn Bridge",
+    "licence": "PD",
+    "credit": "Unknown photographer; Library of Congress Prints and Photographs Division"
+  },
+  "record/eiffel-tower": {
+    "file": "/art/record/eiffel-tower.webp",
+    "w": 113,
+    "h": 160,
+    "alt": "The Eiffel Tower",
+    "licence": "PD",
+    "credit": "Unknown photographer; Library of Congress Prints and Photographs Division"
+  },
+  "record/marconi-wireless-1901": {
+    "file": "/art/record/marconi-wireless-1901.webp",
+    "w": 160,
+    "h": 99,
+    "alt": "Radio",
+    "licence": "PD",
+    "credit": "LIFE Photo Archive (published anonymously in the UK; PD-anon-70-EU / PD-US)"
+  },
+  "record/wright-flyer-first-flight": {
+    "file": "/art/record/wright-flyer-first-flight.webp",
+    "w": 160,
+    "h": 104,
+    "alt": "Wright Flyer",
+    "licence": "PD",
+    "credit": "John T. Daniels / Library of Congress"
+  },
+  "record/ford-model-t-roadster": {
+    "file": "/art/record/ford-model-t-roadster.webp",
+    "w": 160,
+    "h": 115,
+    "alt": "Model T",
+    "licence": "PD",
+    "credit": "Library of Congress (photographer not credited; PD-US expired)"
+  },
+  "record/trinity-test-fireball": {
+    "file": "/art/record/trinity-test-fireball.webp",
+    "w": 160,
+    "h": 108,
+    "alt": "Trinity Test",
+    "licence": "PD",
+    "credit": "Berlyn Brixner / Los Alamos National Laboratory"
+  },
+  "record/eniac-brl-programmers": {
+    "file": "/art/record/eniac-brl-programmers.webp",
+    "w": 160,
+    "h": 122,
+    "alt": "ENIAC",
+    "licence": "PD",
+    "credit": "U.S. Army (photographer unknown)"
+  },
+  "record/sputnik-1-replica": {
+    "file": "/art/record/sputnik-1-replica.webp",
+    "w": 160,
+    "h": 131,
+    "alt": "Sputnik",
+    "licence": "PD",
+    "credit": "NSSDC, NASA"
+  },
+  "record/apollo-11-bootprint": {
+    "file": "/art/record/apollo-11-bootprint.webp",
+    "w": 159,
+    "h": 160,
+    "alt": "Apollo 11",
+    "licence": "PD",
+    "credit": "NASA / Buzz Aldrin"
   }
 }

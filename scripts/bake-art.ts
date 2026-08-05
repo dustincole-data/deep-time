@@ -25,6 +25,13 @@
  * field under the box across its ENTIRE dwell window"), using `sky1` — the
  * band field.ts's own doc comment already calls "most likely to land on".
  *
+ * A second, far simpler pass bakes the record register (§11): real
+ * photographs of surviving artefacts, one per `flood` entry (`record.json`).
+ * No keying, no halo, no contrast gate — a rectangular print has no keyed
+ * boundary to measure across — so it is a plain fit-inside resize into WebP,
+ * still run through this same Playwright canvas rather than a new `sharp`
+ * dependency, for the byte-identical reason above.
+ *
  *   node scripts/bake-art.ts
  *   node scripts/bake-art.ts --verbose
  */
@@ -32,7 +39,7 @@ import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
-import { arrivals, withheld, yearsAgo } from '../src/lib/timeline.ts';
+import { arrivals, flood, yearsAgo } from '../src/lib/timeline.ts';
 import { place, zones } from '../src/lib/layout.ts';
 import { fieldAt, type RGB } from '../src/lib/field.ts';
 
@@ -40,6 +47,10 @@ const VERBOSE = process.argv.includes('--verbose');
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const OUT_DIR = join(ROOT, 'public', 'art');
 const ART_JSON = join(ROOT, 'src', 'data', 'art.json');
+/** The record register's own source and output dirs (§11) — separate from
+ *  the painted register's `art/source/` and flat `public/art/`. */
+const RECORD_SRC_DIR = join(ROOT, 'art', 'record');
+const RECORD_OUT_DIR = join(OUT_DIR, 'record');
 
 /**
  * §11's `alt` = the analogy clause, carried from timeline.json's `analogy`
@@ -80,23 +91,7 @@ interface ManifestEntry {
   quadrants: string[];
   /** True for the four planet portraits (§11): whole-disc subject, square crop, no rim trim. */
   isPlanet: boolean;
-  /**
-   * Cap on the baked long edge, in px. Omit for `SCROLL_MAX_EDGE`, which is
-   * what every scroll subject takes.
-   *
-   * The withheld ten are the one set with a KNOWN, small, capped box: a stamp
-   * cell is ≤ 62.6 px at every gate viewport, by construction (§9 caps the cell
-   * at a fifth of the fan's widest row). §12's draw rule is
-   * `maxDrawCSS = 2 × intrinsicPx / dpr`, so 62.6 CSS px at DPR 3 is satisfied
-   * by an intrinsic 94 px. Baking them at ~1,000 px shipped 1.11 MB to draw
-   * 60 px pictures. 256 is 2.7× what the rule needs and still an eighth of the
-   * bytes — §12's own words are "the art box is a maximum, not a target".
-   */
-  maxEdge?: number;
 }
-
-/** See ManifestEntry.maxEdge — the withheld ten only ever draw in a stamp cell. */
-const STAMP_MAX_EDGE = 256;
 
 /**
  * The scroll subjects' cap, and the reason there has to be one.
@@ -126,6 +121,15 @@ const STAMP_MAX_EDGE = 256;
  * set (Cooksonia, 3.44:1 at 590 px) untouched.
  */
 const SCROLL_MAX_EDGE = 700;
+
+/**
+ * The record register's cap (§11). These are prints, not cut-outs — no
+ * keying, no halo — and they only ever draw at blip-cell size, so 160 clears
+ * §12's 2× draw rule without paying for pixels nothing can show. §12
+ * projected the record register at ~4.2 MB decoded for ~50 images at this
+ * edge, folded into the two totals `main()` prints and asserts below.
+ */
+const FLOOD_MAX_EDGE = 160;
 
 const MANIFEST: ManifestEntry[] = [
   {
@@ -336,54 +340,16 @@ const MANIFEST: ManifestEntry[] = [
     quadrants: ['chicxulub'],
     isPlanet: true,
   },
-  /* THE WITHHELD TEN, 2026-08-02 — §7's revision gives them art for the finale
-     stamp (§9). They are never drawn on the scrolling page, so their field is
-     not a dwell sample but the drained finale black (see FINALE_FIELD).
-
-     Three proof rounds at --quality low, recorded because each fixed a
-     different failure the recipe already predicts:
-       1. `homo-erectus` came back as a nude modern man and tripped the safety
-          filter twice. All three hominin heads moved to PROFILE busts — a
-          profile carries the brow, the forehead and the chin as silhouette,
-          which is what §11's "readable as a strong silhouette at small size"
-          asks for and what a front-facing portrait cannot do.
-       2. `ardipithecus` came back KNUCKLE-WALKING — the exact thing its
-          negative named. Same failure as the gharial and the three fingers:
-          naming the default summons it. The words were deleted and bipedality
-          stated positively three ways instead (upright on two legs, feet flat
-          on the ground, hands empty and clear of the ground).
-       3. The three heads came back photoreal, off-register from the flat
-          painted set. The flatness push went in the `negative` field, not the
-          analogy — the analogy ships as alt text and must stay a description
-          of the subject, never of the treatment.
-     `writing` then needed a fourth round at medium: it baked as an even grid
-     of identical triangles reading as a waffle, and was re-rolled for ruled
-     rows of wedges turned different ways. */
-  {
-    file: 'art/source/sheet-29-ardipithecus-first-stone-tools-first-homo-homo-erectus.png',
-    quadrants: ['ardipithecus', 'first-stone-tools', 'first-homo', 'homo-erectus'],
-    isPlanet: false,
-    maxEdge: STAMP_MAX_EDGE,
-  },
-  {
-    file: 'art/source/sheet-30-fire-kept-homo-sapiens-oldest-known-picture-farming.png',
-    quadrants: ['fire-kept', 'homo-sapiens', 'oldest-known-picture', 'farming'],
-    isPlanet: false,
-    maxEdge: STAMP_MAX_EDGE,
-  },
-  {
-    // The `writing` quadrant here is superseded by sheet 32.
-    file: 'art/source/sheet-31-writing-industrial-revolution.png',
-    quadrants: ['', 'industrial-revolution', '', ''],
-    isPlanet: false,
-    maxEdge: STAMP_MAX_EDGE,
-  },
-  {
-    file: 'art/source/sheet-32-writing.png',
-    quadrants: ['writing'],
-    isPlanet: false,
-    maxEdge: STAMP_MAX_EDGE,
-  },
+  /* THE WITHHELD TEN's painted art (sheets 29-32, generated 2026-08-02 for
+     §7's since-cut finale stamp) is deliberately NOT in this MANIFEST — the
+     stamp was their only consumer and Task 4 (2026-08-04) deleted it, so
+     baking them would ship bytes nothing draws. Dustin's ruling, 2026-08-04:
+     drop the bake, keep the sources — `art/source/sheet-29.png` through
+     `sheet-32.png` stay on disk and in git history untouched, in case the
+     finale ever wants this art again. Their generation history (three
+     proof-round fixes: hominin heads moved to profile busts, ardipithecus's
+     knuckle-walking negative, writing's wedge-grid re-roll) is unchanged and
+     recoverable from this file's history. */
 ];
 
 const DESKTOP = { w: 1440, h: 900 };
@@ -407,16 +373,7 @@ const STRENGTH = 0.62;
 const RINGS: [number, number][] = [[0.008, 0.003], [0.016, 0.008]];
 
 /** §10: sample the field across the arrival's real dwell window, not at a point. */
-/**
- * §9's finale field, fully drained. `drawField` lays `rgba(3,5,8,drain)` over
- * everything and the drain reaches 1 before the cascade starts, so every one of
- * the withheld ten sits on this one colour for its whole life. There is no
- * dwell window to sample: they are never on the scrolling page at all (§7).
- */
-const FINALE_FIELD: RGB = [3, 5, 8];
-
 function dwellFieldSamples(id: string): RGB[] {
-  if (withheld.some((w) => w.id === id)) return [FINALE_FIELD];
   const z = zones(DESKTOP);
   const placed = place(arrivals, z);
   const p = placed.find((x) => x.id === id);
@@ -442,9 +399,10 @@ async function bakeSheetInPage(
     dataUrl: string;
     quadrants: string[];
     isPlanetBySubject: Record<string, boolean>;
-    /** 0 = ship at the trimmed source size. See ManifestEntry.maxEdge. */
+    /** 0 = ship at the trimmed source size; otherwise the cap on the baked
+     *  long edge (`SCROLL_MAX_EDGE`, the only value this ever carries now). */
     maxEdge: number;
-    fieldSamplesBySubject: Record<string, [number, number, number][]>;
+    fieldSamplesBySubject: Record<string, RGB[]>;
     strength: number;
     gate: number;
     rings: [number, number][];
@@ -664,7 +622,7 @@ async function bakeSheetInPage(
   }
 
   /** A flat field, the given canvas over it, measured. Used by both passes. */
-  function overField(draw: (cx: CanvasRenderingContext2D) => void, w: number, h: number, field: [number, number, number]): HTMLCanvasElement {
+  function overField(draw: (cx: CanvasRenderingContext2D) => void, w: number, h: number, field: RGB): HTMLCanvasElement {
     const cvs = document.createElement('canvas');
     cvs.width = w;
     cvs.height = h;
@@ -676,7 +634,7 @@ async function bakeSheetInPage(
   }
 
   // Contrast across the subject's boundary, against a flat field colour.
-  function measureAgainstField(src: HTMLCanvasElement, rings: HTMLCanvasElement[] | null, field: [number, number, number], strength: number): number {
+  function measureAgainstField(src: HTMLCanvasElement, rings: HTMLCanvasElement[] | null, field: RGB, strength: number): number {
     const pad = padOf(src);
     const cvs = overField((cx) => compose(cx, src, rings, strength), src.width + pad * 2, src.height + pad * 2, field);
     return measureComposite(cvs, src, pad, pad);
@@ -698,7 +656,7 @@ async function bakeSheetInPage(
    * the arrival's whole dwell, and a subject below 3:1 is still excluded and
    * its art revised.
    */
-  function solveHalo(src: HTMLCanvasElement, fields: [number, number, number][], strength: number) {
+  function solveHalo(src: HTMLCanvasElement, fields: RGB[], strength: number) {
     // Each polarity's rings depend only on the subject, so they are built once
     // and reused across every sampled field.
     const ringsFor = [true, false].map((d) => haloRings(src, d));
@@ -797,9 +755,7 @@ async function bakeSheetInPage(
          subject is now downscaled to SCROLL_MAX_EDGE, and a downscale is a
          low-pass filter across the very boundary the 4 px band is read at, so
          it can only pull the two means together. The recorded number has to be
-         the shipped one or it is a claim about an asset nobody receives — and
-         the same fix corrects the withheld ten, which record a number measured
-         before a 4× reduction.
+         the shipped one or it is a claim about an asset nobody receives.
          Mask is the SUBJECT scaled and offset exactly as `bakeHalo` placed it,
          because the finished asset's own alpha is subject + halo and the gate is
          measured across the subject's boundary alone. Worst case over the
@@ -823,11 +779,11 @@ async function bakeSheetInPage(
       /* The SUBJECT's own box inside the shipped asset, as fractions.
          Every asset carries a transparent margin — the halo ring is a dilation,
          so it needs room, and `trim` leaves it. Measured 2026-08-02 that margin
-         is 18-30% of the canvas, which is invisible on the scroll (the box is a
-         maximum there) and fatal in the finale stamp: filling a 62 px CELL with
-         the CANVAS leaves the picture covering 70% of it, and ten pictures
-         separated by their own padding read as a row of icons rather than as a
-         jam. Recorded here because this is the only place that can measure it. */
+         is 18-30% of the canvas — invisible on the scroll, where the box is a
+         maximum rather than a target. Recorded here because this is the only
+         place that can measure it; §9's finale stamp, the one consumer that
+         read it at a size small enough for the margin to matter, was cut
+         2026-08-04 (Task 4) with no replacement consumer yet. */
       const ob = alphaBounds(baked);
       const webp = baked.toDataURL('image/webp', 0.92);
       results[id] = {
@@ -846,8 +802,38 @@ async function bakeSheetInPage(
   });
 }
 
+/**
+ * The record register's bake (§11): fit inside `maxEdge`, encode WebP. No
+ * keying, no halo, no contrast gate — passed directly to `page.evaluate`, the
+ * same way `bakeSheetInPage` is, so it must stay self-contained (its own
+ * source, no reference to anything outside `args`). Every source under
+ * `art/record/` is a JPEG and carries no alpha; the opaque fill before
+ * drawing strips it defensively rather than assuming that stays true.
+ */
+async function bakeRecordInPage(args: { dataUrl: string; maxEdge: number }) {
+  const img = new Image();
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = () => reject(new Error('image failed to decode'));
+    img.src = args.dataUrl;
+  });
+  const scale = Math.min(1, args.maxEdge / Math.max(img.naturalWidth, img.naturalHeight));
+  const w = Math.max(1, Math.round(img.naturalWidth * scale));
+  const h = Math.max(1, Math.round(img.naturalHeight * scale));
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const cx = c.getContext('2d')!;
+  cx.fillStyle = '#000';
+  cx.fillRect(0, 0, w, h);
+  cx.imageSmoothingQuality = 'high';
+  cx.drawImage(img, 0, 0, w, h);
+  return { w, h, webp: c.toDataURL('image/webp', 0.82) };
+}
+
 async function main() {
   await mkdir(OUT_DIR, { recursive: true });
+  await mkdir(RECORD_OUT_DIR, { recursive: true });
   const browser = await chromium.launch();
   const page = await browser.newPage();
   const art: Record<string, any> = {};
@@ -869,7 +855,7 @@ async function main() {
         quadrants: entry.quadrants,
         isPlanetBySubject,
         fieldSamplesBySubject,
-        maxEdge: entry.maxEdge ?? SCROLL_MAX_EDGE,
+        maxEdge: SCROLL_MAX_EDGE,
         strength: STRENGTH,
         gate: GATE,
         rings: RINGS,
@@ -884,34 +870,21 @@ async function main() {
            strength that now means the ART is what gets revised, which is the
            outcome §11 named anyway.
 
-           WHICH measurement the gate reads depends on where the subject is
-           drawn, and there are only two places (2026-08-04).
-
-           A SCROLL subject is read at its shipped size, against the field, with
-           its whole halo drawn — so the shipped-size number is the one that
-           describes it, and it is the one gated.
-
-           The WITHHELD TEN are read in §9's stamp, and the stamp is not a
-           boundary-separation situation at all. §9 rule 1 specifies them "edge-
-           to-edge, no gutter, no gap, no border": for eight of the ten cells
-           every neighbour is another picture, not the field. §9 rule 8 then
-           fills each cell from the subject's own `opaque` box and CLIPS the
-           overflow, so on whichever axis fills the cell the halo is scaled past
-           the edge and never drawn. Gating them on a measurement of the halo
-           against the field asks the art to buy separation that the design
-           deliberately removes and the cell throws away — measured, it demands
-           a 700 px asset (0.58 MB, over §12's transfer gate) to protect a 62 px
-           drawing whose halo is cropped off. So the ten are gated on the
-           full-size solve, and BOTH numbers are recorded either way. */
-        const inStamp = withheld.some((w) => w.id === id);
-        const failedGate = (inStamp ? r.contrastAtSolve : r.contrast) < GATE;
+           Every scroll subject is read at its shipped size, against the
+           field, with its whole halo drawn — so the shipped-size number is
+           the one that describes it, and it is the one gated. (The withheld
+           ten used to gate on the full-size solve instead, because §9's stamp
+           cropped their halo past recognition; the stamp — and the bake of
+           their art — is gone as of Task 6, 2026-08-04, so that branch is
+           too.) */
+        const failedGate = r.contrast < GATE;
         const base64 = String(r.webp).split(',')[1]!;
         const file = `${id}.webp`;
         await writeFile(join(OUT_DIR, file), Buffer.from(base64, 'base64'));
 
         console.log(
           `${id}  ${r.w}×${r.h}  contrast ${r.contrast}:1 / full ${r.contrastAtSolve}:1` +
-            `  gate on ${inStamp ? 'full (stamp)' : 'shipped'} ${failedGate ? '❌ BELOW GATE' : '✅'}` +
+            `  gate on shipped ${failedGate ? '❌ BELOW GATE' : '✅'}` +
             `  halo a${r.halo.strength.toFixed(2)}${r.halo.polarity ? ' ' + r.halo.polarity : ''}` +
             (notVerified ? '  ⚠ NOT VERIFIED — excluded from art.json' : '') +
             (failedGate ? '  ⚠ FAILED 3:1 GATE — excluded from art.json' : ''),
@@ -943,14 +916,50 @@ async function main() {
           contrast: r.contrast,
           /** The same measurement before the downscale. See `failedGate` for which one gates. */
           contrastFullSize: r.contrastAtSolve,
-          /** Which of the two §11's 3:1 gate was applied to, and why it is that one. */
-          gatedOn: inStamp ? 'fullSize' : 'shipped',
+          /** The measurement §11's 3:1 gate was applied to — always 'shipped'
+           *  now that the withheld ten, the one case gated on the full-size
+           *  solve instead, are no longer baked here (Task 6, 2026-08-04). */
+          gatedOn: 'shipped',
           referenceCheckedAgainst: a ? (a.reference ?? 'PhyloPic / published reconstructions, §11') : null,
         };
       }
     }
+
+    // The record register (§11): real photographs, one per `flood` entry —
+    // never a hardcoded count, always `flood.length`. Keyed `record/<id>` in
+    // art.json, distinct from the painted register's bare ids, which is also
+    // why the transfer/decoded totals below need no special-casing: joining
+    // `${key}.webp` onto OUT_DIR resolves this key to public/art/record/<id>.webp
+    // exactly as written below.
+    for (const f of flood) {
+      const buf = await readFile(join(RECORD_SRC_DIR, `${f.id}.jpg`));
+      const dataUrl = `data:image/jpeg;base64,${buf.toString('base64')}`;
+      const baked = await page.evaluate(bakeRecordInPage, { dataUrl, maxEdge: FLOOD_MAX_EDGE });
+      await writeFile(join(RECORD_OUT_DIR, `${f.id}.webp`), Buffer.from(baked.webp.split(',')[1]!, 'base64'));
+      console.log(`record/${f.id}  ${baked.w}×${baked.h}`);
+      art[`record/${f.id}`] = {
+        file: `/art/record/${f.id}.webp`,
+        w: baked.w,
+        h: baked.h,
+        // `alt` isn't in §11's list for this register, but ArtEntry (index.astro)
+        // is inferred from this file's own shape and every painted-register entry
+        // has one — omitting it here would make `.alt` a union-narrowing error at
+        // the one call site that reads it. The flood's own `name` is a fine alt.
+        alt: f.name,
+        licence: f.licence,
+        credit: f.credit,
+      };
+    }
   } finally {
     await browser.close();
+  }
+
+  // §11: every flood subject needs a baked image, and a missing licence or
+  // credit is fatal — this register ships with attribution or not at all.
+  for (const f of flood) {
+    const e = art[`record/${f.id}`];
+    if (!e) throw new Error(`${f.id}: no baked record image — every flood subject needs one`);
+    if (!e.licence || !e.credit) throw new Error(`${f.id}: baked without a licence or credit (§11)`);
   }
 
   await writeFile(ART_JSON, JSON.stringify(art, null, 2) + '\n');
@@ -965,7 +974,8 @@ async function main() {
      Decoded is the one §12 calls decisive — "a phone dies on resident bitmaps,
      not on transfer" — and it is the one a lower WebP quality cannot move, since
      a decoded bitmap is `w × h × 4` whatever it was encoded at. If either fails,
-     the remedy is fewer pixels (`SCROLL_MAX_EDGE`), not a lower quality. */
+     the remedy is fewer pixels (`SCROLL_MAX_EDGE` for the painted register,
+     `FLOOD_MAX_EDGE` for the record register), not a lower quality. */
   const entries = Object.entries(art) as [string, { w: number; h: number }][];
   const sizes = await Promise.all(entries.map(([id]) => stat(join(OUT_DIR, `${id}.webp`))));
   const transfer = sizes.reduce((s, f) => s + f.size, 0);
@@ -978,7 +988,9 @@ async function main() {
       `Decoded, all resident  ${mb(decoded)} MB / ${mb(DECODED_GATE)} gate  ${overDecoded ? '❌' : '✅'}`,
   );
   if (overTransfer || overDecoded) {
-    console.error('\n❌ GATE FAIL — §12. Lower SCROLL_MAX_EDGE; a lower WebP quality cannot move the decoded figure.');
+    console.error(
+      '\n❌ GATE FAIL — §12. Lower SCROLL_MAX_EDGE or FLOOD_MAX_EDGE; a lower WebP quality cannot move the decoded figure.',
+    );
     process.exitCode = 1;
   }
 }

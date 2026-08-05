@@ -1421,10 +1421,23 @@ export function fan(z: Zones): Fan {
    grid describes nothing still on screen. Solving the heap into it would
    reproduce the exact fault ruling E was written to kill: at 1920×1080 the stage
    ends at x=1614 and the bar sits at 1842, which is a 228 px hole through the
-   middle of the composition. So the flood takes the whole frame, and the ONLY
-   thing it stops clear of is the reserved scale zone (§5 rule 1). The finale
-   already reads the clock zone this way — `fan()`'s closing block sits inside it
-   at every desktop width and is swept against `z.scale` alone.
+   middle of the composition — and a rect strictly inside `z.stage` can never be
+   "clipped by the frame", which is what §4 consequence 2 requires of it. So the
+   flood takes the whole frame.
+
+   THE CLOCK ZONE IS RELEASED AT THE FINALE; THE BAR'S ZONE NEVER IS.
+   *Dustin's ruling, 2026-08-04, amending §4 and §15.* At the finale the reserved-
+   zone rule covers THE BAR ALONE, and the heap deliberately covers the bottom-
+   left where the clock zone is. That zone exists to protect a LIVE READOUT, and
+   there is no readout there to protect: `#hud` is at opacity 0 from px 525 of the
+   finale and the flood does not start until px 6,020. The finale already read it
+   this way before the amendment — `fan()`'s closing block sits inside `z.clock`
+   at every desktop width and is swept against `z.scale` alone. A future reader
+   who finds the heap over the clock zone has found the ruling, not a bug.
+
+   `z.scale` is a different matter and is NOT released: §15 protects the bar
+   absolutely, so nothing here — including a cell's ROTATED footprint, see
+   `BLIP_BAR_CLEAR` — may enter it at any viewport.
 
    IT BLEEDS OFF THREE EDGES AND NEVER THE FOURTH (§4 consequences 2 and 3). The
    fields run past the top, bottom and left of the frame by a fraction of a cell,
@@ -1437,11 +1450,19 @@ export function fan(z: Zones): Fan {
 /**
  * Below this the flood drops entirely rather than shrinking to a smear.
  *
- * `solvedCell` is the side of the square each subject gets if the two fields
- * were tiled exactly, so this is a floor on the ROOM per print, not on the drawn
- * size. §10's ruling — text at 200% costs art, never legibility — is what
- * licenses the drop: fifty prints at 30 px a side is not a smaller version of
- * the argument, it is a smudge, and the plate still carries every word.
+ * THE FLOOR IS HEIGHT-SHAPED, NOT AREA-SHAPED (Dustin, 2026-08-04). `solvedCell`
+ * is the SHORT SIDE OF THE SMALLEST SLOT either field's grid hands a print — not
+ * `sqrt(area / flood.length)`, which is what it was first written as and which
+ * measured the wrong thing. At 1440×900 with 200% text the plate takes 778 px of
+ * the 900 and leaves two 61 px ribbons; those ribbons are 1,354 px wide, so they
+ * carry 165,000 px² of area and cleared an area-shaped floor comfortably while
+ * handing every print a 30 px slot. §6 is explicit that this case drops: "if the
+ * band grows past the point where either `.blip` rect can hold a usable print,
+ * the flood drops entirely" — a rect with area but no height cannot hold one.
+ *
+ * §10's ruling — text at 200% costs art, never legibility — is what licenses the
+ * drop: fifty prints at 30 px a side is not a smaller version of the argument, it
+ * is a smudge, and the plate still carries every word.
  */
 export const BLIP_CELL_MIN = 34;
 /**
@@ -1452,7 +1473,18 @@ export const BLIP_CELL_MIN = 34;
  */
 export const BLIP_ROT_MAX = 2;
 
-/** Clear space kept between the heap's right edge and the reserved scale zone. */
+/**
+ * Clear space kept between the heap's right edge and the reserved scale zone.
+ *
+ * It is 8 px of CLEAR SPACE, not 8 px of hope: `rect` is the print's UNROTATED
+ * box and every print draws at up to ±`BLIP_ROT_MAX`, so the footprint that
+ * actually lands on the glass is the rotated AABB, which is wider. Measured
+ * before this was fixed, the drawn mass crossed `z.scale.x` by 0.09 px at
+ * 3440×1440 and 1.62 px at 3840×2160 — below every gate viewport, so it shipped
+ * green while breaching the one rule §15 protects absolutely. The clearance is
+ * therefore honoured against the ROTATED footprint (see `rotatedBy` and the cap
+ * in `blip()`), which holds at any width instead of at the widths swept.
+ */
 const BLIP_BAR_CLEAR = 8;
 /**
  * How far the mass runs off the top, bottom and left edges, in solved cells.
@@ -1527,16 +1559,6 @@ function clampInto(r: Rect, box: Rect): Rect {
   };
 }
 
-/**
- * THE PLATE'S COPY, as `#plate` in `index.astro` renders it. Modelled here for
- * the same reason every other string on this page is (see TEXT above): the band
- * is SOLVED to the words' own height (§4 consequence 4) and Node has no DOM.
- * If the markup's words change these change with them, and the browser gate is
- * what catches a disagreement.
- */
-const PLATE_KICKER = 'Everything after the last tick';
-/** `<h2 class="pt">All of<br />human history</h2>` — the break is in the markup. */
-const PLATE_TITLE = ['All of', 'human history'] as const;
 /** `.pk` → `.pt`, `.pt` → `.pr`, `.pr` → the closing line, and the band's own padding. Decorative px: they do not take text zoom. */
 const PLATE_GAPS = { kicker: 18, title: 26, rule: 26, pad: 40 } as const;
 /** `.pr { height: 1px }`. */
@@ -1547,6 +1569,12 @@ const PLATE_RULE_H = 1;
  * viewport and this text scale. The closing line is measured with the SAME spec
  * `fan()` gives it, because the plate reuses the finale's existing closing block
  * rather than duplicating it — one sentence, one measurement.
+ *
+ * EVERY string comes from `FINALE_CFG.copy`, never from a literal here. The band
+ * is SOLVED to the words' own height (§4 consequence 4), so a copy edit that this
+ * model could not see would silently leave the solved band and the rendered plate
+ * describing different text. `plateTitle` is an array because the break between
+ * its two lines is authored, not wrapped — `#plate` joins it with `<br />`.
  */
 function blipBandHeight(z: Zones, boxW: number): number {
   const { w, textScale: k } = z.viewport;
@@ -1565,18 +1593,27 @@ function blipBandHeight(z: Zones, boxW: number): number {
   const titleW = boxW * 0.92;
   const lineW = Math.min(470, boxW * (z.mobile ? 0.92 : 0.62));
 
-  const titleH = PLATE_TITLE.reduce((acc, s) => acc + blockH(s, title, titleW), 0);
+  const c = FINALE_CFG.copy;
+  const titleH = c.plateTitle.reduce((acc, s) => acc + blockH(plain(s), title, titleW), 0);
   return (
     PLATE_GAPS.pad +
-    blockH(PLATE_KICKER, kicker, titleW) +
+    blockH(plain(c.plateKicker), kicker, titleW) +
     PLATE_GAPS.kicker +
     titleH +
     PLATE_GAPS.title +
     PLATE_RULE_H +
     PLATE_GAPS.rule +
-    blockH(plain(FINALE_CFG.copy.closing), line, lineW) +
+    blockH(plain(c.closing), line, lineW) +
     PLATE_GAPS.pad
   );
+}
+
+/** The AABB a `w × h` rect occupies once it is drawn at `deg` about its own centre. */
+function rotatedBy(w: number, h: number, deg: number): { w: number; h: number } {
+  const a = (Math.abs(deg) * Math.PI) / 180;
+  const c = Math.cos(a);
+  const s = Math.sin(a);
+  return { w: w * c + h * s, h: w * s + h * c };
 }
 
 interface BlipSlot {
@@ -1627,10 +1664,10 @@ function blipShuffle<T>(xs: T[], r: () => number): T[] {
  * The geometry of the flood. A pure function of the viewport and the bar, like
  * every other rect on this site.
  *
- * The cell is DERIVED, never chosen: it is the side of the square that would
- * tile the two fields exactly with one square per flood subject. Density is
- * bought by adding subjects (§4's no-repeats rule), so `flood.length` is read
- * here and never assumed.
+ * The cell is DERIVED, never chosen: it is the short side of the smallest slot
+ * either field's own grid hands a print, so it answers §6's question directly —
+ * can this rect hold a usable print? Density is bought by adding subjects (§4's
+ * no-repeats rule), so `flood.length` is read here and never assumed.
  */
 export function blip(z: Zones, bar: Rect): Blip {
   const vh = z.viewport.h;
@@ -1647,33 +1684,20 @@ export function blip(z: Zones, bar: Rect): Blip {
   const topH = bandY;
   const botH = vh - (bandY + bandH);
 
-  const area = right <= 0 ? 0 : right * Math.max(0, topH) + right * Math.max(0, botH);
-  const solvedCell = Math.sqrt(area / n);
-
   const band: Rect = { x: 0, y: bandY, w: Math.max(0, right), h: bandH };
+  const dropped = (cell: number): Blip => ({
+    shown: false,
+    fields: [
+      { x: 0, y: 0, w: 0, h: 0 },
+      { x: 0, y: 0, w: 0, h: 0 },
+    ],
+    band,
+    cells: [],
+    bracket: [],
+    solvedCell: cell,
+  });
 
-  if (topH <= 0 || botH <= 0 || solvedCell < BLIP_CELL_MIN) {
-    return {
-      shown: false,
-      fields: [
-        { x: 0, y: 0, w: 0, h: 0 },
-        { x: 0, y: 0, w: 0, h: 0 },
-      ],
-      band,
-      cells: [],
-      bracket: [],
-      solvedCell,
-    };
-  }
-
-  const bleed = solvedCell * BLIP_BLEED;
-  band.x = -bleed;
-  band.w = right + bleed;
-
-  const fields: [Rect, Rect] = [
-    { x: -bleed, y: -bleed, w: right + bleed, h: topH + bleed },
-    { x: -bleed, y: bandY + bandH, w: right + bleed, h: botH + bleed },
-  ];
+  if (right <= 0 || topH <= 0 || botH <= 0) return dropped(0);
 
   /* THE SPLIT. Each field is filled independently (§4 consequence 1) and gets
      subjects in proportion to the room it has, so neither is left bare. */
@@ -1688,6 +1712,21 @@ export function blip(z: Zones, bar: Rect): Blip {
   const slots: [BlipSlot[], BlipSlot[]] = [
     blipShuffle(blipSlots({ x: 0, y: 0, w: right, h: topH }, nTop), r),
     blipShuffle(blipSlots({ x: 0, y: bandY + bandH, w: right, h: botH }, nBot), r),
+  ];
+
+  /* THE FLOOR, read off the grid that was just built rather than off the area
+     it covers. The smallest slot is the print with the least room, and §6 drops
+     the whole flood on that print rather than shipping a band of smears. */
+  const solvedCell = Math.min(...slots.flat().map((s) => Math.min(s.w, s.h)));
+  if (solvedCell < BLIP_CELL_MIN) return dropped(solvedCell);
+
+  const bleed = solvedCell * BLIP_BLEED;
+  band.x = -bleed;
+  band.w = right + bleed;
+
+  const fields: [Rect, Rect] = [
+    { x: -bleed, y: -bleed, w: right + bleed, h: topH + bleed },
+    { x: -bleed, y: bandY + bandH, w: right + bleed, h: botH + bleed },
   ];
 
   const cells: BlipCell[] = [];
@@ -1705,17 +1744,30 @@ export function blip(z: Zones, bar: Rect): Blip {
 
     const vary = BLIP_SIZE_VARY[0] + r() * (BLIP_SIZE_VARY[1] - BLIP_SIZE_VARY[0]);
     const aspect = BLIP_ASPECT[0] + r() * (BLIP_ASPECT[1] - BLIP_ASPECT[0]);
-    // Capped against the field on BOTH axes before it is placed, so `clampInto`
-    // only ever has to move it. A print is never squashed to make it fit.
-    const h = Math.min(Math.min(slot.w, slot.h) * BLIP_SHINGLE * vary, field.h, field.w / aspect);
+    const rot = (r() - 0.5) * 2 * BLIP_ROT_MAX;
+    /* THE FOOTPRINT, NOT THE RECT, IS WHAT IS FITTED AND PLACED. A print draws
+       rotated about its own centre, so the box that lands on the glass is the
+       AABB below — bigger than `rect` on both axes. Capping and clamping THAT is
+       what makes `BLIP_BAR_CLEAR` a real 8 px of clear space at every width
+       rather than at the widths that happen to be swept. */
+    const unit = rotatedBy(aspect, 1, rot); // the AABB of a print one unit tall
+    const h = Math.min(
+      Math.min(slot.w, slot.h) * BLIP_SHINGLE * vary,
+      field.h / unit.h,
+      field.w / unit.w,
+    );
     const cw = h * aspect;
     const cx = slot.cx + (r() - 0.5) * slot.w * BLIP_JITTER;
     const cy = slot.cy + (r() - 0.5) * slot.h * BLIP_JITTER;
-    const rot = (r() - 0.5) * 2 * BLIP_ROT_MAX;
+    const aw = h * unit.w;
+    const ah = h * unit.h;
+    // Fitted above, so this is a pure translation — the footprint keeps its size
+    // and the print inside it keeps its aspect.
+    const box = clampInto({ x: cx - aw / 2, y: cy - ah / 2, w: aw, h: ah }, field);
     cells.push({
       id: f.id,
       i,
-      rect: clampInto({ x: cx - cw / 2, y: cy - h / 2, w: cw, h }, field),
+      rect: { x: box.x + (aw - cw) / 2, y: box.y + (ah - h) / 2, w: cw, h },
       rot,
     });
   });

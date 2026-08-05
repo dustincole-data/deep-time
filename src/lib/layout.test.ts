@@ -871,6 +871,23 @@ describe('the blip — the record, heaped (design §4)', () => {
     const z = zones(vp);
     return { b: blip(z, fan(z).bar), z };
   };
+  /**
+   * Wider than anything §12 names as a gate — and where the rotated footprint
+   * first crossed the bar's zone: measured `z.scale.x + 0.09` at 3440×1440 and
+   * `+1.62` at 3840×2160 while every gate viewport still reported clean.
+   */
+  const ULTRAWIDE = [
+    { w: 2560, h: 1440 },
+    { w: 3440, h: 1440 },
+    { w: 3840, h: 2160 },
+  ];
+  /** The box a cell actually puts on the glass, once `rot` is applied about its centre. */
+  const drawnBox = (c: { rect: Rect; rot: number }): Rect => {
+    const a = (Math.abs(c.rot) * Math.PI) / 180;
+    const w = c.rect.w * Math.cos(a) + c.rect.h * Math.sin(a);
+    const h = c.rect.w * Math.sin(a) + c.rect.h * Math.cos(a);
+    return { x: c.rect.x + (c.rect.w - w) / 2, y: c.rect.y + (c.rect.h - h) / 2, w, h };
+  };
 
   it('draws one cell per flood subject, chronological, and never repeats one', () => {
     for (const vp of GATE_VIEWPORTS) {
@@ -935,6 +952,33 @@ describe('the blip — the record, heaped (design §4)', () => {
         expect([vp.w, b.solvedCell >= BLIP_CELL_MIN]).toEqual([vp.w, true]);
       }
     }
+  });
+
+  it('keeps the DRAWN cell — rotated, not the box — clear of the bar at any width', () => {
+    for (const vp of [...GATE_VIEWPORTS, ...ULTRAWIDE]) {
+      const { b, z } = blipOf(vp);
+      expect([vp.w, b.shown]).toEqual([vp.w, true]);
+      for (const c of b.cells) {
+        const drawn = drawnBox(c);
+        expect([vp.w, c.id, intersects(drawn, z.scale)]).toEqual([vp.w, c.id, false]);
+        expect([vp.w, c.id, intersects(drawn, b.band)]).toEqual([vp.w, c.id, false]);
+        expect([vp.w, c.id, b.fields.some((f) => contains(f, drawn))]).toEqual([vp.w, c.id, true]);
+      }
+    }
+  });
+
+  it('refuses a field with area but no height — the floor is height-shaped (§6)', () => {
+    /* 1440×900 at 200% text: the plate takes 778 of the 900 px and leaves two
+       61 px ribbons. They are 1,354 px wide, so they carry area to spare and an
+       area-shaped floor waved them through at 30 px a print. */
+    const z = zones({ ...DESKTOP, textScale: 2 });
+    const b = blip(z, fan(z).bar);
+    expect(b.shown).toBe(false);
+    expect(b.solvedCell).toBeLessThan(BLIP_CELL_MIN);
+    expect([b.cells.length, b.bracket.length]).toEqual([0, 0]);
+    // What it was refused for still had room for fifty prints at the floor, by area alone.
+    const fieldH = (z.viewport.h - b.band.h) / 2;
+    expect(fieldH * b.band.w).toBeGreaterThan(flood.length * BLIP_CELL_MIN * BLIP_CELL_MIN);
   });
 
   it('is deterministic — the same viewport solves to the same heap', () => {

@@ -1027,6 +1027,8 @@
     "cascadePitchPx": 120,
     "tenPitchPx": 42,
     "copy": {
+      "plateKicker": "Everything after the last tick",
+      "plateTitle": ["All of", "human history"],
       "seamCaption": "never drawn on the page you just scrolled.",
       "closing": "The last ten happened in the final 110 of 115,000 pixels. Everything humans have farmed, written, built or remembered is the last three tenths of one pixel.",
       "epilogue": "Two things on this page came within a rule of being cut. *Tyrannosaurus rex* sits 49 pixels from the asteroid; the first primates sit 251 — both closer than the 600-pixel floor allows anywhere else on this page, and both stayed anyway.",

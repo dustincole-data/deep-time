@@ -10,6 +10,7 @@
  * one place and shipped from another.
  */
 import raw from '../data/timeline.json' with { type: 'json' };
+import record from '../data/record.json' with { type: 'json' };
 
 export type Tier = 'M' | 'I' | 'F';
 export type ArtKind = 'subject' | 'abstract' | 'planet';
@@ -114,6 +115,20 @@ export const withheld: Withheld[] = raw.withheld.map((w) => ({
   negative: 'negative' in w ? (w.negative as string) : undefined,
   reference: 'reference' in w ? (w.reference as string) : undefined,
 }));
+
+export interface Flood {
+  id: string;
+  yearsAgo: number;
+  name: string;
+  source: string;
+  licence: 'PD' | 'CC0';
+  credit: string;
+}
+
+/** The record, chronological. The count is deliberately not fixed in code. */
+export const flood: Flood[] = (record.flood as Flood[])
+  .slice()
+  .sort((a, b) => b.yearsAgo - a.yearsAgo);
 
 const clamp = (v: number, lo: number, hi: number) => (v < lo ? lo : v > hi ? hi : v);
 

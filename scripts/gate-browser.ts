@@ -40,8 +40,7 @@ import { readFile, stat } from 'node:fs/promises';
 import { extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, type Page } from 'playwright';
-import { arrivals, CONSTANTS, finaleBeats, milestoneY } from '../src/lib/timeline.ts';
-import { flood } from '../src/lib/timeline.ts';
+import { arrivals, CONSTANTS, finaleBeats, flood, milestoneY } from '../src/lib/timeline.ts';
 import { blip, contains, fan, intersects, place, zones, type Viewport } from '../src/lib/layout.ts';
 
 const VERBOSE = process.argv.includes('--verbose');

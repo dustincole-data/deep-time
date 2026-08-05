@@ -24,6 +24,7 @@ import {
   fanDate,
   fanRows,
   FINALE_CFG,
+  flood,
   milestones,
   plain,
   pxFromNow,
@@ -36,6 +37,9 @@ import art from '../data/art.json' with { type: 'json' };
 const { RUN, YEARS_PER_PX, TOTAL } = CONSTANTS;
 type ArtEntry = (typeof art)[keyof typeof art];
 const artFor = (id: string): ArtEntry | undefined => (art as Record<string, ArtEntry>)[id];
+/** The record register (§11) — baked under its own `record/` key so it can never
+    collide with a scroll subject's painted plate. Missing art is a build failure. */
+const recordArt = (id: string): ArtEntry => (art as Record<string, ArtEntry>)[`record/${id}`]!;
 const nf = (n: number) => n.toLocaleString('en-US');
 ---
 
@@ -211,11 +215,49 @@ const nf = (n: number) => n.toLocaleString('en-US');
         }
       </ol>
 
-      <div id="closing-block">
-        <p class="closing">{FINALE_CFG.copy.closing}</p>
-        {/* Cut 2026-07-31 — see finaleNote in timeline.json. Open question, not yet re-authored. */}
-        {FINALE_CFG.copy.epilogue && <p class="epilogue" set:html={emphasise(FINALE_CFG.copy.epilogue)} />}
-        <a class="again" href="#top">{FINALE_CFG.copy.again}</a>
+      {/* THE FLOOD (design §4) — the record, heaped. `aria-hidden` with empty
+          `alt`s on purpose: the finale's visually-hidden summary above already
+          states the whole scale argument in numbers, and fifty alt strings would
+          be read out as a wall in front of it. Every rect comes from `blip()`;
+          nothing here positions a print. */}
+      <div id="blip" aria-hidden="true">
+        {/* Two hairlines from the heap's outer right corners to the bar's last
+            pixel. Decoration, like the leader lines — `blip()` gives the coords. */}
+        <svg id="blip-bracket"><line /><line /></svg>
+        {
+          flood.map((f, i) => (
+            <img
+              class="bc"
+              data-blip-cell={i}
+              src={recordArt(f.id).file}
+              alt=""
+              width={recordArt(f.id).w}
+              height={recordArt(f.id).h}
+              loading="eager"
+              decoding="async"
+            />
+          ))
+        }
+      </div>
+
+      {/* THE PLATE (design §6) — one rect, its tenants in sequence, images never
+          entering it. EVERY string comes from `FINALE_CFG.copy`: `blip()` solves
+          the band's height from that same copy, so a title retyped here would
+          silently leave the solved band and the rendered words describing
+          different text. `plateTitle` is an array because the break between its
+          two lines is authored, not wrapped. */}
+      <div id="blip-plate">
+        <p class="pk">{FINALE_CFG.copy.plateKicker}</p>
+        <h2 class="pt" set:html={FINALE_CFG.copy.plateTitle.map(emphasise).join('<br />')} />
+        <hr class="pr" />
+        {/* The closing line lives HERE, in the band — one sentence, one
+            measurement. The plate reuses this block rather than duplicating it. */}
+        <div id="closing-block">
+          <p class="closing">{FINALE_CFG.copy.closing}</p>
+          {/* Cut 2026-07-31 — see finaleNote in timeline.json. Open question, not yet re-authored. */}
+          {FINALE_CFG.copy.epilogue && <p class="epilogue" set:html={emphasise(FINALE_CFG.copy.epilogue)} />}
+          <a class="again" href="#top">{FINALE_CFG.copy.again}</a>
+        </div>
       </div>
     </section>
 
@@ -490,21 +532,79 @@ const nf = (n: number) => n.toLocaleString('en-US');
     letter-spacing: 0.24em; text-transform: uppercase; color: #ffd9a0; opacity: 0;
     line-height: 1.25;
   }
-  .js #closing-block { position: absolute; opacity: 0; }
   #closing-block p { margin: 0; }
   #closing-block .closing { font-size: clamp(14px, 1.5vw, 19px); line-height: 1.55; }
-  #closing-block .epilogue {
-    font-size: 13px; line-height: 1.6; opacity: 0; margin-top: 1.5em;
-    transition: opacity 0.4s linear;
-  }
-  #closing-block.ep .epilogue { opacity: 0.62; }
+  #closing-block .epilogue { font-size: 13px; line-height: 1.6; margin-top: 1.5em; }
   #closing-block .again {
     display: inline-block; margin-top: 1.8em; font-size: 10px; letter-spacing: 0.28em;
-    text-transform: uppercase; opacity: 0; color: inherit; text-decoration: none;
+    text-transform: uppercase; color: inherit; text-decoration: none;
     border-bottom: 1px solid currentColor; padding-bottom: 3px; pointer-events: auto;
-    transition: opacity 0.4s linear;
   }
-  #closing-block.ep .again { opacity: 0.6; }
+
+  /* ---------- the flood: the record, heaped (design §4) ---------- */
+  /* Without JS there is no geometry to heap fifty prints into, and the document's
+     job is the facts — which the plate's own words carry in full. */
+  #blip { display: none; }
+  /* `overflow: hidden` IS §4 consequence 2: the fields deliberately run off the
+     top, bottom and left by half a cell, and the frame is what cuts them, so the
+     mass reads as MORE THAN FITS rather than as a composition. It never runs off
+     the right — `blip()` stops it clear of the bar's reserved zone. */
+  .js #blip { display: block; position: absolute; inset: 0; overflow: hidden; }
+  /* One print. `blip()` writes the rect and the rotation in the resize path;
+     nothing but opacity is written in the frame. */
+  .js #blip .bc {
+    position: absolute; left: 0; top: 0; opacity: 0; object-fit: cover;
+    transform-origin: 50% 50%;
+  }
+  .js #blip-bracket {
+    position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
+    opacity: 0; color: #ffd9a0;
+  }
+  #blip-bracket line { stroke: currentColor; stroke-width: 1; }
+
+  /* ---------- the plate: the band the flood was solved around (design §6) ----------
+     EVERY number below is `blipBandHeight()` in layout.ts, which solves the band's
+     height from these exact gaps and type sizes. Changing one here without changing
+     it there leaves the solved band and the rendered words describing different
+     text — which is the whole reason the copy moved into `timeline.json`. */
+  .js #blip-plate {
+    position: absolute; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; text-align: center; pointer-events: none;
+    padding: 40px 0; /* PLATE_GAPS.pad, both ends */
+  }
+  /* `flex: none`, and it is load-bearing. The band is solved for the kicker, the
+     title, the rule and the line; `↑ again` adds ~30px on top of that, so the
+     column overflows slightly and a shrinkable item absorbs ALL of it — every
+     other child is floored at its own min-content height, so the 1px rule was
+     the only thing that could give, and it rendered at 0. */
+  .js #blip-plate > * { flex: none; }
+  .js #blip-plate .pk, .js #blip-plate .pt, .js #blip-plate .pr { opacity: 0; }
+  /* main.ts writes the opacity of all three: they arrive in sequence, and each
+     one's resting value is folded into that write rather than split across two
+     files. */
+  #blip-plate .pk {
+    margin: 0 0 18px; font-size: clamp(10px, 0.8vw, 12px); letter-spacing: 0.28em;
+    text-transform: uppercase;
+  }
+  /* The site's punchline set as a title. The FLOOR is the constant that matters:
+     a 16px punchline is not a smaller version of it. */
+  #blip-plate .pt {
+    margin: 0 0 26px; max-width: 92%; font-size: clamp(28px, 4.2vw, 60px);
+    line-height: 1.02; letter-spacing: -0.02em; font-weight: 700; text-transform: uppercase;
+  }
+  #blip-plate .pr {
+    margin: 0 0 26px; border: 0; width: 88px; height: 1px; background: #ffd9a0;
+  }
+  /* The closing line's own measure, `blipBandHeight`'s `lineW` verbatim. */
+  .js #closing-block {
+    position: static; display: grid; width: min(470px, 62%); margin: 0;
+  }
+  /* The line and the epilogue share ONE slot, so the epilogue costs the band no
+     height it was not solved for. They never occupy it at once — sequential,
+     never a crossfade, the same ruling §9 staging rule 3 already makes. */
+  .js #closing-block .closing, .js #closing-block .epilogue { grid-area: 1 / 1; opacity: 0; }
+  .js #closing-block .epilogue { margin-top: 0; }
+  .js #closing-block .again { grid-area: 2 / 1; justify-self: center; opacity: 0; }
 
   /* The document is one viewport taller than the scroll: without a pad the last
      beats of the finale are unreachable on every device. lvh, not vh. */
@@ -517,6 +617,9 @@ const nf = (n: number) => n.toLocaleString('en-US');
        Nothing is lost — the Moon fact reaches the phone as the 4,450 Ma whisper. */
     #hud .modelled, #hud .rule { display: none; }
     #hud-clock { font-size: clamp(30px, 11vw, 44px); }
+    /* `blipBandHeight`'s `lineW` on the mobile branch — a phone column has no
+       room to hold the sentence to a 62% measure. */
+    .js #closing-block { width: min(470px, 92%); }
   }
 
   /* ── the dustincoledata signature ──────────────────────────────────────────

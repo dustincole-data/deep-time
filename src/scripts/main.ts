@@ -40,7 +40,19 @@ import {
   spokenName,
   yearsAgo,
 } from '../lib/timeline.ts';
-import { fan, frame, hudBottomInset, place, zones, type Fan, type Placed, type Zones } from '../lib/layout.ts';
+import {
+  barHeadPulse,
+  blip,
+  fan,
+  frame,
+  hudBottomInset,
+  place,
+  zones,
+  type Blip,
+  type Fan,
+  type Placed,
+  type Zones,
+} from '../lib/layout.ts';
 import { fieldAt, toHex, type RGB } from '../lib/field.ts';
 import art from '../data/art.json' with { type: 'json' };
 
@@ -119,19 +131,24 @@ const leaderEls: SVGLineElement[] = fanRowEls.map(() => {
   return ln;
 });
 const seamCapEl = $('seam-caption');
-const closeEl = $('closing-block');
 
-// The stamp (§9) — the withheld ten, crammed. Ten cells and a two-line bracket.
-const stampEl = $('stamp');
-const stampEls = [...stampEl.querySelectorAll<HTMLElement>('[data-stamp-cell]')];
-const bracketSvg = $<SVGSVGElement & HTMLElement>('stamp-bracket');
-const bracketEls: SVGLineElement[] = [0, 1].map(() => {
-  const ln = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-  ln.setAttribute('stroke', '#ffd9a0');
-  ln.setAttribute('stroke-width', '1');
-  bracketSvg.appendChild(ln);
-  return ln;
-});
+/* The ending's last two objects: the heap, and the band of words cut through it.
+   `#blip-plate`, not `#plate` — `#plate` is the Boring Billion (§6), and the two
+   are on screen 100,000 px apart. */
+const blipEl = $('blip');
+const blipCells = [...blipEl.querySelectorAll<HTMLElement>('[data-blip-cell]')];
+const blipBracket = $<SVGSVGElement & HTMLElement>('blip-bracket');
+const bracketEls = [...blipBracket.querySelectorAll('line')];
+const blipPlate = $('blip-plate');
+const plateKickerEl = blipPlate.querySelector<HTMLElement>('.pk')!;
+const plateTitleEl = blipPlate.querySelector<HTMLElement>('.pt')!;
+const plateRuleEl = blipPlate.querySelector<HTMLElement>('.pr')!;
+/** In the plate's TOP slot, stacked on the kicker — the two swap, so neither costs the band height. */
+const againEl = blipPlate.querySelector<HTMLElement>('.again')!;
+const closeEl = $('closing-block');
+const closingLineEl = closeEl.querySelector<HTMLElement>('.closing')!;
+/** null while the epilogue is cut — see `finaleNote` in timeline.json. */
+const epilogueEl = closeEl.querySelector<HTMLElement>('.epilogue');
 
 /* ============================================================================
    GEOMETRY — recomputed ONLY here, never in the frame
@@ -144,6 +161,20 @@ let F: Fan;
 let placed: Placed[] = [];
 let mobile = false;
 let B = finaleBeats(0);
+let BL: Blip;
+/**
+ * The arrest pulse's peak scale, SOLVED against the room the viewport gives the
+ * marker (`barHeadPulse`). At 390 px wide the head's centre sits 11 px from the
+ * glass, so an unclamped 2.6× ran 12.4 px off the screen and cut the arrest's only
+ * visible event in half. Written here, read in the frame.
+ */
+let arrestPulse = { x: 1, y: 1 };
+/**
+ * Where each print starts fading in, in px from `RUN_END`. Solved in `relayout()`
+ * and read in the frame — the ramp depends on the beats, which depend on the
+ * layout, and §3 forbids either being worked out per frame.
+ */
+const heapAt = new Array<number>(blipCells.length).fill(1e9);
 
 function relayout() {
   // §12: re-sync from the canvas's OWN box, never from window `resize`. The iOS
@@ -210,6 +241,80 @@ function relayout() {
   // the shortest read on the page.
   const last = placed[placed.length - 1]!;
   B = finaleBeats(Math.max(0, last.y + last.dwell - RUN_END));
+
+  layoutBlip();
+}
+
+/**
+ * The heap and the band, written HERE and nowhere else (§3): every rect below is
+ * a layout WRITE, and the frame that reads them may not read layout back.
+ *
+ * `BL.shown` is false wherever the band has grown past the point either field can
+ * hold a usable print — §10's ruling that text costs art, never legibility, and
+ * measured at 200% text on 1440×900 and both phones. Then nothing is left behind:
+ * `display: none` on the container takes the prints out of the paint AND out of
+ * layout, and the plate carries the ending on its own.
+ */
+function layoutBlip() {
+  arrestPulse = barHeadPulse(F.bar, { w: W });
+  BL = blip(Z, F.bar);
+  blipEl.style.display = BL.shown ? '' : 'none';
+
+  for (let i = 0; i < blipCells.length; i++) {
+    const el = blipCells[i]!;
+    const c = BL.cells[i];
+    if (!c) {
+      el.style.display = 'none';
+      continue;
+    }
+    el.style.display = '';
+    // `rect` is the UNROTATED box and the print draws at ±BLIP_ROT_MAX about its
+    // own centre, which is what `transform-origin: 50% 50%` makes true here.
+    el.style.transform = `translate(${c.rect.x}px,${c.rect.y}px) rotate(${c.rot}deg)`;
+    el.style.width = `${c.rect.w}px`;
+    el.style.height = `${c.rect.h}px`;
+  }
+
+  for (let i = 0; i < bracketEls.length; i++) {
+    const ln = bracketEls[i]!;
+    const b = BL.bracket[i];
+    ln.style.display = b ? '' : 'none';
+    if (!b) continue;
+    ln.setAttribute('x1', String(b.x1));
+    ln.setAttribute('y1', String(b.y1));
+    ln.setAttribute('x2', String(b.x2));
+    ln.setAttribute('y2', String(b.y2));
+  }
+
+  /* The band, MINUS its left bleed: `blipBandHeight()` solved the words against
+     the frame's usable width (0 → the bar's clearance), and the bleed is the
+     heap's alone. Measuring the title and the line against the bled box would
+     make the CSS and the solve disagree about how tall the words are. */
+  const right = BL.band.x + BL.band.w;
+  blipPlate.style.left = '0px';
+  blipPlate.style.top = `${BL.band.y}px`;
+  blipPlate.style.width = `${right}px`;
+  blipPlate.style.height = `${BL.band.h}px`;
+
+  /* THE RAMP (design §5). Geometric, and the ratio is SOLVED rather than chosen:
+     the ramp's dynamic range is the design's — the first print's pitch over the
+     last's, 240:14 — and the first pitch then follows from the one hard
+     constraint, that the pitches sum to the span the beat actually has. The
+     design's absolute 240 px and 14 px cannot both hold at this count: 50 prints
+     at that range sum to 4,027 px and the flood has 2,290 to spend, so keeping
+     the range and scaling both ends is what survives. Measured, that is a first
+     pitch of ~136 px and a last of ~8 px — legible prints at the head, an
+     avalanche at the tail, which is the whole of what §5 asks for. */
+  const n = blipCells.length;
+  const start = B.floodStart + FLOOD_CLEAR;
+  const span = B.floodEnd - start - FLOOD_FADE;
+  const r = n > 1 ? Math.pow(FLOOD_PITCH_LAST / FLOOD_PITCH_FIRST, 1 / (n - 1)) : 1;
+  const p0 = n > 1 ? (span * (1 - r)) / (1 - Math.pow(r, n)) : span;
+  let at = start;
+  for (let i = 0; i < n; i++) {
+    heapAt[i] = at;
+    at += p0 * Math.pow(r, i);
+  }
 }
 
 function buildTicks() {
@@ -242,32 +347,12 @@ function layoutFan() {
   seamCapEl.style.top = `${F.seamCaption.y}px`;
   seamCapEl.style.width = `${F.rowRight}px`;
   seamCapEl.style.fontSize = `${F.seamCaption.h / 1.25}px`;
-  closeEl.style.left = `${F.closing.x}px`;
-  closeEl.style.width = `${F.closing.w}px`;
-  closeEl.style.bottom = `${H - (F.closing.y + F.closing.h)}px`;
+  /* The closing block is NOT placed from `F.closing` any more: design §6 puts the
+     sentence inside the plate's band, so `#closing-block` is a flow child of
+     `#blip-plate` and takes its measure from the band the flood was solved
+     around. `fan()` still computes `F.closing`, and the collision gate still
+     sweeps it — that rect is now the ending the redesign replaced. */
   finaleEl.classList.toggle('after', F.closingPlacement === 'after');
-
-  // The stamp (§9): cells edge-to-edge, no gutter. `object-fit: contain` keeps
-  // each picture inside its own cell, so the jam never becomes an overlap.
-  const S = F.stamp;
-  // Text costs art (§10): at 200% the closing block takes the room and the
-  // block drops out entirely. The ten rows still carry every name and date.
-  stampEl.style.display = S.shown ? 'block' : 'none';
-  if (!S.shown) return;
-  stampEls.forEach((el, i) => {
-    const c = S.cells[i]!;
-    el.style.left = `${c.rect.x}px`;
-    el.style.top = `${c.rect.y}px`;
-    el.style.width = `${c.rect.w}px`;
-    el.style.height = `${c.rect.h}px`;
-  });
-  bracketEls.forEach((ln, i) => {
-    const b = S.bracket[i]!;
-    ln.setAttribute('x1', String(b.x1));
-    ln.setAttribute('y1', String(b.y1));
-    ln.setAttribute('x2', String(b.x2));
-    ln.setAttribute('y2', String(b.y2));
-  });
 }
 
 /* ============================================================================
@@ -585,8 +670,33 @@ function draw(now: number) {
 }
 
 /* ============================================================================
-   THE FINALE — the true-scale bar being read (§9)
+   THE FINALE — the bar being read, and then buried (§9; design §3–§6)
    ========================================================================= */
+
+/**
+ * The fan's exit, at the HEAD of the flood beat.
+ *
+ * ONE fade serves two rulings, deliberately. Design §3 requires the fan to clear
+ * at the start of the flood AT EVERY VIEWPORT, sequentially, because the fan is
+ * forty text rows and text × image is still a gate. §9 staging rule 3 already
+ * required the same clearance on a phone, where the free column is 3 px wide and
+ * the closing line cannot share the screen with the fan. A second fade would
+ * double-multiply the phone's row opacities; and the phone's own fade — keyed
+ * `tenEnd - 240 → tenEnd - 20` — now lands 700 px BEFORE `hold`, the beat §15
+ * protects as "the full fan on screen". So the phone's fade is not kept beside
+ * this one, it is replaced by it: clearing here satisfies rule 3 with 2,980 px to
+ * spare, and gives the phone back the hold it was losing.
+ */
+const FLOOD_CLEAR = 200;
+/** How long one print takes to arrive. It appears at its final position; nothing travels (§5). */
+const FLOOD_FADE = 90;
+/** design §5's ramp, as its dynamic range. `layoutBlip()` says why only the range survives. */
+const FLOOD_PITCH_FIRST = 240;
+const FLOOD_PITCH_LAST = 14;
+/** Last opacity written per print: once the heap is up this saves 50 paint invalidations a frame. */
+const cellVis = new Array<number>(blipCells.length).fill(-1);
+/** Whether `↑ again` is currently reachable. `null` so the first finale frame always writes. */
+let againLive: boolean | null = null;
 
 function drawFinale(f: number) {
   for (let i = 0; i < fanRowEls.length; i++) {
@@ -600,55 +710,81 @@ function drawFinale(f: number) {
   }
   seamCapEl.style.opacity = String(smooth(B.tenStart - 140, B.tenStart + 60, f) * 0.85);
 
-  // Sequential, never a crossfade: two texts at 30% opacity stacked on each other
-  // is precisely the overlap the layout contract bans (§9 staging rule 3).
-  const after = F.closingPlacement === 'after';
-  if (after) {
-    /* §9 staging rule 4 — a phone's free column is 3 px, so the stamp and the
-       fan cannot be on screen together and the overlap is avoided by ORDER
-       rather than by an exemption. The fan gives the screen up at the end of
-       `the ten`, one beat earlier than it already does for the closing block. */
-    const fanOut = 1 - smooth(B.tenEnd - 240, B.tenEnd - 20, f);
-    for (const el of fanRowEls) el.style.opacity = String(Number(el.style.opacity) * fanOut);
-    leaderSvg.style.opacity = String(fanOut);
-    seamCapEl.style.opacity = String(Number(seamCapEl.style.opacity) * fanOut);
-  }
+  /* THE ARREST (design §3). NOTHING IS STOPPED HERE, because nothing is still
+     running: `yearsAgo()` clamps at 0 and the px counter clamps at RUN, so the
+     clock is already hard-locked and the marker is already sitting on the bar's
+     last pixel by the time this beat opens. What the beat adds is the moment
+     being SEEN — one pulse on that last pixel, bought with the visitor's own
+     scroll and returning to rest, after which the instrument never moves again.
+     A timer, a lock or a scroll-lock would all be answering a question the scale
+     contract answered at RUN_END. The scale is `arrestPulse`, solved per resize
+     against the room the glass gives the marker — the widening is what a phone
+     cannot afford, and the thickening is what carries the beat there instead. */
+  const pulse = Math.sin(Math.PI * clamp((f - B.drainEnd) / (B.arrestEnd - B.drainEnd), 0, 1));
+  const px = 1 + pulse * (arrestPulse.x - 1);
+  const py = 1 + pulse * (arrestPulse.y - 1);
+  barHead.style.transform = `translateY(${F.bar.h}px) scale(${px},${py})`;
 
-  /* THE STAMP (§9 staging rule 6) — the block ASSEMBLES rather than appearing,
-     which is the difference between an avalanche and a photograph and the same
-     argument rule 2 already makes for the rows.
+  // The fan goes out BEFORE the heap comes in — see FLOOD_CLEAR.
+  const fanOut = 1 - smooth(B.floodStart, B.floodStart + FLOOD_CLEAR, f);
+  for (const el of fanRowEls) el.style.opacity = String(Number(el.style.opacity) * fanOut);
+  leaderSvg.style.opacity = String(fanOut);
+  seamCapEl.style.opacity = String(Number(seamCapEl.style.opacity) * fanOut);
 
-     Desktop runs it in lockstep with the ten rows: same start, same 42 px
-     pitch, so each row and its picture land together and the tie between them
-     needs no explaining. A phone cannot — the fan is still clearing that column
-     — so there the run waits for the fan and takes the first half of `hold`, at
-     a tighter pitch so a real hold survives it. The two empty beats §15 defends
-     are untouched: `breath` is whole at both, and `hold` still ends in stillness
-     with the full block on screen. */
-  const stampStart = after ? B.tenEnd - 20 : B.tenStart + 60;
-  const stampPitch = after ? 20 : 42;
-  for (let i = 0; i < stampEls.length; i++) {
-    const a = stampStart + i * stampPitch;
-    stampEls[i]!.style.opacity = String(smooth(a, a + 110, f));
+  /* THE FLOOD (design §5) — chronological, oldest first, on the ramp solved in
+     `layoutBlip()`. Opacity is the ONLY thing written per print: every rect was
+     written in the resize path, so a print appears at its final position and
+     does not travel, and the frame stays a pure function of scrollY. */
+  for (let i = 0; i < blipCells.length; i++) {
+    const o = smooth(heapAt[i]!, heapAt[i]! + FLOOD_FADE, f);
+    if (o !== cellVis[i]) {
+      blipCells[i]!.style.opacity = String(o);
+      cellVis[i] = o;
+    }
   }
-  // The bracket measures the block, so it has nothing to measure until the
-  // block is whole. It closes once the last cell has landed.
-  const stampDone = stampStart + (stampEls.length - 1) * stampPitch + 110;
-  const bracketIn = smooth(stampDone, stampDone + 180, f) * 0.55;
-  /* The stamp's own exit, which is NOT the fan's. On desktop it never leaves —
-     the geometry already keeps it clear of the closing block, so the visitor
-     reads the sentence with the block still above it, which is the better of
-     the two readings and costs nothing. On a phone it must go, because the line
-     needs the column; but it goes LATE and fast, because everything between the
-     last cell landing and this fade is the sit-back, and a phone has only 700 px
-     of `hold` to find it in. Measured: the block completes at 270 px before the
-     fade starts — a real half-second of stillness with the full jam on screen,
-     where reusing the closing block's own 260 px lead-in left 74 px. */
-  const stampOut = after ? 1 - smooth(B.lineStart - 170, B.lineStart - 40, f) : 1;
-  stampEl.style.opacity = String(stampOut);
-  bracketSvg.style.opacity = String(bracketIn * stampOut);
-  closeEl.style.opacity = String(smooth(B.lineStart, B.lineStart + 320, f));
-  closeEl.classList.toggle('ep', f >= B.endStart);
+  // The bracket closes the argument once the mass is complete: this whole screen,
+  // at that size, is that one pixel.
+  blipBracket.style.opacity = String(smooth(B.floodEnd, B.floodEnd + 160, f) * 0.55);
+
+  /* THE PLATE (design §6) — one rect, three tenants IN SEQUENCE: kicker, then
+     the title, then the line. A single fade on the block would land all three at
+     once and the title would arrive as a caption rather than as the label. */
+  const P = B.floodEnd;
+  const kickerIn = smooth(P, P + 140, f);
+  const title = smooth(P + 120, P + 270, f);
+  plateTitleEl.style.opacity = String(title);
+  plateRuleEl.style.opacity = String(title * 0.8);
+  const lineIn = smooth(P + 250, P + 400, f);
+
+  /* LEFT HOLDING. The band holds two double-tenanted slots — `↑ again` shares the
+     kicker's, the epilogue shares the line's — and BOTH trade on the same two
+     ramps, so the plate transforms as one gesture rather than two. Sequential,
+     never a crossfade: the kicker and the line are fully out before the epilogue
+     and the link are in, which is §9 staging rule 3 applied inside a block. The
+     line has held for 1,100 px by then, and the band's height never moves,
+     because `blipBandHeight` solves both slots as a `max`. */
+  const swapOut = smooth(B.endStart + 200, B.endStart + 420, f);
+  const swapIn = smooth(B.endStart + 420, B.endStart + 700, f);
+  plateKickerEl.style.opacity = String(kickerIn * (1 - swapOut) * 0.55);
+  closingLineEl.style.opacity = String(lineIn * (1 - swapOut));
+  if (epilogueEl) epilogueEl.style.opacity = String(swapIn * 0.62);
+  againEl.style.opacity = String(swapIn * 0.6);
+  /* HIDDEN MEANS UNREACHABLE. `↑ again` is a real link to `#top`, which no element
+     answers, so it takes the page to pixel 0 of 127,500 — the whole scroll, undone.
+     It is at opacity 0 for the first 9,815px of the finale, and this task moved it
+     from the bottom-left corner to the middle of the screen, on top of the flood.
+     Opacity hides neither hit-testing nor Tab focus, and the outline `:focus-visible`
+     would draw cannot render at opacity 0 — so an invisible control sat over the
+     pictures, one stray click or Tab-Enter from destroying the only moment the site
+     exists for. `inert` removes the pointer target, the focus stop and the a11y-tree
+     entry together, which is why `#finale` itself is held that way before RUN_END.
+     Guarded on inequality, like every other write in this frame. Never touched in the
+     no-JS path, where the link renders visible and must stay clickable. */
+  const againReachable = swapIn > 0;
+  if (againReachable !== againLive) {
+    againEl.toggleAttribute('inert', !againReachable);
+    againLive = againReachable;
+  }
 }
 
 /* ============================================================================

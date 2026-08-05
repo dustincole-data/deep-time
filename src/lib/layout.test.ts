@@ -4,9 +4,16 @@
  * cannot quietly move a zone and leave the sweep passing for the wrong reason.
  */
 import { describe, expect, it } from 'vitest';
-import { arrivals, CONSTANTS, fanRows, finaleBeats, FINALE_CFG, pxFromNow, withheld } from './timeline.ts';
+import { arrivals, CONSTANTS, fanRows, finaleBeats, FINALE_CFG, flood, pxFromNow, withheld } from './timeline.ts';
 import {
+  ARREST_PULSE,
   ART_MIN_H,
+  barHead,
+  barHeadPulse,
+  barHeadPulsed,
+  blip,
+  BLIP_CELL_MIN,
+  BLIP_ROT_MAX,
   contains,
   fan,
   frame,
@@ -15,17 +22,12 @@ import {
   place,
   sameRect,
   showsArt,
-  stampFill,
   showsLine,
   textHeight,
   windowsOverlap,
   zones,
   type Rect,
 } from './layout.ts';
-import artManifest from '../data/art.json' with { type: 'json' };
-
-interface ArtEntry { w: number; h: number; opaque: [number, number, number, number] }
-const ART = artManifest as unknown as Record<string, ArtEntry | undefined>;
 
 const DESKTOP = { w: 1440, h: 900 };
 const PHONE = { w: 390, h: 844 };
@@ -403,15 +405,15 @@ describe('the finale (§9)', () => {
     return last.y + last.dwell - CONSTANTS.RUN_END;
   })();
 
-  it('stages the seven beats exactly where §9 puts them', () => {
+  it('stages the beats exactly where §9 puts them', () => {
     // The 7 Ma card releases 485 px in, and the drain is that plus a 40 px pad.
     expect(overrun).toBe(485);
     const B = finaleBeats(overrun);
-    expect([B.drainEnd, B.cascadeEnd, B.breathEnd, B.tenStart, B.tenEnd]).toEqual([
-      525, 4125, 4725, 4725, 5325,
+    expect([B.drainEnd, B.arrestEnd, B.cascadeEnd, B.breathEnd, B.tenStart, B.tenEnd]).toEqual([
+      525, 700, 4300, 4900, 4900, 5500,
     ]);
-    expect([B.holdEnd, B.lineStart, B.lineEnd, B.endStart, B.total]).toEqual([
-      6025, 6025, 6725, 6725, 7000,
+    expect([B.holdEnd, B.floodStart, B.floodEnd, B.plateEnd, B.lineStart, B.lineEnd, B.endStart, B.total]).toEqual([
+      6200, 6200, 8780, 9180, 9180, 9880, 9880, 10900,
     ]);
     expect(B.total).toBe(CONSTANTS.FINALE);
   });
@@ -424,7 +426,7 @@ describe('the finale (§9)', () => {
 
   it('cascades thirty rows at 120 px and runs the ten at 42', () => {
     const B = finaleBeats(overrun);
-    expect(B.cascadeEnd - B.drainEnd).toBe(30 * FINALE_CFG.cascadePitchPx);
+    expect(B.cascadeEnd - B.arrestEnd).toBe(30 * FINALE_CFG.cascadePitchPx);
     // A fast run, not one hit: you watch them accumulate onto one point.
     expect(FINALE_CFG.tenPitchPx).toBe(42);
   });
@@ -498,79 +500,6 @@ describe('the finale (§9)', () => {
     for (const vp of GATE_VIEWPORTS) {
       const f = fan(zones(vp));
       for (const r of f.rows) expect([vp.w, r.id, r.box.y > f.seamY]).toEqual([vp.w, r.id, r.ten]);
-    }
-  });
-});
-
-describe('the stamp — the whole human era, crammed (§9)', () => {
-  it('is ten cells, chronological, in the same order as the ten rows', () => {
-    for (const vp of GATE_VIEWPORTS) {
-      const f = fan(zones(vp));
-      expect([vp.w, f.stamp.shown]).toEqual([vp.w, true]);
-      expect(f.stamp.cells.map((c) => c.id)).toEqual(withheld.map((w) => w.id));
-    }
-  });
-
-  it('tiles edge-to-edge — the jam is the zero gutter, never an overlap', () => {
-    // This is the whole reason the cram was taken over the pile (§15): the
-    // site's last screen still obeys the rule it made a ship gate.
-    for (const vp of GATE_VIEWPORTS) {
-      const { cells, box, cell } = fan(zones(vp)).stamp;
-      for (const c of cells) expect([vp.w, c.id, contains(box, c.rect)]).toEqual([vp.w, c.id, true]);
-      for (let i = 0; i < cells.length; i++) {
-        for (let j = i + 1; j < cells.length; j++) {
-          expect([vp.w, cells[i]!.id, cells[j]!.id, intersects(cells[i]!.rect, cells[j]!.rect)])
-            .toEqual([vp.w, cells[i]!.id, cells[j]!.id, false]);
-        }
-      }
-      // Tiled, not merely non-overlapping: the ten cells account for the block
-      // exactly, so there is no gap anywhere inside it.
-      const area = cells.reduce((s, c) => s + c.rect.w * c.rect.h, 0);
-      expect(area).toBeCloseTo(box.w * box.h, 6);
-      expect(box.w).toBeCloseTo(cell * 5, 6);
-      expect(box.h).toBeCloseTo(cell * 2, 6);
-    }
-  });
-
-  it('is never wider than one fan row is long', () => {
-    // §9's claim in the one number that can be checked: the whole human era is
-    // smaller than a single label. It is also what stops the block growing into
-    // a poster on a wide monitor — past a point, width buys the free column.
-    for (const vp of [...GATE_VIEWPORTS, { w: 2560, h: 1440 }]) {
-      const f = fan(zones(vp));
-      expect([vp.w, f.stamp.box.w <= f.widestRow + 1e-6]).toEqual([vp.w, true]);
-    }
-  });
-
-  it('brackets to the bar last pixel — the one with no tick', () => {
-    for (const vp of GATE_VIEWPORTS) {
-      const f = fan(zones(vp));
-      expect(f.stamp.bracket).toHaveLength(2);
-      for (const b of f.stamp.bracket) {
-        expect([vp.w, b.x2]).toEqual([vp.w, f.bar.x - 2]);
-        // The bar's last pixel is where the ten rows already converge.
-        expect(b.y2).toBeCloseTo(f.rows[39]!.leader.y2, 6);
-      }
-    }
-  });
-
-  it('drops out entirely at 200% text, rather than shrinking to a smudge', () => {
-    // §10: text costs art, never legibility. The closing block doubles and takes
-    // the room the stamp was solved into, so the stamp goes — and leaves nothing
-    // behind for the runtime to place.
-    for (const vp of GATE_VIEWPORTS) {
-      const s = fan(zones({ ...vp, textScale: 2 })).stamp;
-      expect([vp.w, s.shown]).toEqual([vp.w, false]);
-      expect([vp.w, s.cells.length, s.bracket.length, s.box.w, s.box.h]).toEqual([vp.w, 0, 0, 0, 0]);
-    }
-  });
-
-  it('shares the screen with the fan only where there is a free column', () => {
-    // Same ruling the closing block takes, and it must resolve the same way:
-    // a phone has no free column, so there the two are sequential.
-    for (const vp of GATE_VIEWPORTS) {
-      const f = fan(zones(vp));
-      expect([vp.w, f.stamp.placement]).toEqual([vp.w, f.closingPlacement]);
     }
   });
 });
@@ -720,20 +649,6 @@ describe('the solve is frozen at 1440×900 and centred above it (ruling E)', () 
     }
   });
 
-  it('closes the hole the ending used to open through its own middle', () => {
-    // The fan is right-anchored to the bar and the closing block used to be
-    // left-anchored to the viewport, so the two ends pulled apart as the monitor
-    // grew — 0px at 1440×900, 422px at 1920×1080. It must not grow with the screen.
-    const gapAt = (vp: { w: number; h: number }) => {
-      const f = fan(zones(vp));
-      return f.stamp.box.x - (f.closing.x + f.closing.w);
-    };
-    const base = gapAt(DESKTOP);
-    for (const vp of WIDE) {
-      expect([vp.w, Math.abs(gapAt(vp) - base) < 40]).toEqual([vp.w, true]);
-    }
-  });
-
   it('leaves the bar itself on the right edge, unbroken (§9, §15)', () => {
     // The clamp moves the ending's TEXT inward; it must never move the bar. §9
     // keeps it the same object at the same edge from 4.60 Ga to the last frame,
@@ -753,7 +668,7 @@ describe('a lone card cannot outgrow a banded one without limit (ruling F)', () 
   };
   const median = (a: number[]) => a.slice().sort((x, y) => x - y)[a.length >> 1] ?? 0;
 
-  it('holds the median jump near 1.6×, not the 2.9× it measured', () => {
+  it('holds the median jump near 2.2×, not the 2.9× it measured', () => {
     for (const vp of GATE_VIEWPORTS) {
       const z = zones(vp);
       const P = place(arrivals, z);
@@ -761,7 +676,7 @@ describe('a lone card cannot outgrow a banded one without limit (ruling F)', () 
       const tall = median(sizes.filter((x) => x.tall).map((x) => x.s));
       const band = median(sizes.filter((x) => !x.tall).map((x) => x.s));
       if (!tall || !band) continue;
-      expect([vp.w, tall / band <= 1.61]).toEqual([vp.w, true]);
+      expect([vp.w, tall / band <= 2.21]).toEqual([vp.w, true]);
     }
   });
 
@@ -787,45 +702,207 @@ describe('a lone card cannot outgrow a banded one without limit (ruling F)', () 
   });
 });
 
-describe('a stamp cell crops toward the head, not through it (§9 rule 8)', () => {
-  const ten = fanRows.filter((r) => r.ten).filter((r) => ART[r.id]);
+describe('the finale grows for the flood, and the scale contract does not move', () => {
+  it('keeps every scale number exactly where it was', () => {
+    expect(CONSTANTS.INTRO).toBe(1600);
+    expect(CONSTANTS.RUN).toBe(115000);
+    expect(CONSTANTS.YEARS_PER_PX).toBe(40000);
+    expect(CONSTANTS.RUN_END).toBe(116600);
+  });
 
-  it('fills the cell on the subject, so its short axis is exact', () => {
-    for (const r of ten) {
-      const e = ART[r.id]!;
-      const f = stampFill(e.opaque, e.w, e.h);
-      const [, , fw, fh] = e.opaque;
-      // One axis fills the cell exactly; neither may come up short of it.
-      expect([r.id, Math.min(fw * f.w, fh * f.h)]).toEqual([r.id, expect.closeTo(1, 6)]);
+  it('grows only FINALE, and TOTAL follows it', () => {
+    expect(CONSTANTS.FINALE).toBe(10900);
+    expect(CONSTANTS.TOTAL).toBe(CONSTANTS.INTRO + CONSTANTS.RUN + CONSTANTS.FINALE);
+    expect(CONSTANTS.TOTAL).toBe(127500);
+  });
+
+  it('orders the beats and keeps both empty ones whole', () => {
+    const b = finaleBeats(0);
+    const seq = [
+      b.drainEnd, b.arrestEnd, b.cascadeEnd, b.breathEnd,
+      b.tenEnd, b.holdEnd, b.floodEnd, b.plateEnd, b.lineEnd,
+    ];
+    for (let i = 1; i < seq.length; i++) expect(seq[i]!).toBeGreaterThan(seq[i - 1]!);
+    // §15: neither empty beat may be shortened.
+    expect(b.breathEnd - b.cascadeEnd).toBe(600);
+    expect(b.holdEnd - b.tenEnd).toBe(700);
+    expect(b.plateEnd).toBeLessThanOrEqual(CONSTANTS.FINALE);
+  });
+
+  it('starts the flood only after hold has finished', () => {
+    const b = finaleBeats(0);
+    expect(b.floodStart).toBe(b.holdEnd);
+  });
+});
+
+describe('the blip — the record, heaped (design §4)', () => {
+  const blipOf = (vp: { w: number; h: number }) => {
+    const z = zones(vp);
+    return { b: blip(z, fan(z).bar), z };
+  };
+  /**
+   * Wider than anything §12 names as a gate — and where the rotated footprint
+   * first crossed the bar's zone: measured `z.scale.x + 0.09` at 3440×1440 and
+   * `+1.62` at 3840×2160 while every gate viewport still reported clean.
+   */
+  const ULTRAWIDE = [
+    { w: 2560, h: 1440 },
+    { w: 3440, h: 1440 },
+    { w: 3840, h: 2160 },
+  ];
+  /** The box a cell actually puts on the glass, once `rot` is applied about its centre. */
+  const drawnBox = (c: { rect: Rect; rot: number }): Rect => {
+    const a = (Math.abs(c.rot) * Math.PI) / 180;
+    const w = c.rect.w * Math.cos(a) + c.rect.h * Math.sin(a);
+    const h = c.rect.w * Math.sin(a) + c.rect.h * Math.cos(a);
+    return { x: c.rect.x + (c.rect.w - w) / 2, y: c.rect.y + (c.rect.h - h) / 2, w, h };
+  };
+
+  it('draws one cell per flood subject, chronological, and never repeats one', () => {
+    for (const vp of GATE_VIEWPORTS) {
+      const { b } = blipOf(vp);
+      expect([vp.w, b.shown]).toEqual([vp.w, true]);
+      expect(b.cells.map((c) => c.id)).toEqual(flood.map((f) => f.id));
+      expect(new Set(b.cells.map((c) => c.id)).size).toBe(b.cells.length);
     }
   });
 
-  it('keeps the top of a figure when the cell has to clip it', () => {
-    let clipped = 0;
-    for (const r of ten) {
-      const e = ART[r.id]!;
-      const f = stampFill(e.opaque, e.w, e.h);
-      const [, fy, , fh] = e.opaque;
-      const cutTop = -(f.t + fy * f.h);
-      const cutBot = f.t + (fy + fh) * f.h - 1;
-      if (cutTop + cutBot < 1e-6) continue;
-      clipped++;
-      // Whatever is lost, more of it comes off the feet than off the head.
-      expect([r.id, cutTop <= cutBot + 1e-9]).toEqual([r.id, true]);
+  it('keeps every cell inside one of the two fields — never in the plate band', () => {
+    for (const vp of GATE_VIEWPORTS) {
+      const { b } = blipOf(vp);
+      for (const c of b.cells) {
+        expect([vp.w, c.id, intersects(c.rect, b.band)]).toEqual([vp.w, c.id, false]);
+        const inAField = b.fields.some((f) => contains(f, c.rect));
+        expect([vp.w, c.id, inAField]).toEqual([vp.w, c.id, true]);
+      }
     }
-    // ardipithecus alone overflows by 94%; if nothing clips, the test is vacuous.
-    expect(clipped).toBeGreaterThan(0);
   });
 
-  it('never leaves a gap: the subject always covers the whole cell', () => {
-    for (const r of ten) {
-      const e = ART[r.id]!;
-      const f = stampFill(e.opaque, e.w, e.h);
-      const [fx, fy, fw, fh] = e.opaque;
-      const l = f.l + fx * f.w;
-      const t = f.t + fy * f.h;
-      expect([r.id, l <= 1e-9, t <= 1e-9]).toEqual([r.id, true, true]);
-      expect([r.id, l + fw * f.w >= 1 - 1e-9, t + fh * f.h >= 1 - 1e-9]).toEqual([r.id, true, true]);
+  it('never enters the reserved scale zone — the bar is inviolable (§5 rule 1)', () => {
+    for (const vp of GATE_VIEWPORTS) {
+      const { b, z } = blipOf(vp);
+      for (const f of b.fields) expect([vp.w, intersects(f, z.scale)]).toEqual([vp.w, false]);
     }
+  });
+
+  it('lets cells overlap each other — that is the whole amendment', () => {
+    const { b } = blipOf(DESKTOP);
+    let overlaps = 0;
+    for (let i = 0; i < b.cells.length; i++)
+      for (let j = i + 1; j < b.cells.length; j++)
+        if (intersects(b.cells[i]!.rect, b.cells[j]!.rect)) overlaps++;
+    expect(overlaps).toBeGreaterThan(0);
+  });
+
+  it('keeps rotation inside the constant, so the heap never reads as a scrapbook', () => {
+    const { b } = blipOf(DESKTOP);
+    for (const c of b.cells) expect(Math.abs(c.rot)).toBeLessThanOrEqual(BLIP_ROT_MAX);
+  });
+
+  it('closes the bracket onto the bar last pixel, from both outer corners', () => {
+    for (const vp of GATE_VIEWPORTS) {
+      const { b, z } = blipOf(vp);
+      const bar = fan(zones(vp)).bar;
+      expect(b.bracket).toHaveLength(2);
+      for (const l of b.bracket) {
+        expect(Math.round(l.x2)).toBe(Math.round(bar.x + bar.w / 2));
+        expect(Math.round(l.y2)).toBe(Math.round(bar.y + bar.h));
+      }
+    }
+  });
+
+  it('drops entirely at 200% text rather than shrinking to a smear (§10)', () => {
+    for (const vp of GATE_VIEWPORTS) {
+      const z = zones({ ...vp, textScale: 2 });
+      const b = blip(z, fan(z).bar);
+      if (!b.shown) {
+        expect([vp.w, b.cells.length, b.bracket.length]).toEqual([vp.w, 0, 0]);
+      } else {
+        expect([vp.w, b.solvedCell >= BLIP_CELL_MIN]).toEqual([vp.w, true]);
+      }
+    }
+  });
+
+  it('keeps the DRAWN cell — rotated, not the box — clear of the bar at any width', () => {
+    for (const vp of [...GATE_VIEWPORTS, ...ULTRAWIDE]) {
+      const { b, z } = blipOf(vp);
+      expect([vp.w, b.shown]).toEqual([vp.w, true]);
+      for (const c of b.cells) {
+        const drawn = drawnBox(c);
+        expect([vp.w, c.id, intersects(drawn, z.scale)]).toEqual([vp.w, c.id, false]);
+        expect([vp.w, c.id, intersects(drawn, b.band)]).toEqual([vp.w, c.id, false]);
+        expect([vp.w, c.id, b.fields.some((f) => contains(f, drawn))]).toEqual([vp.w, c.id, true]);
+      }
+    }
+  });
+
+  it('refuses a field with area but no height — the floor is height-shaped (§6)', () => {
+    /* 1440×900 at 200% text: the plate takes 778 of the 900 px and leaves two
+       61 px ribbons. They are 1,354 px wide, so they carry area to spare and an
+       area-shaped floor waved them through at 30 px a print. */
+    const z = zones({ ...DESKTOP, textScale: 2 });
+    const b = blip(z, fan(z).bar);
+    expect(b.shown).toBe(false);
+    expect(b.solvedCell).toBeLessThan(BLIP_CELL_MIN);
+    expect([b.cells.length, b.bracket.length]).toEqual([0, 0]);
+    // What it was refused for still had room for fifty prints at the floor, by area alone.
+    const fieldH = (z.viewport.h - b.band.h) / 2;
+    expect(fieldH * b.band.w).toBeGreaterThan(flood.length * BLIP_CELL_MIN * BLIP_CELL_MIN);
+  });
+
+  it('is deterministic — the same viewport solves to the same heap', () => {
+    const a = blipOf(DESKTOP).b;
+    const c = blipOf(DESKTOP).b;
+    expect(a.cells.map((x) => [x.id, x.rect, x.rot])).toEqual(c.cells.map((x) => [x.id, x.rect, x.rot]));
+  });
+});
+
+/* The marker is the arrest beat's only visible event, and until 2026-08-05 nothing
+   modelled it: the collision gate reads `#bar`'s own rect, and the head is a child
+   that overflows it by design. It shipped clipped on a phone. */
+describe('the marker — the arrest pulse stays on the glass', () => {
+  const WIDE = { w: 1920, h: 1080 };
+  const barOf = (vp: { w: number; h: number }) => fan(zones(vp)).bar;
+
+  it('keeps the pulsed marker inside the viewport at every gate width', () => {
+    for (const vp of [...GATE_VIEWPORTS, WIDE, { w: 2560, h: 1440 }, { w: 3840, h: 2160 }]) {
+      const r = barHeadPulsed(barOf(vp), vp);
+      expect([vp.w, r.x >= 0]).toEqual([vp.w, true]);
+      expect([vp.w, Math.round((r.x + r.w) * 10) / 10 <= vp.w]).toEqual([vp.w, true]);
+    }
+  });
+
+  it('keeps the pulsed marker inside the bar own reserved zone (§15)', () => {
+    for (const vp of [...GATE_VIEWPORTS, WIDE]) {
+      const z = zones(vp);
+      const r = barHeadPulsed(barOf(vp), vp);
+      // Height only grows downward from the bar's fill line, so the zone check is
+      // the x axis: the zone spans the full viewport height by construction.
+      expect([vp.w, r.x >= z.scale.x]).toEqual([vp.w, true]);
+      expect([vp.w, r.x + r.w <= z.scale.x + z.scale.w]).toEqual([vp.w, true]);
+    }
+  });
+
+  it('never shrinks the marker, and never exceeds the beat own peak', () => {
+    for (const vp of [...GATE_VIEWPORTS, WIDE]) {
+      const s = barHeadPulse(barOf(vp), vp);
+      expect([vp.w, s.x >= 1, s.x <= ARREST_PULSE.x]).toEqual([vp.w, true, true]);
+      expect([vp.w, s.y]).toEqual([vp.w, ARREST_PULSE.y]);
+    }
+  });
+
+  it('does not weaken the desktop pulse to pay for the phone', () => {
+    for (const vp of [DESKTOP, WIDE]) expect([vp.w, barHeadPulse(barOf(vp), vp).x]).toEqual([vp.w, ARREST_PULSE.x]);
+  });
+
+  /* The clamp is doing work, not sitting there: unclamped, this is the bug that
+     shipped — 402.4 on a 390px screen, so the swell was cut off by the edge. */
+  it('is what stops the phone marker running off the screen', () => {
+    const bar = barOf(PHONE);
+    const rest = barHead(bar);
+    const unclamped = rest.w * ARREST_PULSE.x;
+    const unclampedRight = rest.x + rest.w / 2 + unclamped / 2;
+    expect(unclampedRight).toBeGreaterThan(PHONE.w);
+    expect(barHeadPulse(bar, PHONE).x).toBeLessThan(ARREST_PULSE.x);
   });
 });

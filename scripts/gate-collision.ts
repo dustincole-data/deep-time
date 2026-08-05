@@ -21,8 +21,9 @@
  *             boundary, and every visible rect is compared with every other.
  *             This is the pass that catches a mistake in `frame()` itself.
  */
-import { arrivals, CONSTANTS, finaleBeats } from '../src/lib/timeline.ts';
+import { arrivals, CONSTANTS, finaleBeats, flood } from '../src/lib/timeline.ts';
 import {
+  blip,
   contains,
   fan,
   frame,
@@ -274,10 +275,19 @@ function run(vp: Viewport): Result {
   const B = finaleBeats(overrun);
   const marks = [
     ['drain', 0, B.drainEnd],
-    ['cascade', B.drainEnd, B.cascadeEnd],
+    // The arrest, the flood and the plate were added with the rebuilt ending and were
+    // NOT swept until this was noticed: `cascade` had been re-spanned from `drainEnd`,
+    // so it covered the arrest and could never catch it collapsing. Each of the three
+    // divides by its own length at runtime — a zeroed arrest makes `main.ts`'s pulse
+    // `0/0`, and `scale(NaN,NaN)` is rejected by the CSS parser WHOLE, taking the
+    // marker's `translateY` with it and throwing the head to the top of the bar.
+    ['arrest', B.drainEnd, B.arrestEnd],
+    ['cascade', B.arrestEnd, B.cascadeEnd],
     ['breath', B.cascadeEnd, B.breathEnd],
     ['the ten', B.tenStart, B.tenEnd],
     ['hold', B.tenEnd, B.holdEnd],
+    ['flood', B.floodStart, B.floodEnd],
+    ['plate', B.floodEnd, B.plateEnd],
     ['the line', B.lineStart, B.lineEnd],
     ['left holding', B.endStart, B.total],
   ] as const;
@@ -292,48 +302,49 @@ function run(vp: Viewport): Result {
   if (!contains(z.scale, F.bar))
     fail('fan × scale bar', `the bar ${fmtRect(F.bar)} is outside its own reserved zone ${fmtRect(z.scale)}`);
 
-  /* THE STAMP (§9). Swept as rects like everything else, and deliberately NOT
-     given an exemption: the cram was chosen over the pile precisely so that the
-     site's own last screen still obeys the rule it made a ship gate. Every cell
-     is checked against every other cell, against the fan, and against the two
-     reserved zones — if the ten ever overlap, that is a bug here, not a style. */
-  const S = F.stamp;
-  if (S.shown) {
-    if (S.cells.length !== 10) fail('stamp geometry', `the stamp has ${S.cells.length} cells, not 10`);
-    for (const c of S.cells) {
-      if (!contains(S.box, c.rect))
-        fail('stamp geometry', `cell ${c.i} ${c.id} ${fmtRect(c.rect)} is outside the block ${fmtRect(S.box)}`);
+  /* THE BLIP (design §4). The amendment is scoped, and this is where the scope is
+     enforced: cell × cell is deliberately NOT swept — that is the ONE sanctioned
+     image-over-image exception — and everything else still is. */
+  const BL = blip(z, F.bar);
+  if (BL.shown) {
+    if (BL.cells.length !== flood.length)
+      fail('blip geometry', `the blip has ${BL.cells.length} cells for ${flood.length} subjects`);
+
+    const ids = new Set(BL.cells.map((c) => c.id));
+    if (ids.size !== BL.cells.length) fail('blip geometry', 'a flood subject is drawn more than once');
+
+    for (const c of BL.cells) {
+      if (!BL.fields.some((f) => contains(f, c.rect)))
+        fail('blip containment', `cell ${c.id} ${fmtRect(c.rect)} is outside both fields`);
+      // text × image is STILL a gate — the carve-out is image × image only.
+      if (intersects(c.rect, BL.band))
+        fail('blip × plate', `cell ${c.id} ${fmtRect(c.rect)} enters the band the words own`);
     }
-    // Edge-to-edge is the point, so this asserts the cells TILE: they must touch
-    // and never intersect. `intersects` already treats a shared edge as no overlap.
-    for (let i = 0; i < S.cells.length; i++) {
-      for (let j = i + 1; j < S.cells.length; j++) {
-        if (intersects(S.cells[i]!.rect, S.cells[j]!.rect))
-          fail('stamp cell × stamp cell', `${S.cells[i]!.id} and ${S.cells[j]!.id} overlap`);
-      }
+    for (const f of BL.fields) {
+      if (intersects(f, z.scale))
+        fail('blip × scale bar', `a blip field ${fmtRect(f)} enters the reserved scale zone`);
+      /* blip × clock is DELIBERATELY NOT swept — Dustin's ruling, 2026-08-04
+         (see layout.ts, "THE CLOCK ZONE IS RELEASED AT THE FINALE; THE BAR'S
+         ZONE NEVER IS"). Design §4 required the mass to bleed off the top,
+         bottom and left and be clipped by the frame — the bottom-left IS the
+         clock zone — while §4's table said reserved zones stay clear; the two
+         contradicted each other. Dustin's ruling: at the finale the reserved-
+         zone rule covers the BAR alone. The clock zone protects a live
+         readout, and there is nothing there to collide with — #hud is at
+         opacity 0 from px 525 of the finale and the flood does not start
+         until px 6,020. Precedent already exists: fan()'s closing block sits
+         inside z.clock unswept today, as do 11–12 fan rows on mobile. A
+         future reader who "restores" a blip × clock check has found the
+         ruling, not a bug — do not add one back. */
     }
-    // Inside the stage at every placement, and never in a reserved zone.
-    if (intersects(S.box, z.scale))
-      fail('stamp × scale bar', `the stamp ${fmtRect(S.box)} enters the reserved scale zone`);
-    if (intersects(S.box, z.clock))
-      fail('stamp × clock', `the stamp ${fmtRect(S.box)} enters the reserved clock zone`);
-  } else if (S.cells.length || S.bracket.length || S.box.w || S.box.h) {
-    // A dropped stamp must leave nothing behind for the runtime to place.
-    fail('stamp geometry', 'the stamp is not shown but still carries geometry');
+  } else if (BL.cells.length || BL.bracket.length) {
+    fail('blip geometry', 'the blip is not shown but still carries geometry');
   }
 
   const fanBoxes: [string, Rect][] = [
     ...F.rows.map((r) => [`row ${r.i} ${r.id}`, r.box] as [string, Rect]),
     ['seam caption', F.seamCaption],
   ];
-  /* §9 staging rule 4, and the same ruling the closing block takes one line
-     below: `beside` means the stamp shares the screen with the fan and must be
-     swept against it; `after` means the phone's free column cannot hold both,
-     so the fan goes fully OUT before the stamp comes in and the two never
-     co-exist. Sequential is how the overlap is avoided, not an exemption from
-     it — which is why the stamp is still swept against the reserved zones above
-     and its own cells are still tiled against each other. */
-  if (S.shown && S.placement === 'beside') fanBoxes.push(['stamp', S.box]);
   // §9 staging rule 3: when the free column cannot hold a sentence, the fan goes
   // fully OUT before the line comes in — sequential, so they never co-exist.
   if (F.closingPlacement === 'beside') fanBoxes.push(['closing block', F.closing]);
@@ -351,9 +362,7 @@ function run(vp: Viewport): Result {
         ? 'fan row × fan row'
         : bn === 'seam caption' || an === 'seam caption'
           ? 'fan row × seam caption'
-          : bn === 'stamp' || an === 'stamp'
-            ? 'fan × stamp'
-            : 'fan row × closing block';
+          : 'fan row × closing block';
       fail(key, `${an} ${fmtRect(ar)} × ${bn} ${fmtRect(br)}`);
     }
   }
@@ -387,8 +396,9 @@ function run(vp: Viewport): Result {
       'widest row': Math.round(F.widestRow),
       'free column': Math.round(F.freeColumn),
       'closing placement': F.closingPlacement === 'beside' ? 1 : 0,
-      'stamp cell': Math.round(F.stamp.solvedCell * 10) / 10,
-      'stamp shown': F.stamp.shown ? 1 : 0,
+      'blip cell': Math.round(BL.solvedCell * 10) / 10,
+      'blip shown': BL.shown ? 1 : 0,
+      'blip cells': BL.cells.length,
     },
   };
 }

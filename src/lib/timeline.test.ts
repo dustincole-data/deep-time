@@ -10,6 +10,7 @@ import {
   arrivalY,
   eraAt,
   fanDate,
+  flood,
   milestones,
   milestoneY,
   plain,
@@ -22,6 +23,7 @@ import {
   INTRO,
   RUN,
   READABILITY_FLOOR_PX,
+  YEARS_PER_PX,
 } from './timeline.ts';
 
 describe('the scale mechanic (§2)', () => {
@@ -225,9 +227,10 @@ describe('the withheld ten (§7)', () => {
   });
 
   it('is chronological and never carries a line', () => {
-    // §7 revised 2026-08-02: the ten DO carry art now, for the finale stamp.
-    // The line ruling is untouched — the cram has no room for one, and the ten
-    // are meant to arrive as a mass rather than be read one at a time.
+    // §7 revised 2026-08-02: the ten DO carry §11's three art-recipe clauses
+    // now (see the test below). The line ruling is untouched regardless of
+    // whether anything currently bakes or draws that art — the ten are still
+    // meant to arrive as a mass rather than be read one at a time.
     for (let i = 0; i < withheld.length - 1; i++) {
       expect(withheld[i]!.yearsAgo).toBeGreaterThan(withheld[i + 1]!.yearsAgo);
     }
@@ -287,5 +290,38 @@ describe('notation (§8, §10)', () => {
 
   it('strips genus emphasis for the plain-text channels', () => {
     expect(plain('*Bangiomorpha*, a red alga.')).toBe('Bangiomorpha, a red alga.');
+  });
+});
+
+describe('the flood — the record, 12 ka to now', () => {
+  it('is non-empty and every id is unique (no repeats — design §4)', () => {
+    expect(flood.length).toBeGreaterThan(0);
+    expect(new Set(flood.map((f) => f.id)).size).toBe(flood.length);
+  });
+
+  it('is chronological, oldest first', () => {
+    for (let i = 1; i < flood.length; i++) {
+      expect(flood[i]!.yearsAgo).toBeLessThanOrEqual(flood[i - 1]!.yearsAgo);
+    }
+  });
+
+  it('stays inside 12 ka — the span the closing line measures', () => {
+    for (const f of flood) {
+      expect(f.yearsAgo).toBeLessThanOrEqual(12000);
+      expect(f.yearsAgo).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it('carries a licence, a credit and a source on every row', () => {
+    for (const f of flood) {
+      expect(['PD', 'CC0']).toContain(f.licence);
+      expect(f.credit.length).toBeGreaterThan(0);
+      expect(f.source.length).toBeGreaterThan(0);
+      expect(f.id).toMatch(/^[a-z0-9-]+$/);
+    }
+  });
+
+  it('is smaller than one pixel of the run, which is the whole point', () => {
+    expect(flood[0]!.yearsAgo / YEARS_PER_PX).toBeLessThan(1);
   });
 });

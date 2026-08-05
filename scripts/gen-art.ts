@@ -134,10 +134,12 @@ async function apiKey(): Promise<string> {
 
 /** §11's three required clauses, in the order the model weights them. */
 function promptFor(id: string): string {
-  /* The withheld ten are subjects too, since §7's 2026-08-02 revision — they
-     are drawn for the finale stamp (§9) and never for the scroll. They carry
-     the same `analogy` / `negative` clauses in the same file, so the only thing
-     that changes here is where the id is looked up. */
+  /* The withheld ten are subjects too, since §7's 2026-08-02 revision. They
+     carry the same `analogy` / `negative` clauses in the same file, so the
+     only thing that changes here is where the id is looked up. They were
+     drawn for the finale stamp (§9) until Task 4 removed it (2026-08-04);
+     `bake-art.ts` no longer bakes their sheets either (Task 6), but this
+     generator still resolves their ids in case the art is wanted again. */
   const a = arrivals.find((x) => x.id === id) ?? withheld.find((x) => x.id === id);
   if (!a) throw new Error(`no arrival or withheld moment with id "${id}"`);
   if (!a.analogy) throw new Error(`${id}: no analogy — §11 requires one, and it is also the alt text`);

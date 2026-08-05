@@ -10,6 +10,7 @@
  * one place and shipped from another.
  */
 import raw from '../data/timeline.json' with { type: 'json' };
+import record from '../data/record.json' with { type: 'json' };
 
 export type Tier = 'M' | 'I' | 'F';
 export type ArtKind = 'subject' | 'abstract' | 'planet';
@@ -63,11 +64,18 @@ export interface Era {
 export interface FinaleBeats {
   /** px from RUN_END where the drain ends and the cascade starts. */
   drainEnd: number;
+  /** px from RUN_END where the instrument stops dead: marker pinned, clock locked. */
+  arrestEnd: number;
   cascadeEnd: number;
   breathEnd: number;
   tenStart: number;
   tenEnd: number;
   holdEnd: number;
+  /** The flood: ~50 record images arriving on a ramping pitch. */
+  floodStart: number;
+  floodEnd: number;
+  /** The plate: kicker, title, then the closing line. */
+  plateEnd: number;
   lineStart: number;
   lineEnd: number;
   endStart: number;
@@ -107,6 +115,20 @@ export const withheld: Withheld[] = raw.withheld.map((w) => ({
   negative: 'negative' in w ? (w.negative as string) : undefined,
   reference: 'reference' in w ? (w.reference as string) : undefined,
 }));
+
+export interface Flood {
+  id: string;
+  yearsAgo: number;
+  name: string;
+  source: string;
+  licence: 'PD' | 'CC0';
+  credit: string;
+}
+
+/** The record, chronological. The count is deliberately not fixed in code. */
+export const flood: Flood[] = (record.flood as Flood[])
+  .slice()
+  .sort((a, b) => b.yearsAgo - a.yearsAgo);
 
 const clamp = (v: number, lo: number, hi: number) => (v < lo ? lo : v > hi ? hi : v);
 
@@ -182,20 +204,19 @@ export function spokenDate(date: string): string {
 export function finaleBeats(overrunPx: number): FinaleBeats {
   const b = FINALE_CFG.beats;
   const drainEnd = overrunPx + b.drainPad;
-  const cascadeEnd = drainEnd + b.cascade;
+  const arrestEnd = drainEnd + b.arrest;
+  const cascadeEnd = arrestEnd + b.cascade;
   const breathEnd = cascadeEnd + b.breath;
   const tenEnd = breathEnd + b.ten;
   const holdEnd = tenEnd + b.hold;
-  const lineEnd = holdEnd + b.line;
+  const floodEnd = holdEnd + b.flood;
+  const plateEnd = floodEnd + b.plate;
+  const lineEnd = plateEnd + b.line;
   return {
-    drainEnd,
-    cascadeEnd,
-    breathEnd,
-    tenStart: breathEnd,
-    tenEnd,
-    holdEnd,
-    lineStart: holdEnd,
-    lineEnd,
+    drainEnd, arrestEnd, cascadeEnd, breathEnd,
+    tenStart: breathEnd, tenEnd, holdEnd,
+    floodStart: holdEnd, floodEnd, plateEnd,
+    lineStart: plateEnd, lineEnd,
     endStart: lineEnd,
     total: FINALE,
   };

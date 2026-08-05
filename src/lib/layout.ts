@@ -78,6 +78,7 @@ import {
   arrivalY,
   fanRows,
   FINALE_CFG,
+  flood,
   INTRO,
   plain,
   RUN,
@@ -261,7 +262,7 @@ const ART_H_FRAC_I = 0.66;
  * inside a single band. The uncapped jump measured 2.9× at the median and 6.9×
  * end to end, which reads as an inconsistency rather than as prominence.
  */
-const ART_TALL_MAX = 1.6;
+const ART_TALL_MAX = 2.2;
 
 const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v);
 const smooth = (e0: number, e1: number, x: number) => {
@@ -1021,52 +1022,10 @@ export interface FanRow extends FanRowData {
   leader: { x1: number; y1: number; x2: number; y2: number };
 }
 
-/**
- * THE STAMP (§9) — the whole human era, crammed.
- *
- * Ten pictures tiled edge-to-edge with NO gutter. The jam is bought with the
- * zero gap and the small cell, never with overlap: each subject is contained
- * inside its own cell, so §5 survives this screen verbatim and the collision
- * gate needs no finale exemption. (The overlapping pile was the alternative and
- * was rejected on exactly that cost — §15.)
- */
-export interface StampCell {
-  id: string;
-  /** 0-9, chronological — cell 0 is Ardipithecus, cell 9 the industrial revolution. */
-  i: number;
-  rect: Rect;
-}
-
-export interface Stamp {
-  /**
-   * False when the solved cell falls under `STAMP_CELL_MIN` — at 200% text the
-   * closing block takes the room the block was solved into. Text costs art (§10),
-   * so the block goes and the ten rows carry the ending on their own. When false,
-   * `box` has no area and `cells` / `bracket` are empty.
-   */
-  shown: boolean;
-  /** The whole block. The cells tile it exactly. */
-  box: Rect;
-  cell: number;
-  /** What the cell solved to before the floor was applied — what the gate reports. */
-  solvedCell: number;
-  cells: StampCell[];
-  /** Two hairlines from the block's right corners to the bar's last pixel, closing to a point. */
-  bracket: { x1: number; y1: number; x2: number; y2: number }[];
-  /**
-   * `beside` — it shares the screen with the fan, in the free column (desktop).
-   * `after` — the phone has no free column, so it takes the screen the fan gives
-   * up (§9 staging rule 4). Same ruling that already places the closing block.
-   */
-  placement: 'beside' | 'after';
-}
-
 export interface Fan {
   /** The true-scale bar. Inside the reserved scale zone, and the same rect the run draws. */
   bar: Rect;
   rows: FanRow[];
-  /** The withheld ten, crammed (§9). */
-  stamp: Stamp;
   /** The gap the withheld ten sit below — what you scrolled past, and what was withheld. */
   seamY: number;
   seamCaption: Rect;
@@ -1130,76 +1089,6 @@ const ROW_PAD_LEFT = 7;
 const CLOSING_CLEARANCE = 34;
 /** Below this much free column, "beside" is not available at this width (§9). */
 const CLOSING_BESIDE_MIN = 190;
-/** The stamp is 5 × 2 (§9). Ten cells, chronological, reading order. */
-const STAMP_COLS = 5;
-const STAMP_ROWS = 2;
-/**
- * Below this, the stamp is not drawn at all.
- *
- * §10 already rules on exactly this case — "text at 200% costs art, never
- * legibility" — and the stamp is art. At 200% text the closing block doubles in
- * height and takes the room the block was solved into, so the block goes, the
- * same way an arrival's picture goes below `ART_MIN_H` and the same way ruling A
- * drops the description line. A ten-picture jam at 12 px a cell is not a smaller
- * version of the argument, it is a smudge; the ten rows above it still carry
- * every name and date, which is the half §8 calls load-bearing.
- */
-export const STAMP_CELL_MIN = 28;
-
-/**
- * How much of a stamp subject's VERTICAL overflow is taken off the top.
- *
- * §9 rule 8 fills each cell with the subject rather than the asset, so the
- * subject's short axis fills the square exactly and its long axis overflows and
- * is clipped. Splitting that overflow evenly — which is what centring does —
- * cuts the same amount off the head as off the feet, and measured 2026-08-04
- * `ardipithecus` overflows its cell by 94%, so an even split took 24% off each
- * end of a standing figure and removed its head. Four of the ten are
- * reconstructions of faces and figures (§11); the thing the finale is FOR is
- * that a visitor recognises us in the block, and a headless figure is not a
- * smaller version of that argument any more than a 12 px cell is.
- *
- * Heads sit at the top of a figure, so the crop keeps the top: an eighth of the
- * overflow comes off the head, the rest off the feet. HORIZONTAL overflow stays
- * centred — subjects are horizontally centred already and there is no
- * equivalent of a head on that axis. Nothing here can touch §5: the cell still
- * clips, so a picture moved inside its square still cannot reach a neighbour.
- */
-const STAMP_CROP_TOP = 0.125;
-
-/**
- * One stamp cell's fill, as multiples of the cell (§9 rule 8). Pure, so the
- * page can solve all four numbers at build and the runtime only places a square.
- *
- * `opaque` is the subject's own box inside the asset, recorded at bake time as
- * fractions of the asset — the halo margin is 18–30% of the canvas, so sizing
- * by the canvas would leave the subject covering ~70% of its cell and turn the
- * jam into a row of icons.
- */
-export function stampFill(
-  opaque: readonly [number, number, number, number],
-  assetW: number,
-  assetH: number,
-): { w: number; h: number; l: number; t: number } {
-  const [fx, fy, fw, fh] = opaque;
-  // The subject's SHORT side fills the cell exactly; the long side overflows.
-  const base = Math.min(fw * assetW, fh * assetH);
-  const w = assetW / base;
-  const h = assetH / base;
-  // The subject, measured in cells. Exactly one of these is 1; the other is ≥1.
-  const subjH = fh * h;
-  return {
-    w,
-    h,
-    // Horizontal: centred, as before.
-    l: 0.5 - (fx + fw / 2) * w,
-    // Vertical: the subject's top edge sits this far above the cell's, which is
-    // STAMP_CROP_TOP of whatever overflows. At zero overflow this is identical
-    // to centring, so the six cells that do not overflow vertically are untouched.
-    t: -(subjH - 1) * STAMP_CROP_TOP - fy * h,
-  };
-}
-
 /** `.fd` — the date, then `.fn` — the name. One row, right-anchored. */
 function fanRowWidth(r: FanRowData, fs: number): number {
   const date: TypeSpec = { size: fs, lineHeight: 1.25, tracking: 0.04, upper: false, weight: 1 };
@@ -1278,10 +1167,10 @@ export function fan(z: Zones): Fan {
   const closingPlacement: 'beside' | 'after' = freeColumn < CLOSING_BESIDE_MIN ? 'after' : 'beside';
   /* RULING E, applied to the ending. The fan is right-anchored to the bar and
      the closing block was left-anchored to the viewport, so the two ends pulled
-     apart as the monitor grew: measured 2026-08-04, the gap between the closing
-     block's right edge and the stamp's left ran 0 px at 1440×900 and 422 px at
-     1920×1080 — a hole INSIDE the composition, which is what read as "huge
-     empty space" rather than any fault of the stamp.
+     apart as the monitor grew: measured 2026-08-04, the gap through the middle
+     of the ending ran 0 px at 1440×900 and 422 px at 1920×1080 — a hole INSIDE
+     the composition, which is what read as "huge empty space" rather than any
+     fault of the composition itself.
 
      The bar is not clamped: §9 keeps it the same object at the same right edge,
      unbroken, and moving it is what §15 forbids. So the finale freezes the SPAN
@@ -1308,84 +1197,9 @@ export function fan(z: Zones): Fan {
 
   const closing: Rect = { x: closeLeft, y: h - closeBottom - closeH, w: closeW, h: closeH };
 
-  /* THE STAMP (§9 staging rules 3 and 4) — a solved rect, not a chosen one.
-     It hangs off the same 'beside' / 'after' ruling the closing block already
-     takes, because it is the same question asked twice: is there a free column
-     at this width, or does the fan have to give the screen up?
-
-       beside (desktop) — the stamp sits in the free column, right-anchored to
-         the column's right edge, which is exactly where the fan's widest row
-         stops being in the way.
-       after  (phone)   — the free column is 3 px, so there is no such place.
-         The stamp takes the fan's own column instead, and the fan is gone by
-         then: it fades at the end of `the ten` and the stamp holds alone.
-
-     Its bottom is CLOSING_CLEARANCE above the closing block at BOTH placements,
-     so the two never share space even though they never share a beat either.
-     Geometry that is true regardless of time is what keeps the gate honest —
-     the sweep reads rects, not beats.
-
-     THE CELL IS CAPPED BY THE FAN'S OWN WIDEST ROW. §9's claim is that the
-     whole human era is "smaller than one fan row is long", so that is the
-     number the cap is made of rather than a taste. It also means the stamp
-     cannot quietly grow into a poster on a wide monitor: past a point, extra
-     width buys the free column, not the block. */
-  const stampPlacement: 'beside' | 'after' = closingPlacement;
-  const stampRight = stampPlacement === 'beside' ? rowRight - widestRow - CLOSING_CLEARANCE : rowRight;
-  const stampBottom = closing.y - CLOSING_CLEARANCE;
-  const solvedCell = Math.max(
-    0,
-    Math.min(
-      (stampRight - closeLeft) / STAMP_COLS,
-      (stampBottom - rowTop) / STAMP_ROWS,
-      widestRow / STAMP_COLS,
-    ),
-  );
-  const stampShown = solvedCell >= STAMP_CELL_MIN;
-  const cell = stampShown ? solvedCell : 0;
-  const stampBox: Rect = {
-    x: stampRight - cell * STAMP_COLS,
-    y: stampBottom - cell * STAMP_ROWS,
-    w: cell * STAMP_COLS,
-    h: cell * STAMP_ROWS,
-  };
-  const stamp: Stamp = {
-    shown: stampShown,
-    box: stampBox,
-    cell,
-    solvedCell,
-    // Chronological, reading order — the same order as the ten rows above it,
-    // so a visitor can tie a row to a cell without being told to (§9 rule 2).
-    cells: !stampShown ? [] : fanRows
-      .filter((r) => r.ten)
-      .map((r, i) => ({
-        id: r.id,
-        i,
-        rect: {
-          x: stampBox.x + (i % STAMP_COLS) * cell,
-          y: stampBox.y + Math.floor(i / STAMP_COLS) * cell,
-          w: cell,
-          h: cell,
-        },
-      })),
-    // The bracket closes to the bar's last pixel — the one the ten land on, and
-    // the one with no tick. It states the relationship geometrically instead of
-    // in words, which is the same move the leader lines already make.
-    bracket: !stampShown
-      ? []
-      : [stampBox.y, stampBox.y + stampBox.h].map((y1) => ({
-          x1: stampBox.x + stampBox.w,
-          y1,
-          x2: bar.x - 2,
-          y2: barBot,
-        })),
-    placement: stampPlacement,
-  };
-
   return {
     bar,
     rows,
-    stamp,
     seamY,
     seamCaption,
     closing,
@@ -1396,4 +1210,489 @@ export function fan(z: Zones): Fan {
     fontSize,
     rowRight,
   };
+}
+
+/* ============================================================================
+   THE MARKER — the one piece of the instrument nothing modelled
+
+   `#bar .head` is the bright dash that rides the bar, and design §3's arrest beat
+   pulses it: the marker reaches the bar's last pixel, swells once, and never moves
+   again. It shipped unbounded on 2026-08-04 and was clipped by the glass on a
+   phone — at 390×844 the head's centre sits 11 px from the right edge, and a 2.6×
+   scale about that centre put its right edge at 402.4 on a 390 px screen, cutting
+   the arrest's ONLY visible event in half. Nothing caught it because nothing here
+   described the head: the collision gate reads `#bar`'s own rect, and the head is
+   a child that overflows it by design.
+
+   So the head is geometry now, in the module every other rect comes from, and the
+   pulse is SOLVED against the room the viewport actually gives rather than chosen.
+   ========================================================================= */
+
+/** `#bar .head` in index.astro: `left: -7px; width: 18px; height: 2px`, at the bar's fill line. */
+export const BAR_HEAD = { left: -7, w: 18, h: 2 } as const;
+/** The arrest pulse's peak scale about the head's own centre, before the viewport bounds it. */
+export const ARREST_PULSE = { x: 2.6, y: 3.2 } as const;
+/** Clear space kept between the pulsed marker and the edge of the glass. */
+const ARREST_EDGE_CLEAR = 1;
+
+/** The marker's rect at rest — page px, in the same space as `fan()`'s bar. */
+export const barHead = (bar: Rect): Rect => ({
+  x: bar.x + BAR_HEAD.left,
+  y: bar.y + bar.h,
+  w: BAR_HEAD.w,
+  h: BAR_HEAD.h,
+});
+
+/**
+ * The pulse's peak scale, clamped so the marker's widest frame still lands on the
+ * glass. Y is unbounded: the head is 2 px tall with the whole lower bar to grow
+ * into, so it is the axis that carries the beat once X runs out of room.
+ */
+export function barHeadPulse(bar: Rect, vp: Pick<Viewport, 'w'>): { x: number; y: number } {
+  const r = barHead(bar);
+  const cx = r.x + r.w / 2;
+  const room = Math.min(cx, vp.w - cx) - ARREST_EDGE_CLEAR;
+  return { x: clamp(room / (r.w / 2), 1, ARREST_PULSE.x), y: ARREST_PULSE.y };
+}
+
+/** The marker's footprint at the pulse's peak — what the test and the runtime both read. */
+export function barHeadPulsed(bar: Rect, vp: Pick<Viewport, 'w'>): Rect {
+  const r = barHead(bar);
+  const s = barHeadPulse(bar, vp);
+  const w = r.w * s.x;
+  const h = r.h * s.y;
+  return { x: r.x + (r.w - w) / 2, y: r.y + (r.h - h) / 2, w, h };
+}
+
+/* ============================================================================
+   THE BLIP (design §4) — the record, heaped
+
+   The one place on the whole site where image × image overlap is legal. It is
+   bought with two named rects and nothing else: text, chrome and the reserved
+   scale zone are still swept, and the sweep asserts the heap never leaves its
+   fields. text × text, text × image and anything × a reserved zone stay zero
+   here exactly as everywhere else, so the carve-out cannot leak.
+
+   THE SHAPE IS TWO RECTS, NEVER ONE RECT WITH A HOLE (§4). The words own a
+   full-width band across the middle and the heap is the mass above it and the
+   mass below it, each filled independently. A centred keep-out box packed
+   around reads as a donut — a rectangular hole in a heap looks like a rendering
+   failure. A band reads as a slot cut cleanly through a mass, which is what it is.
+
+   WHY THE BOX IS THE FRAME AND NOT `z.stage`. `z.stage` is the RUN's grid,
+   frozen at 1440×900 by ruling E and inset from the clock zone the HUD lives
+   in. By the flood the HUD has faded out (`main.ts` drives `#hud` to zero
+   through the drain beat), the fan is gone and the field is black, so the run's
+   grid describes nothing still on screen. Solving the heap into it would
+   reproduce the exact fault ruling E was written to kill: at 1920×1080 the stage
+   ends at x=1614 and the bar sits at 1842, which is a 228 px hole through the
+   middle of the composition — and a rect strictly inside `z.stage` can never be
+   "clipped by the frame", which is what §4 consequence 2 requires of it. So the
+   flood takes the whole frame.
+
+   THE CLOCK ZONE IS RELEASED AT THE FINALE; THE BAR'S ZONE NEVER IS.
+   *Dustin's ruling, 2026-08-04, amending §4 and §15.* At the finale the reserved-
+   zone rule covers THE BAR ALONE, and the heap deliberately covers the bottom-
+   left where the clock zone is. That zone exists to protect a LIVE READOUT, and
+   there is no readout there to protect: `#hud` is at opacity 0 from px 525 of the
+   finale and the flood does not start until px 6,020. The finale already read it
+   this way before the amendment — `fan()`'s closing block sits inside `z.clock`
+   at every desktop width and is swept against `z.scale` alone. A future reader
+   who finds the heap over the clock zone has found the ruling, not a bug.
+
+   `z.scale` is a different matter and is NOT released: §15 protects the bar
+   absolutely, so nothing here — including a cell's ROTATED footprint, see
+   `BLIP_BAR_CLEAR` — may enter it at any viewport.
+
+   IT BLEEDS OFF THREE EDGES AND NEVER THE FOURTH (§4 consequences 2 and 3). The
+   fields run past the top, bottom and left of the frame by a fraction of a cell,
+   so prints at the edges are cut by the frame and the mass reads as MORE THAN
+   FITS rather than as a composition. It never bleeds right: the bar's zone is
+   inviolable, and a visitor on a wide monitor sees the mass end and the
+   instrument stand alone.
+   ========================================================================= */
+
+/**
+ * Below this the flood drops entirely rather than shrinking to a smear.
+ *
+ * THE FLOOR IS HEIGHT-SHAPED, NOT AREA-SHAPED (Dustin, 2026-08-04). `solvedCell`
+ * is the SHORT SIDE OF THE SMALLEST SLOT either field's grid hands a print — not
+ * `sqrt(area / flood.length)`, which is what it was first written as and which
+ * measured the wrong thing. At 1440×900 with 200% text the plate takes 778 px of
+ * the 900 and leaves two 61 px ribbons; those ribbons are 1,354 px wide, so they
+ * carry 165,000 px² of area and cleared an area-shaped floor comfortably while
+ * handing every print a 30 px slot. §6 is explicit that this case drops: "if the
+ * band grows past the point where either `.blip` rect can hold a usable print,
+ * the flood drops entirely" — a rect with area but no height cannot hold one.
+ *
+ * §10's ruling — text at 200% costs art, never legibility — is what licenses the
+ * drop: fifty prints at 30 px a side is not a smaller version of the argument, it
+ * is a smudge, and the plate still carries every word.
+ */
+export const BLIP_CELL_MIN = 34;
+/**
+ * Degrees, ± — design §9 open item 3, ruled by Dustin on 2026-08-04. Deliberately
+ * HALF the prototype's ±4.5°: at 4.5 the heap reads as a scrapbook of tilted
+ * snapshots, and the finale's claim is that this is the record, not a memento.
+ * Two degrees is enough to say "stacked" and not enough to say "arranged".
+ */
+export const BLIP_ROT_MAX = 2;
+
+/**
+ * Clear space kept between the heap's right edge and the reserved scale zone.
+ *
+ * It is 8 px of CLEAR SPACE, not 8 px of hope: `rect` is the print's UNROTATED
+ * box and every print draws at up to ±`BLIP_ROT_MAX`, so the footprint that
+ * actually lands on the glass is the rotated AABB, which is wider. Measured
+ * before this was fixed, the drawn mass crossed `z.scale.x` by 0.09 px at
+ * 3440×1440 and 1.62 px at 3840×2160 — below every gate viewport, so it shipped
+ * green while breaching the one rule §15 protects absolutely. The clearance is
+ * therefore honoured against the ROTATED footprint (see `rotatedBy` and the cap
+ * in `blip()`), which holds at any width instead of at the widths swept.
+ */
+const BLIP_BAR_CLEAR = 8;
+/**
+ * How far the mass runs off the top, bottom and left edges, in solved cells.
+ * Half a cell: every subject still has most of itself on screen — a subject
+ * pushed fully into the margin is one that was researched, licensed and baked
+ * and is then never seen.
+ */
+const BLIP_BLEED = 0.5;
+/**
+ * A print is drawn OVER its slot rather than inside it, which is what makes the
+ * mass shingle instead of tile. Multiples of the slot's SHORT side.
+ */
+const BLIP_SHINGLE = 1.55;
+/** How far a print may wander off its slot centre, as a fraction of the slot. */
+const BLIP_JITTER = 0.5;
+/** Print sizes vary — the record is not a contact sheet. Multiples of the shingle. */
+const BLIP_SIZE_VARY = [0.86, 1.22] as const;
+/** Prints are mixed portrait and landscape. Width ÷ height. */
+const BLIP_ASPECT = [0.68, 1.63] as const;
+
+export interface BlipCell {
+  id: string;
+  i: number;
+  rect: Rect;
+  rot: number;
+}
+
+export interface Blip {
+  /** False when the solved cell falls under `BLIP_CELL_MIN`. Then nothing is left behind. */
+  shown: boolean;
+  /** The two fill rects — above the plate band and below it. Never one rect with a hole. */
+  fields: [Rect, Rect];
+  /**
+   * The full-width band the words own. No cell may intersect it. Named `band`,
+   * because `Zones.plate` is already the Boring Billion plate (§6). It is
+   * returned whether or not the heap is — the words outlive the pictures.
+   */
+  band: Rect;
+  cells: BlipCell[];
+  /** Two hairlines from the heap's outer right corners to the bar's last pixel. */
+  bracket: { x1: number; y1: number; x2: number; y2: number }[];
+  /** What the cell solved to before the floor was applied — what the gate reports. */
+  solvedCell: number;
+}
+
+/**
+ * Deterministic. §3's contract is that two frames at one scroll position are
+ * byte-identical, and a heap that reshuffles between them is a bug rather than a
+ * texture — so the jitter comes from a seeded LCG, never `Math.random()`.
+ */
+function blipRng(seed: number): () => number {
+  let s = seed >>> 0;
+  return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+}
+
+/**
+ * A rect MOVED into `box`. Aspect is preserved: a print that cannot fit is
+ * scaled uniformly about its own centre first, never squashed into a shape the
+ * picture is not. By construction nothing reaches the scale branch — the size is
+ * capped against the field before it is placed — but a silent aspect change is
+ * exactly the kind of thing that would never be noticed, so it cannot be possible.
+ */
+function clampInto(r: Rect, box: Rect): Rect {
+  const s = Math.min(1, box.w / r.w, box.h / r.h);
+  const w = r.w * s;
+  const h = r.h * s;
+  return {
+    w,
+    h,
+    x: clamp(r.x + (r.w - w) / 2, box.x, box.x + box.w - w),
+    y: clamp(r.y + (r.h - h) / 2, box.y, box.y + box.h - h),
+  };
+}
+
+/**
+ * The band's gaps, as fractions of THE TYPE THEY SEPARATE — never fixed px.
+ *
+ * TIGHTENED 2026-08-05, on Dustin's ruling from the first render. The gaps were
+ * the literals 18 / 26 / 26 / 40, which put **151 px of air around 226 px of
+ * type**: the band took 41.8% of a 1440×900 viewport, the heap was left 58%, and
+ * the ending read as two dense bands with a black gap between them — the exact
+ * failure design §4 names ("too tall and the mass becomes two thin strips with
+ * dead black between"). Nothing about the type changed; only the slack went.
+ *
+ * Ratios rather than px for a second reason: a fixed 18 px gap under a kicker
+ * that has doubled is not the same design, it is a crowded one. Expressed against
+ * their own type the gaps take the text scale with them, which is what "the band
+ * is SOLVED to the words" has to mean if it means anything. `index.astro` sets
+ * exactly these numbers as `em` on exactly these elements.
+ */
+const PLATE_GAPS = {
+  /** kicker → title, of the kicker's own size. */
+  kicker: 1.0,
+  /** title → rule, of the title's own size. */
+  title: 0.17,
+  /** rule → the line, of the line's size. */
+  rule: 0.55,
+  /** The band's clear space from the heap, top and bottom, of the line's size. */
+  pad: 1.05,
+} as const;
+/** `.pr { height: 1px }`. */
+const PLATE_RULE_H = 1;
+
+/**
+ * The band the words own, at this viewport and this text scale. The closing line
+ * is measured with the SAME spec `fan()` gives it, because the plate reuses the
+ * finale's existing closing block rather than duplicating it — one sentence, one
+ * measurement.
+ *
+ * EVERY string comes from `FINALE_CFG.copy`, never from a literal here. The band
+ * is SOLVED to the words' own height (§4 consequence 4), so a copy edit that this
+ * model could not see would silently leave the solved band and the rendered plate
+ * describing different text. `plateTitle` is an array because the break between
+ * its two lines is authored, not wrapped — `#blip-plate` joins it with `<br />`.
+ *
+ * TWO SLOTS HOLD TWO TENANTS EACH, and are therefore solved as a `max`. The
+ * left-holding beat SWAPS rather than adds (sequential, never a crossfade — §9
+ * staging rule 3): `↑ again` takes the kicker's slot and the epilogue takes the
+ * line's. Modelling them as a max is what makes the band's height the same in
+ * both states, so the words never move when they trade places — and it is why
+ * the last beat costs the heap nothing. Solved as a SUM instead, `↑ again` alone
+ * added 22 px the band was never given, and the runtime spent it out of the
+ * clear space between the words and the prints: measured before this was fixed,
+ * the 40 px pad delivered 24.7 px of real clearance at 1440×900.
+ */
+function blipBandHeight(z: Zones, boxW: number): number {
+  const { w, textScale: k } = z.viewport;
+  const cl = (lo: number, vw: number, hi: number) => clamp(w * vw, lo, hi);
+
+  const kicker: TypeSpec = { size: cl(10, 0.008, 12) * k, lineHeight: 1.25, tracking: 0.28, upper: true, weight: 1 };
+  /* `clamp(28px, 4.2vw, 60px)` — 60 at 1440 and up, 28 on a phone. The FLOOR is
+     the constant that matters: this is the site's punchline set as a title, and
+     a 16 px punchline is not a smaller version of it. */
+  const title: TypeSpec = { size: cl(28, 0.042, 60) * k, lineHeight: 1.02, tracking: -0.02, upper: true, weight: 1.1 };
+  // `fan()`'s own `lineSpec`, verbatim — the same sentence in the same block.
+  const line: TypeSpec = { size: cl(14, 0.015, 19) * k, lineHeight: 1.55, tracking: 0, upper: false, weight: 1 };
+  // `fan()`'s `againSpec` and `epSpec`, verbatim — the same two tenants.
+  const again: TypeSpec = { size: 10 * k, lineHeight: 1.25, tracking: 0.28, upper: true, weight: 1 };
+  const ep: TypeSpec = { size: 13 * k, lineHeight: 1.6, tracking: 0, upper: false, weight: 1 };
+
+  // The title is centred across the whole band; the paragraph is set to a
+  // measure, which is why it is the narrower of the two.
+  const titleW = boxW * 0.92;
+  const lineW = Math.min(470, boxW * (z.mobile ? 0.92 : 0.62));
+
+  const c = FINALE_CFG.copy;
+  const titleH = c.plateTitle.reduce((acc, s) => acc + blockH(plain(s), title, titleW), 0);
+  const topH = Math.max(
+    blockH(plain(c.plateKicker), kicker, titleW),
+    blockH(plain(c.again), again, titleW),
+  );
+  const bodyH = Math.max(
+    blockH(plain(c.closing), line, lineW),
+    blockH(plain(c.epilogue), ep, lineW),
+  );
+  const pad = line.size * PLATE_GAPS.pad;
+  return (
+    pad +
+    topH +
+    kicker.size * PLATE_GAPS.kicker +
+    titleH +
+    title.size * PLATE_GAPS.title +
+    PLATE_RULE_H +
+    line.size * PLATE_GAPS.rule +
+    bodyH +
+    pad
+  );
+}
+
+/** The AABB a `w × h` rect occupies once it is drawn at `deg` about its own centre. */
+function rotatedBy(w: number, h: number, deg: number): { w: number; h: number } {
+  const a = (Math.abs(deg) * Math.PI) / 180;
+  const c = Math.cos(a);
+  const s = Math.sin(a);
+  return { w: w * c + h * s, h: w * s + h * c };
+}
+
+interface BlipSlot {
+  cx: number;
+  cy: number;
+  w: number;
+  h: number;
+}
+
+/**
+ * `m` slots tiling `box`, in reading order.
+ *
+ * The remainder is spread ACROSS the rows rather than left at the end of the
+ * last one: a rigid `cols × rows` grid leaves `cols*rows - m` empty slots in one
+ * corner, and a heap with a rectangular bite out of its bottom-right is the same
+ * donut fault §4 already rejected, only moved. Every row therefore carries
+ * `floor(m/rows)` prints or one more, and spans the box edge to edge.
+ */
+function blipSlots(box: Rect, m: number): BlipSlot[] {
+  const cols = clamp(Math.round(Math.sqrt((m * box.w) / box.h)), 1, m);
+  const rows = clamp(Math.ceil(m / cols), 1, m);
+  const ch = box.h / rows;
+  const base = Math.floor(m / rows);
+  const extra = m % rows;
+  const out: BlipSlot[] = [];
+  for (let r = 0; r < rows; r++) {
+    const inRow = base + (r < extra ? 1 : 0);
+    const cw = box.w / inRow;
+    for (let c = 0; c < inRow; c++) {
+      out.push({ cx: box.x + cw * (c + 0.5), cy: box.y + ch * (r + 0.5), w: cw, h: ch });
+    }
+  }
+  return out;
+}
+
+/** Fisher–Yates, off the seeded stream. Deterministic, like everything else here. */
+function blipShuffle<T>(xs: T[], r: () => number): T[] {
+  for (let i = xs.length - 1; i > 0; i--) {
+    const j = Math.floor(r() * (i + 1));
+    const t = xs[i]!;
+    xs[i] = xs[j]!;
+    xs[j] = t;
+  }
+  return xs;
+}
+
+/**
+ * The geometry of the flood. A pure function of the viewport and the bar, like
+ * every other rect on this site.
+ *
+ * The cell is DERIVED, never chosen: it is the short side of the smallest slot
+ * either field's own grid hands a print, so it answers §6's question directly —
+ * can this rect hold a usable print? Density is bought by adding subjects (§4's
+ * no-repeats rule), so `flood.length` is read here and never assumed.
+ */
+export function blip(z: Zones, bar: Rect): Blip {
+  const vh = z.viewport.h;
+  const n = flood.length;
+
+  // The heap stops clear of the reserved scale zone; the other three edges are
+  // the frame's, and it runs off them.
+  const right = z.scale.x - BLIP_BAR_CLEAR;
+
+  const bandH = blipBandHeight(z, Math.max(0, right));
+  const bandY = (vh - bandH) / 2;
+  // The two ON-SCREEN masses. The bleed is added after the cell is solved, so
+  // the density is solved against what a visitor can actually see.
+  const topH = bandY;
+  const botH = vh - (bandY + bandH);
+
+  const band: Rect = { x: 0, y: bandY, w: Math.max(0, right), h: bandH };
+  const dropped = (cell: number): Blip => ({
+    shown: false,
+    fields: [
+      { x: 0, y: 0, w: 0, h: 0 },
+      { x: 0, y: 0, w: 0, h: 0 },
+    ],
+    band,
+    cells: [],
+    bracket: [],
+    solvedCell: cell,
+  });
+
+  if (right <= 0 || topH <= 0 || botH <= 0) return dropped(0);
+
+  /* THE SPLIT. Each field is filled independently (§4 consequence 1) and gets
+     subjects in proportion to the room it has, so neither is left bare. */
+  const nTop = clamp(Math.round((n * topH) / (topH + botH)), 1, n - 1);
+  const nBot = n - nTop;
+
+  const r = blipRng(1 + Math.round(z.viewport.w * 7 + z.viewport.h));
+  /* The slots are shuffled, so the flood ACCUMULATES rather than wipes. Cells
+     stay in flood order — chronological, one per subject — and only WHICH slot a
+     subject lands in is permuted; the ramping arrival pitch (§5) then reads as an
+     avalanche filling the whole frame instead of two left-to-right sweeps. */
+  const slots: [BlipSlot[], BlipSlot[]] = [
+    blipShuffle(blipSlots({ x: 0, y: 0, w: right, h: topH }, nTop), r),
+    blipShuffle(blipSlots({ x: 0, y: bandY + bandH, w: right, h: botH }, nBot), r),
+  ];
+
+  /* THE FLOOR, read off the grid that was just built rather than off the area
+     it covers. The smallest slot is the print with the least room, and §6 drops
+     the whole flood on that print rather than shipping a band of smears. */
+  const solvedCell = Math.min(...slots.flat().map((s) => Math.min(s.w, s.h)));
+  if (solvedCell < BLIP_CELL_MIN) return dropped(solvedCell);
+
+  const bleed = solvedCell * BLIP_BLEED;
+  band.x = -bleed;
+  band.w = right + bleed;
+
+  const fields: [Rect, Rect] = [
+    { x: -bleed, y: -bleed, w: right + bleed, h: topH + bleed },
+    { x: -bleed, y: bandY + bandH, w: right + bleed, h: botH + bleed },
+  ];
+
+  const cells: BlipCell[] = [];
+  let takenTop = 0;
+  let takenBot = 0;
+  flood.forEach((f, i) => {
+    /* Interleaved, not blocked: giving the top field the first half outright
+       would put every slowly-arriving early print in one mass and the whole
+       avalanche in the other. Both masses build together, in proportion. */
+    const wantTop =
+      takenTop < nTop && (takenBot >= nBot || (takenTop + 0.5) / nTop <= (takenBot + 0.5) / nBot);
+    const side = wantTop ? 0 : 1;
+    const slot = slots[side]![wantTop ? takenTop++ : takenBot++]!;
+    const field = fields[side]!;
+
+    const vary = BLIP_SIZE_VARY[0] + r() * (BLIP_SIZE_VARY[1] - BLIP_SIZE_VARY[0]);
+    const aspect = BLIP_ASPECT[0] + r() * (BLIP_ASPECT[1] - BLIP_ASPECT[0]);
+    const rot = (r() - 0.5) * 2 * BLIP_ROT_MAX;
+    /* THE FOOTPRINT, NOT THE RECT, IS WHAT IS FITTED AND PLACED. A print draws
+       rotated about its own centre, so the box that lands on the glass is the
+       AABB below — bigger than `rect` on both axes. Capping and clamping THAT is
+       what makes `BLIP_BAR_CLEAR` a real 8 px of clear space at every width
+       rather than at the widths that happen to be swept. */
+    const unit = rotatedBy(aspect, 1, rot); // the AABB of a print one unit tall
+    const h = Math.min(
+      Math.min(slot.w, slot.h) * BLIP_SHINGLE * vary,
+      field.h / unit.h,
+      field.w / unit.w,
+    );
+    const cw = h * aspect;
+    const cx = slot.cx + (r() - 0.5) * slot.w * BLIP_JITTER;
+    const cy = slot.cy + (r() - 0.5) * slot.h * BLIP_JITTER;
+    const aw = h * unit.w;
+    const ah = h * unit.h;
+    // Fitted above, so this is a pure translation — the footprint keeps its size
+    // and the print inside it keeps its aspect.
+    const box = clampInto({ x: cx - aw / 2, y: cy - ah / 2, w: aw, h: ah }, field);
+    cells.push({
+      id: f.id,
+      i,
+      rect: { x: box.x + (aw - cw) / 2, y: box.y + (ah - h) / 2, w: cw, h },
+      rot,
+    });
+  });
+
+  /* THE BRACKET (§4). Two hairlines from the heap's outer right corners to the
+     bar's last pixel — the one the ten land on, and the one with no tick. It
+     states the relationship geometrically instead of in words, which is the move
+     the leader lines already make: this whole screen, at that size, is that. */
+  const bracket = [fields[0].y, fields[1].y + fields[1].h].map((y1) => ({
+    x1: right,
+    y1,
+    x2: bar.x + bar.w / 2,
+    y2: bar.y + bar.h,
+  }));
+
+  return { shown: true, fields, band, cells, bracket, solvedCell };
 }

@@ -24,6 +24,7 @@ import {
   fanDate,
   fanRows,
   FINALE_CFG,
+  flood,
   milestones,
   plain,
   pxFromNow,
@@ -31,12 +32,14 @@ import {
   spokenName,
   withheld,
 } from '../lib/timeline.ts';
-import { stampFill } from '../lib/layout.ts';
 import art from '../data/art.json' with { type: 'json' };
 
 const { RUN, YEARS_PER_PX, TOTAL } = CONSTANTS;
 type ArtEntry = (typeof art)[keyof typeof art];
 const artFor = (id: string): ArtEntry | undefined => (art as Record<string, ArtEntry>)[id];
+/** The record register (§11) — baked under its own `record/` key so it can never
+    collide with a scroll subject's painted plate. Missing art is a build failure. */
+const recordArt = (id: string): ArtEntry => (art as Record<string, ArtEntry>)[`record/${id}`]!;
 const nf = (n: number) => n.toLocaleString('en-US');
 ---
 
@@ -212,53 +215,55 @@ const nf = (n: number) => n.toLocaleString('en-US');
         }
       </ol>
 
-      {/* THE STAMP (§9) — the whole human era, crammed. Ten pictures tiled
-          edge-to-edge with no gutter; the jam is the zero gap and the small
-          cell, never overlap, so §5 survives this screen verbatim.
-
-          aria-hidden in its entirety, bracket included (§10): the ten rows
-          immediately above carry all ten names and dates in the same order, so
-          exposing each cell's alt would read the same ten moments twice. The
-          alt strings still exist and are still build-asserted in art.json. */}
-      <div id="stamp" aria-hidden="true">
-        <svg id="stamp-bracket"></svg>
+      {/* THE FLOOD (design §4) — the record, heaped. `aria-hidden` with empty
+          `alt`s on purpose: the finale's visually-hidden summary above already
+          states the whole scale argument in numbers, and fifty alt strings would
+          be read out as a wall in front of it. Every rect comes from `blip()`;
+          nothing here positions a print. */}
+      <div id="blip" aria-hidden="true">
+        {/* Two hairlines from the heap's outer right corners to the bar's last
+            pixel. Decoration, like the leader lines — `blip()` gives the coords. */}
+        <svg id="blip-bracket"><line /><line /></svg>
         {
-          fanRows.filter((r) => r.ten).map((r, i) => {
-            const e = artFor(r.id)!;
-            /* Fill the cell with the SUBJECT, not with the asset. Every asset
-               carries a transparent halo margin (18-30%, measured), so sizing
-               the picture by its canvas leaves the subject covering 70% of its
-               cell — and ten pictures separated by their own padding is a row
-               of icons, not a jam. `opaque` is the subject's own box inside the
-               asset, recorded at bake time; these four numbers are it, solved
-               here as multiples of the cell so the runtime only has to place a
-               square and the browser does the rest in percentages.
-
-               The overflow is clipped BY the cell, so growing the picture past
-               its square cannot reach a neighbour: §5 holds by construction,
-               which is what the gate asserts on the cells themselves.
-
-               `stampFill` also decides WHERE the clip falls — the crop keeps the
-               top of a figure rather than splitting the overflow evenly, which
-               is what stopped the tallest of the ten losing its head. */
-            const f = stampFill(e.opaque, e.w, e.h);
-            const style =
-              `--w:${f.w.toFixed(4)};--h:${f.h.toFixed(4)};` +
-              `--l:${f.l.toFixed(4)};--t:${f.t.toFixed(4)}`;
-            return (
-              <span class="sc" data-stamp-cell={i} style={style}>
-                <img src={e.file} alt="" width={e.w} height={e.h} />
-              </span>
-            );
-          })
+          flood.map((f, i) => (
+            <img
+              class="bc"
+              data-blip-cell={i}
+              src={recordArt(f.id).file}
+              alt=""
+              width={recordArt(f.id).w}
+              height={recordArt(f.id).h}
+              loading="eager"
+              decoding="async"
+            />
+          ))
         }
       </div>
 
-      <div id="closing-block">
-        <p class="closing">{FINALE_CFG.copy.closing}</p>
-        {/* Cut 2026-07-31 — see finaleNote in timeline.json. Open question, not yet re-authored. */}
-        {FINALE_CFG.copy.epilogue && <p class="epilogue" set:html={emphasise(FINALE_CFG.copy.epilogue)} />}
-        <a class="again" href="#top">{FINALE_CFG.copy.again}</a>
+      {/* THE PLATE (design §6) — one rect, its tenants in sequence, images never
+          entering it. EVERY string comes from `FINALE_CFG.copy`: `blip()` solves
+          the band's height from that same copy, so a title retyped here would
+          silently leave the solved band and the rendered words describing
+          different text. `plateTitle` is an array because the break between its
+          two lines is authored, not wrapped. */}
+      <div id="blip-plate">
+        {/* TWO TENANTS, ONE SLOT. The left-holding beat swaps rather than adds, so
+            `↑ again` takes the kicker's slot and the epilogue takes the line's —
+            which is what lets the band be solved as a `max` and cost the heap
+            nothing for the last beat. Sequential, never a crossfade. */}
+        <div class="ptop">
+          <p class="pk">{FINALE_CFG.copy.plateKicker}</p>
+          <a class="again" href="#top">{FINALE_CFG.copy.again}</a>
+        </div>
+        <h2 class="pt" set:html={FINALE_CFG.copy.plateTitle.map(emphasise).join('<br />')} />
+        <hr class="pr" />
+        {/* The closing line lives HERE, in the band — one sentence, one
+            measurement. The plate reuses this block rather than duplicating it. */}
+        <div id="closing-block">
+          <p class="closing">{FINALE_CFG.copy.closing}</p>
+          {/* Cut 2026-07-31 — see finaleNote in timeline.json. Open question, not yet re-authored. */}
+          {FINALE_CFG.copy.epilogue && <p class="epilogue" set:html={emphasise(FINALE_CFG.copy.epilogue)} />}
+        </div>
       </div>
     </section>
 
@@ -533,46 +538,91 @@ const nf = (n: number) => n.toLocaleString('en-US');
     letter-spacing: 0.24em; text-transform: uppercase; color: #ffd9a0; opacity: 0;
     line-height: 1.25;
   }
-  /* THE STAMP (§9). No-JS gets nothing here on purpose: without the solved
-     geometry the cells have no size, and the no-JS document already carries all
-     ten moments as the last ten rows of the list above. */
-  #stamp { display: none; }
-  /* A full-size layer, like #leaders — the cells carry finale-relative
-     coordinates, and a shrink-to-fit box would collapse to 0×0 and take the
-     bracket's SVG viewport with it. */
-  .js #stamp { display: block; position: absolute; inset: 0; width: 100%; height: 100%; opacity: 1; }
-  /* Cells are placed by main.ts, edge-to-edge — no gap, no border, no caption.
-     The cell CLIPS, which is the containment §5 needs: a picture grown to fill
-     its square cannot reach a neighbour, so no two ever share a pixel.
-     No transition on the opacity: every pixel of motion is bought with a pixel
-     of the visitor's own scroll (§10), and a CSS transition is time-driven. */
-  .js #stamp .sc { position: absolute; overflow: hidden; opacity: 0; }
-  /* Percentages of the cell, so the four build-solved multiples are all the
-     runtime needs — it places a square and the browser does the rest. */
-  .js #stamp .sc img {
-    position: absolute; display: block;
-    width: calc(var(--w) * 100%); height: calc(var(--h) * 100%);
-    left: calc(var(--l) * 100%); top: calc(var(--t) * 100%);
-  }
-  .js #stamp-bracket {
-    position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
-    opacity: 0; pointer-events: none;
-  }
-  .js #closing-block { position: absolute; opacity: 0; }
   #closing-block p { margin: 0; }
   #closing-block .closing { font-size: clamp(14px, 1.5vw, 19px); line-height: 1.55; }
-  #closing-block .epilogue {
-    font-size: 13px; line-height: 1.6; opacity: 0; margin-top: 1.5em;
-    transition: opacity 0.4s linear;
-  }
-  #closing-block.ep .epilogue { opacity: 0.62; }
-  #closing-block .again {
-    display: inline-block; margin-top: 1.8em; font-size: 10px; letter-spacing: 0.28em;
-    text-transform: uppercase; opacity: 0; color: inherit; text-decoration: none;
+  #closing-block .epilogue { font-size: 13px; line-height: 1.6; margin-top: 1.5em; }
+  /* `↑ again` lives in the plate's top slot, not in the closing block — see the
+     `.ptop` rule below for why. `fan()`'s `againSpec` is the model of this type. */
+  #blip-plate .again {
+    display: inline-block; margin: 0; font-size: 10px; letter-spacing: 0.28em;
+    text-transform: uppercase; color: inherit; text-decoration: none;
     border-bottom: 1px solid currentColor; padding-bottom: 3px; pointer-events: auto;
-    transition: opacity 0.4s linear;
   }
-  #closing-block.ep .again { opacity: 0.6; }
+
+  /* ---------- the flood: the record, heaped (design §4) ---------- */
+  /* Without JS there is no geometry to heap fifty prints into, and the document's
+     job is the facts — which the plate's own words carry in full. */
+  #blip { display: none; }
+  /* `overflow: hidden` IS §4 consequence 2: the fields deliberately run off the
+     top, bottom and left by half a cell, and the frame is what cuts them, so the
+     mass reads as MORE THAN FITS rather than as a composition. It never runs off
+     the right — `blip()` stops it clear of the bar's reserved zone. */
+  .js #blip { display: block; position: absolute; inset: 0; overflow: hidden; }
+  /* One print. `blip()` writes the rect and the rotation in the resize path;
+     nothing but opacity is written in the frame. */
+  .js #blip .bc {
+    position: absolute; left: 0; top: 0; opacity: 0; object-fit: cover;
+    transform-origin: 50% 50%;
+  }
+  .js #blip-bracket {
+    position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
+    opacity: 0; color: #ffd9a0;
+  }
+  #blip-bracket line { stroke: currentColor; stroke-width: 1; }
+
+  /* ---------- the plate: the band the flood was solved around (design §6) ----------
+     EVERY number below is `blipBandHeight()` in layout.ts, which solves the band's
+     height from these exact gaps and type sizes. Changing one here without changing
+     it there leaves the solved band and the rendered words describing different
+     text — which is the whole reason the copy moved into `timeline.json`.
+
+     The gaps are `em` against the type they separate, which is `PLATE_GAPS`
+     verbatim: 1.0 of the kicker, 0.17 of the title, 0.55 of the line, and 1.05 of
+     the line as the band's own clear space from the heap. The plate carries the
+     LINE's size so the two gaps written against it resolve correctly. */
+  .js #blip-plate {
+    position: absolute; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; text-align: center; pointer-events: none;
+    font-size: clamp(14px, 1.5vw, 19px);
+    padding: 1.05em 0; /* PLATE_GAPS.pad, both ends */
+  }
+  /* `flex: none`, and it is load-bearing. Any overflow of the content box is
+     absorbed entirely by the one shrinkable child — every text child is floored at
+     its own min-content height, so the 1px rule was the only thing that could
+     give, and it rendered at 0 until this was added. */
+  .js #blip-plate > * { flex: none; }
+  .js #blip-plate .pk, .js #blip-plate .pt, .js #blip-plate .pr, .js #blip-plate .again { opacity: 0; }
+  /* The kicker's slot, holding the kicker and `↑ again` stacked in one cell: its
+     height is the taller of the two and does not change when they swap. */
+  .js #blip-plate .ptop { display: grid; }
+  .js #blip-plate .ptop > * { grid-area: 1 / 1; justify-self: center; }
+  #blip-plate .ptop {
+    margin: 0 0 1em; font-size: clamp(10px, 0.8vw, 12px); /* PLATE_GAPS.kicker */
+  }
+  /* main.ts writes the opacity of every part: they arrive in sequence, and each
+     one's resting value is folded into that write rather than split across two
+     files. */
+  #blip-plate .pk {
+    margin: 0; font-size: inherit; letter-spacing: 0.28em; text-transform: uppercase;
+  }
+  /* The site's punchline set as a title. The FLOOR is the constant that matters:
+     a 16px punchline is not a smaller version of it. */
+  #blip-plate .pt {
+    margin: 0 0 0.17em; max-width: 92%; font-size: clamp(28px, 4.2vw, 60px);
+    line-height: 1.02; letter-spacing: -0.02em; font-weight: 700; text-transform: uppercase;
+  }
+  #blip-plate .pr {
+    margin: 0 0 0.55em; border: 0; width: 88px; height: 1px; background: #ffd9a0;
+  }
+  /* The closing line's own measure, `blipBandHeight`'s `lineW` verbatim. */
+  .js #closing-block {
+    position: static; display: grid; width: min(470px, 62%); margin: 0;
+  }
+  /* The line and the epilogue share ONE slot, so the epilogue costs the band no
+     height it was not solved for. They never occupy it at once — sequential,
+     never a crossfade, the same ruling §9 staging rule 3 already makes. */
+  .js #closing-block .closing, .js #closing-block .epilogue { grid-area: 1 / 1; opacity: 0; }
+  .js #closing-block .epilogue { margin-top: 0; }
 
   /* The document is one viewport taller than the scroll: without a pad the last
      beats of the finale are unreachable on every device. lvh, not vh. */
@@ -585,6 +635,9 @@ const nf = (n: number) => n.toLocaleString('en-US');
        Nothing is lost — the Moon fact reaches the phone as the 4,450 Ma whisper. */
     #hud .modelled, #hud .rule { display: none; }
     #hud-clock { font-size: clamp(30px, 11vw, 44px); }
+    /* `blipBandHeight`'s `lineW` on the mobile branch — a phone column has no
+       room to hold the sentence to a 62% measure. */
+    .js #closing-block { width: min(470px, 92%); }
   }
 
   /* ── the dustincoledata signature ──────────────────────────────────────────

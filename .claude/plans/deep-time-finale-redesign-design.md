@@ -122,7 +122,13 @@ This is the constraint that decides how full the screen can get, and it is why t
 
 **Chronological, oldest first**, so the last image to land is the most recent. The visitor watches the record accumulate in the order it happened and the run ends on today.
 
-**The pitch ramps.** The first few arrive slowly enough to be read as *things* — Lascaux, a tablet, a pyramid — and then it avalanches. Pitch runs **≈240 px → ≈14 px** on a geometric ramp whose ratio is solved so the sum equals the flood's span. Solved, not chosen: same posture as every other rect on the site.
+**The pitch ramps.** The first few arrive slowly enough to be read as *things* — Göbekli Tepe, a tablet, a pyramid — and then it avalanches. The ramp is geometric and **only its dynamic range is chosen; both endpoints are solved.** The range is **240 : 14** — a 17:1 spread from head to tail — and the one hard constraint is that the pitches sum to the span the beat actually has. Solved, not chosen: same posture as every other rect on the site.
+
+> **AMENDED 2026-08-05, from the built page.** The absolute endpoints could not both survive the count. Fifty prints at a literal 240 → 14 sum to **4,025 px**, and the flood beat spends 2,580 px of which the fan's exit takes 200 and the last print's fade 90 — **2,290 px to place them in**. Keeping the *range* and scaling both ends is what fits: ratio **0.943658**, first pitch **136.5 px**, last **7.96 px**, summing to exactly 2,290.
+>
+> **The cost, stated:** at the design speed the head now runs **0.27 s per print instead of 0.48 s**, so "slow enough to be read as *things*" is halved. Three levers restore it, and they are alternatives, not a stack — **lengthen the flood beat to ~4,315 px**, **cut the count to ~28** (the literal ramp sums to 2,276 px there), or **accept the compressed head**. The count and the beat are both Dustin's; nothing here may be changed by an implementer.
+>
+> (The head's example was also corrected: Lascaux is ~17,000 years old and falls outside the 12 ka the closing line measures, so it is not in the register. The first print is Göbekli Tepe.)
 
 **Each image appears at its final position and does not travel.** Identical to the cascade's rule (*"Each label fades in at its final position… Nothing travels"*) and for the same reason — travel across a filling screen is the one thing that would make a static-composited layer expensive.
 
@@ -149,7 +155,13 @@ One rect, three tenants in sequence, images never entering it.
 - **The title is a label for the picture, not a narration of it.** §8's voice holds: third person, no `you`, no `we`, no build-up. *All of human history* names what the visitor is looking at; the line underneath destroys it. The kicker ties the block to the instrument — the last tick is the 7 Ma split, and everything in the flood is after it.
 - **The closing line is §8's, verbatim, unrounded.** Neither number moves. *"A true-scale site cannot round its own punchline."*
 - **The epilogue and `↑ again` follow in the same rect**, in the `left holding` beat.
-- **At 200% text the plate grows and the flood shrinks to fit it.** §10's ruling — text costs art, never legibility — applies unchanged. If the band grows past the point where either `.blip` rect can hold a usable print, **the flood drops entirely** and the rows carry the ending, exactly as staging rule 7 already specifies for the stamp.
+- **At 200% text the plate grows and the flood shrinks to fit it.** §10's ruling — text costs art, never legibility — applies unchanged. If the band grows past the point where either `.blip` rect can hold a usable print, **the flood drops entirely and the plate carries the ending alone.**
+
+  > **AMENDED 2026-08-05, from the built page.** This clause originally said *the rows* carry the ending, "exactly as staging rule 7 already specifies for the stamp." **Not the rows.** §9's rule 7 handed the dropped stamp back to the ten rows because in that design the fan was still on screen at the end. This one clears the fan at the *start* of the flood, at every viewport, sequentially (§3) — so by the time the plate speaks there are no rows left to carry anything.
+  >
+  > The geometry says the same thing twice over. Measured at head, the band and the fan occupy the same screen: at 1440×900 with 200% text the band is y 63.9–836.1 and the fan rows are y 45.1–857.1, and **38 of the 40 rows intersect the band**, as do the seam caption and the closing rect; at 390×780 it is all 40. Even at 100% text, 15 rows intersect it. Keeping both is text × text — the one pair "stuff can't overlap" has never licensed anywhere, finale included (§4's table).
+  >
+  > **The drop costs the pictures and nothing else:** the kicker, the title, the closing line, the epilogue and `↑ again` are all in the band, and the band is solved to them.
 
 ---
 

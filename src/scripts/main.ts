@@ -341,11 +341,18 @@ function buildTicks() {
 }
 
 function layoutFan() {
+  /* THE FAN RESISTS THE TEXT ZOOM — Dustin's ruling, 2026-08-05, signing off the
+     SC 1.4.4 carve-out `layout.ts` has carried since 2026-07-31: the fan's rows
+     are the graphic, and its content is reachable at any size through §10's
+     visually-hidden summary. The browser multiplies every px written here by the
+     visitor's text scale, so the size is divided by it first and the rows land at
+     the pitch they were solved for. Undivided they render at 29 px in a 20.4 px
+     pitch and 38 of 39 adjacent pairs overlap. */
   fanRowEls.forEach((el, i) => {
     const r = F.rows[i]!;
     el.style.top = `${r.y - r.fontSize * 0.72}px`;
     el.style.width = `${F.rowRight}px`;
-    el.style.fontSize = `${r.fontSize}px`;
+    el.style.fontSize = `${r.fontSize * F.writeScale}px`;
     const ln = leaderEls[i]!;
     ln.setAttribute('x1', String(r.leader.x1));
     ln.setAttribute('y1', String(r.leader.y1));
@@ -357,7 +364,8 @@ function layoutFan() {
   });
   seamCapEl.style.top = `${F.seamCaption.y}px`;
   seamCapEl.style.width = `${F.rowRight}px`;
-  seamCapEl.style.fontSize = `${F.seamCaption.h / 1.25}px`;
+  // Fan geometry too — it sits INSIDE the seam gap, so it takes the same divide.
+  seamCapEl.style.fontSize = `${(F.seamCaption.h / 1.25) * F.writeScale}px`;
   /* The closing block is NOT placed from `F.closing` any more: design §6 puts the
      sentence inside the plate's band, so `#closing-block` is a flow child of
      `#blip-plate` and takes its measure from the band the flood was solved

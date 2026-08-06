@@ -433,6 +433,42 @@ describe('the measured text scale (§10, 2026-08-05)', () => {
     expect(textScaleOf(-16)).toBe(1);
   });
 
+  it('hands the runtime the divide that holds the fan at its own pitch', () => {
+    // Dustin's ruling, 2026-08-05, signing off the SC 1.4.4 carve-out: the fan is
+    // the graphic. A text-only zoom multiplies every px the runtime writes, so
+    // the size is divided by the scale first and the rows land where they were
+    // solved. Undivided they render at 29px in a 20.4px pitch — 38 of 39
+    // adjacent pairs overlapping, which is what `gate:browser` now sweeps for.
+    expect(fan(zones(DESKTOP)).writeScale).toBe(1);
+    expect(fan(zones({ ...DESKTOP, textScale: 2 })).writeScale).toBe(0.5);
+    for (const vp of GATE_VIEWPORTS) {
+      const one = fan(zones(vp));
+      const two = fan(zones({ ...vp, textScale: 2 }));
+      // What lands on the glass: the written size times the browser's own factor.
+      expect([vp.w, two.fontSize * two.writeScale * 2]).toEqual([vp.w, one.fontSize]);
+    }
+  });
+
+  it('leaves the fan GEOMETRY identical at every text scale', () => {
+    // The other half of the same ruling, and the reason `FAN_TAKES_TEXT_SCALE`
+    // stays false: if any of this moved with the text scale, the fan would not be
+    // geometry and the divide above would be resisting a design, not a browser.
+    for (const vp of GATE_VIEWPORTS) {
+      const one = fan(zones(vp));
+      const two = fan(zones({ ...vp, textScale: 2 }));
+      expect([vp.w, two.pitch, two.fontSize, two.widestRow, two.seamY]).toEqual([
+        vp.w,
+        one.pitch,
+        one.fontSize,
+        one.widestRow,
+        one.seamY,
+      ]);
+      for (let i = 0; i < one.rows.length; i++)
+        expect([vp.w, i, sameRect(one.rows[i]!.box, two.rows[i]!.box)]).toEqual([vp.w, i, true]);
+      expect([vp.w, sameRect(one.seamCaption, two.seamCaption)]).toEqual([vp.w, true]);
+    }
+  });
+
   it('is the scale the finale is actually solved at', () => {
     // The end of the wire: the number this returns is what drops the flood at
     // 200% on the frozen solve viewport (§6 / §10 — text costs art, never

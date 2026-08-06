@@ -647,7 +647,11 @@ for each arrival (and the HUD, the whisper band, the Boring Billion plate):
 >
 > **Closed by measuring it.** `#text-probe` (index.astro) declares 16 px inline and renders nothing; `relayout()` divides its rendered size by 16 and passes the ratio to `zones()`, and a `ResizeObserver` on the probe re-solves when a visitor changes their text size mid-page. The real-browser gate now runs the same four viewports **at 200% as well as 100%** — eight variants — with the zoom applied as Gecko applies it, and asserts the runtime is solving at the scale it is being gated at.
 >
-> **Three consequences of an enlarged scale are now measurable, and all three are UNRULED** (`scripts/gate-browser.ts` names each, scoped, with its numbers): the fan's rows overlap 38 of 39 adjacent pairs; the HUD's modelled height counts one line per element and a phone's clock, rate and counter all wrap (343.7 px real against a 240 px zone); and the Boring Billion plate's copy is not modelled at any scale (706 px of words in a 209 px box). None is new to this date; each needs a ruling rather than a patch.
+> **Three consequences of an enlarged scale became measurable the same day. One is now ruled; two are open** (`scripts/gate-browser.ts` names each, scoped, with its numbers). None is new to this date — they were simply unmeasurable while the runtime could not reach 200%.
+>
+> - **RULED, and shipped — the fan resists the zoom.** Its rows overlapped 38 of 39 adjacent pairs (29.0 px of ink in a 20.4 px pitch). `FAN_TAKES_TEXT_SCALE = false` only ever stopped the MODEL from scaling the fan; the browser zooms the px `layoutFan()` writes inline regardless. **Dustin signed off the SC 1.4.4 carve-out on 2026-08-05** — the fan's rows are the graphic, and §10's own visually-hidden finale summary already states the whole scale argument in numbers, so the content is reachable at any text size. `Fan.writeScale` (= 1/textScale) divides the zoom back out at the DOM boundary; the rows now render at their solved 12.4 px at 100% and 200% alike, and `gate:browser` sweeps row × row at both.
+> - **OPEN — the HUD's model counts one line per element.** `hudHeight()` has no wrap model at all, where `textBlockH` wraps every arrival through `lineCount()`. At 390×844/200% the clock, the rate line and the px counter each take two lines: 343.7 px of real HUD against a 240 px reserved zone. Desktop holds and stays gated strictly. Wrapping it honestly costs ~370 px of an 844 px phone, taken from the arrivals.
+> - **OPEN — the Boring Billion plate's copy is not modelled, at any scale.** `z.plate` is a share of the stage, never a solve against its own five paragraphs: 706 px of content in a 209 px box at 1440×900/200%. It was already overflowing at 100%-solved (453 px box, 253 px over); measuring the scale grows the clock zone, shrinks the stage, and roughly doubles it.
 
 ### Screen reader — three fixed points, not fifty-four
 
@@ -735,7 +739,7 @@ aria-label="True-scale bar: 34 percent of Earth's history passed."
 |---|---|
 | 1.1.1 Non-text | `alt` = the analogy clause, build-asserted. Leader-line SVG `aria-hidden` |
 | 1.4.3 Contrast (text) | **≥ 4.5:1**, servo scrim, solved per box at build |
-| 1.4.4 / 1.4.12 Resize & spacing | 200% text costs the art, never the box — swept in the model **and, since 2026-08-05, in a real browser at 200%** (the runtime measures the scale; it did not until that date). **Three exclusions, all unruled: the fan's rows, the HUD on a phone, the Boring Billion plate's copy — see the amendment in this section** |
+| 1.4.4 / 1.4.12 Resize & spacing | 200% text costs the art, never the box — swept in the model **and, since 2026-08-05, in a real browser at 200%** (the runtime measures the scale; it did not until that date). **The fan's rows are exempt as a graphic, signed off 2026-08-05, with §10's finale summary carrying their content. Two exclusions remain open: the HUD on a phone, and the Boring Billion plate's copy — see the amendment in this section** |
 | 1.4.11 Non-text contrast | **≥ 3:1** across each subject's boundary, build-enforced |
 | 2.1.1 / 2.1.2 Keyboard | jump model above; nothing traps focus |
 | 2.2.2 Pause, Stop, Hide | **does not apply** — no motion starts automatically |

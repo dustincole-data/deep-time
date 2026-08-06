@@ -1092,6 +1092,25 @@ export interface Fan {
   fontSize: number;
   /** Rows span x = 0 to here; the leader lines run from here to the bar. */
   rowRight: number;
+  /**
+   * What the runtime must WRITE to get the sizes above onto the glass — every
+   * font-size in this object multiplied by this before it reaches the DOM.
+   *
+   * It is `1 / textScale`, and it is the whole of Dustin's 2026-08-05 ruling in
+   * one number. A text-only zoom multiplies the used size of EVERY px
+   * declaration, JavaScript's inline writes included, so a fan written at its
+   * solved 12.4 px renders at 24.8 in a 20.4 px pitch — 38 of 39 adjacent pairs
+   * overlapping. `FAN_TAKES_TEXT_SCALE = false` never prevented that; it only
+   * stopped the model from predicting it. Dividing here is what actually holds
+   * the rows apart, and it leaves every rect in this object identical at every
+   * text scale, which is what "the fan is geometry" has to mean to be true.
+   *
+   * IT RESISTS A MULTIPLIER, NOT A FLOOR. A browser MINIMUM font size re-applies
+   * after this division, so a visitor who sets one gets the overlap back; that
+   * setting is outside what a divide can answer, and outside what the probe can
+   * honestly measure (see `textScaleOf`).
+   */
+  writeScale: number;
 }
 
 const FAN_T = {
@@ -1104,7 +1123,22 @@ const BAR_BOT_FRAC = { desktop: 0.81, mobile: 0.8 } as const;
 /** Row type is 0.62 of the pitch, clamped — the fan must stay legible at any height. */
 const FAN_TYPE_OF_PITCH = 0.62;
 /**
- * PENDING SIGN-OFF (2026-07-31) — the fan does not take the text scale.
+ * SIGNED OFF 2026-08-05 by Dustin — the fan does not take the text scale, and
+ * the runtime now HOLDS it there. Everything below is the argument he ruled on.
+ *
+ * What the sign-off had to answer, and could not before it was measured: this
+ * flag only ever governed the MODEL. A text-only zoom multiplies the px
+ * `layoutFan()` writes inline exactly as it multiplies a stylesheet's, so the
+ * rows doubled on the glass whatever this said — 29.0 px of ink in a 20.4 px
+ * pitch, **38 of 39 adjacent pairs overlapping**, precisely the failure the
+ * paragraph below predicts. The ruling is carried by `Fan.writeScale`, which
+ * divides the size back out at the DOM boundary; this flag stays `false` because
+ * the fan's own geometry is still solved at 100%, unchanged at any scale.
+ *
+ * The compensating route the ruling rests on is unchanged and already built:
+ * §10 gives the finale a visually-hidden summary stating the whole scale
+ * argument in numbers, so the content of the fan is reachable at any text size
+ * even though its graphic is not enlarged.
  *
  * The fan's rows and its seam caption are GEOMETRY, not type: the pitch is fixed
  * by fitting forty rows into the viewport, so doubling the type puts 24.8 px of
@@ -1255,6 +1289,9 @@ export function fan(z: Zones): Fan {
     pitch,
     fontSize,
     rowRight,
+    // The browser will multiply every px written below by `k`; this takes it back
+    // out, so what lands is what was solved. See `Fan.writeScale`.
+    writeScale: 1 / k,
   };
 }
 

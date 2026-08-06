@@ -92,29 +92,6 @@ const VARIANTS: Viewport[] = [
 const isKnownGap = (vp: Viewport) => vp.w === 1440 && vp.h === 900 && vp.textScale === 2;
 
 /**
- * THE FAN'S ROWS ARE NOT SWEPT AT AN ENLARGED TEXT SCALE — unruled, flagged
- * 2026-08-05, NOT a silent pass.
- *
- * `layout.ts:1061` marks `FAN_TAKES_TEXT_SCALE = false` PENDING SIGN-OFF, on the
- * argument that the fan's rows are geometry rather than type: the pitch is fixed
- * by fitting forty rows into the viewport, so doubled type cannot fit. That flag
- * only stops the MODEL from scaling the fan. It cannot stop the browser — a
- * text-only zoom multiplies the px `layoutFan()` writes inline exactly as it
- * multiplies a stylesheet's, so the rows double on the glass whatever the model
- * believes. Measured here at the fan's fullest moment: 29.0 px of ink in a
- * 20.4 px pitch, **38 of 39 adjacent pairs overlapping, worst 9.0 px** at
- * 1440×900 (28.0 in 19.5, same 38/39, at 390×844). Zero at 100%, both.
- *
- * That is the number `layout.ts:1064` predicted — and it ships. Avoiding it needs
- * a ruling, not a patch: either the fan resists the zoom (write `fontSize / k`,
- * which is the SC 1.4.4 carve-out awaiting sign-off) or it drops at a scale it
- * cannot hold, the way §6 already drops the flood. Both change what the ending
- * IS at 200%, so neither is a gate's call. The rows are swept strictly at 100%,
- * which is new coverage this gate did not have before today.
- */
-const fanRowsUnruledAtScale = (vp: Viewport) => (vp.textScale ?? 1) > 1;
-
-/**
  * THE HUD WRAPS AT AN ENLARGED SCALE AND ITS MODEL DOES NOT KNOW — found by these
  * columns on the day they were added, 2026-08-05. Unruled; NOT a silent pass.
  *
@@ -272,46 +249,76 @@ interface Snapshot {
  * line-breaking. §13's point stands either way — the model must survive type it
  * did not choose.
  *
- * TWO PASSES, AND BOTH ARE LOAD-BEARING:
+ * IT IS APPLIED AT THE WRITE, NOT AFTER IT. Every element's inline `fontSize`
+ * setter is replaced, so a size the runtime writes is multiplied once, as it is
+ * set. The first version watched for writes with a MutationObserver and
+ * re-multiplied what it found — `layoutFan()` sets `top`, `width` and `fontSize`
+ * as three separate mutations of one attribute, records arrive batched, and the
+ * same write could be zoomed twice: it reported the fan overlapping at 1440×900
+ * while the runtime was dividing correctly, and reported it clean at 1920×1080.
+ * A harness that is wrong in both directions on one run is worth more dead than
+ * alive. (The setter is an OWN property of each declaration in Blink, not
+ * something on `CSSStyleDeclaration.prototype` — patching the prototype silently
+ * does nothing.)
+ *
+ * TWO RULES FOR THE STYLESHEET PASS, both load-bearing:
  *   - Every size is READ before any is written. Written in document order, a
  *     child that inherits its size would read its parent's already-zoomed value
  *     and compound — 4× at the second level, which is not the state under test.
- *   - A MutationObserver re-zooms inline writes, because `relayout()` writes the
- *     fan's rows and the seam caption itself, from the model, in px. Firefox
- *     zooms those too; without the observer this gate would test a page where
- *     exactly the elements the model positions are the ones left unzoomed.
+ *   - ONLY ELEMENTS THAT DECLARE THEIR OWN SIZE ARE WRITTEN. Materialising a px
+ *     size on every element severs inheritance: the fan's `.fd`/`.fn` spans stop
+ *     following the row whose size `layoutFan()` writes, so a runtime that
+ *     divides the zoom back out (`Fan.writeScale`) would look like it had done
+ *     nothing. Gecko scales computed sizes and inheritance still flows through
+ *     them; an element whose computed size equals its parent's is left alone so
+ *     it keeps following. Relative units come out right either way — read before
+ *     any write, `em` and `%` have already resolved against the unzoomed parent.
  */
 async function applyTextZoom(page: Page, k: number) {
   await page.evaluate((k) => {
-    const mine = new WeakMap<Element, string>();
     const els = [...document.querySelectorAll<HTMLElement>('*')];
-    const base = els.map((el) =>
-      el.style.fontSize ? parseFloat(el.style.fontSize) : parseFloat(getComputedStyle(el).fontSize),
-    );
+    const sizeOf = (el: Element | null) =>
+      el ? parseFloat(getComputedStyle(el).fontSize) : Number.NaN;
+    const base = els.map((el) => (el.style.fontSize ? parseFloat(el.style.fontSize) : sizeOf(el)));
+    // Its own declaration, or its parent's, passed down? Only the former is
+    // scaled here; an inheritor follows whatever its parent ends up at.
+    const declares = els.map((el, i) => {
+      if (el.style.fontSize) return true;
+      const parent = el.parentElement;
+      if (!parent) return true;
+      return Math.abs(base[i]! - sizeOf(parent)) > 0.01;
+    });
+
+    // The stylesheet pass FIRST, unhooked: these are absolute, already-zoomed
+    // values, and running them through the hook would apply `k` twice.
     els.forEach((el, i) => {
       const b = base[i]!;
-      if (!Number.isFinite(b)) return;
-      const next = `${b * k}px`;
-      mine.set(el, next);
-      el.style.fontSize = next;
+      if (Number.isFinite(b) && declares[i]) el.style.fontSize = `${b * k}px`;
     });
-    const reapply = (el: HTMLElement) => {
-      const inline = el.style?.fontSize;
-      if (!inline || inline === mine.get(el)) return;
-      const next = `${parseFloat(inline) * k}px`;
-      mine.set(el, next);
-      el.style.fontSize = next;
-    };
-    new MutationObserver((muts) => {
-      for (const m of muts) if (m.type === 'attributes') reapply(m.target as HTMLElement);
-    }).observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['style'],
-      subtree: true,
-    });
-    // The probe's box is what tells main.ts the type moved (see index.astro), and
-    // a real zoom change lands the same way: through a resize of that one element.
-    window.dispatchEvent(new Event('resize'));
+
+    /* Then the hook, for every size the runtime writes from here on — the fan's
+       rows and the seam caption, which is exactly where `Fan.writeScale` lands.
+
+       IT GOES THROUGH `setProperty`, AND THAT IS NOT A STYLE CHOICE. Blink
+       exposes `fontSize` as an own DATA property of each declaration with no
+       setter to wrap: the first version of this asked for `desc.set`, found
+       `undefined` on all 905 elements, and skipped every one of them in silence.
+       The gate then passed a build with the divide deliberately removed — a
+       200% column that zoomed the stylesheet and nothing the runtime wrote.
+       Replacing the slot with a real accessor is what makes the write
+       interceptable; `setProperty` is a genuine method and cannot recurse. */
+    for (const el of els) {
+      const style = el.style;
+      Object.defineProperty(style, 'fontSize', {
+        configurable: true,
+        enumerable: true,
+        get: () => style.getPropertyValue('font-size'),
+        set: (v: string) => {
+          const px = typeof v === 'string' && v.endsWith('px') ? parseFloat(v) : Number.NaN;
+          style.setProperty('font-size', Number.isFinite(px) ? `${px * k}px` : v);
+        },
+      });
+    }
   }, k);
 }
 
@@ -394,6 +401,7 @@ async function snapshot(page: Page): Promise<Snapshot> {
 }
 
 async function runVariant(page: Page, url: string, vp: Viewport, points: number[]) {
+  const k = vp.textScale ?? 1;
   await page.setViewportSize({ width: vp.w, height: vp.h });
   await page.goto(url, { waitUntil: 'load' });
   await page.waitForSelector('html.js', { timeout: 5000 });
@@ -403,9 +411,14 @@ async function runVariant(page: Page, url: string, vp: Viewport, points: number[
   const failures: string[] = [];
   const fail = (msg: string) => failures.push(msg);
 
-  const k = vp.textScale ?? 1;
   if (k !== 1) {
     await applyTextZoom(page, k);
+    /* The probe's own box just changed, which is the only signal a text-only zoom
+       gives — main.ts re-solves off its ResizeObserver, and every size it writes
+       from here on goes through the hook. Two settles: one for the observer to
+       fire and relayout to write, one for the frame that reads those writes. */
+    await settle(page);
+    await settle(page);
     /* HARNESS SANITY, not the wire: did the zoom actually land on the page? A
        variant whose emulation silently did nothing would sweep a 100% page under
        a 200% label and report it green. This says only that the type moved —
@@ -467,16 +480,20 @@ async function runVariant(page: Page, url: string, vp: Viewport, points: number[
        2026-08-05. The model gate has always asserted `fan row × fan row`, but
        against `fanRowWidth()`'s own prediction of the ink; the rows are the one
        block on the page whose type main.ts writes in px from the model, so what
-       the browser does with that px is exactly what no model can answer. */
+       the browser does with that px is exactly what no model can answer.
+
+       AND IT IS SWEPT AT 200% TOO, which is the point. Undivided, an enlarged
+       scale renders these rows at 29 px in a 20.4 px pitch and 38 of 39 adjacent
+       pairs overlap; `Fan.writeScale` divides the zoom back out at the DOM
+       boundary (Dustin's ruling, 2026-08-05). This is the check that proves it —
+       remove the divide and 1,271 firings come back per desktop variant. */
     maxFanRows = Math.max(maxFanRows, snap.fanRows.length);
-    if (!fanRowsUnruledAtScale(vp)) {
-      for (let i = 0; i < snap.fanRows.length; i++) {
-        for (let j = i + 1; j < snap.fanRows.length; j++) {
-          const a = snap.fanRows[i]!;
-          const b = snap.fanRows[j]!;
-          if (intersects(a.box, b.box, 1))
-            fail(`y=${y} fan row ${a.i} [${r(a.box)}] × row ${b.i} [${r(b.box)}]`);
-        }
+    for (let i = 0; i < snap.fanRows.length; i++) {
+      for (let j = i + 1; j < snap.fanRows.length; j++) {
+        const a = snap.fanRows[i]!;
+        const b = snap.fanRows[j]!;
+        if (intersects(a.box, b.box, 1))
+          fail(`y=${y} fan row ${a.i} [${r(a.box)}] × row ${b.i} [${r(b.box)}]`);
       }
     }
 
@@ -543,7 +560,7 @@ async function runVariant(page: Page, url: string, vp: Viewport, points: number[
     fail(`the model dropped the flood here, but ${maxPrints} prints rendered anyway`);
   // A row-versus-row sweep that never saw two rows is not a clean fan, it is an
   // empty loop — the same failure the two assertions above exist to make loud.
-  if (!fanRowsUnruledAtScale(vp) && maxFanRows < 2)
+  if (maxFanRows < 2)
     fail(`the sweep never saw two lit fan rows (peak ${maxFanRows}) — the row check asserted nothing`);
 
   return { vp, samples, maxConcurrent, finaleSamples, maxPrints, maxFanRows, failures };
@@ -651,10 +668,9 @@ async function main() {
         `  ${res.samples} real-browser scroll samples · max concurrent ${res.maxConcurrent}` +
           ` · finale samples ${res.finaleSamples} · heap peak ${res.maxPrints}/${flood.length}` +
           ` · fan rows lit ${res.maxFanRows}` +
-          (fanRowsUnruledAtScale(vp) || isKnownGap(vp) || hudWrapsUnmodelled(vp) || plateCopyUnmodelled(vp)
+          (isKnownGap(vp) || hudWrapsUnmodelled(vp) || plateCopyUnmodelled(vp)
             ? `\n  NOT SWEPT here (unruled, see the comments above): ` +
               [
-                fanRowsUnruledAtScale(vp) && 'fan row × fan row',
                 isKnownGap(vp) && 'arrival text vs its box',
                 hudWrapsUnmodelled(vp) && '#hud vs its zone',
                 plateCopyUnmodelled(vp) && '#plate vs the reserved zones',

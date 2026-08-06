@@ -390,6 +390,52 @@ const blockH = (s: string, f: TypeSpec, availW: number) => lineCount(s, f, avail
 /** `*Bangiomorpha*, a red alga.` → the string the browser actually lays out. */
 const plainText = (s: string) => s.replace(/\*/g, '');
 
+/* ----------------------------------------------------------------------------
+   THE TEXT SCALE, MEASURED — because until 2026-08-05 nothing measured it.
+
+   Every 200% protection this module owns — ruling B's whisper band, ruling D's
+   clock zone, `blipBandHeight`'s solved band, §6's flood drop — reads
+   `viewport.textScale`, and `main.ts` never passed one. The collision gate's four
+   200% columns therefore proved the MODEL consistent with itself at a scale the
+   runtime could not reach: every one of those protections was dead code on the
+   live page, and the 200% claim was about a state that never existed.
+
+   Firefox's text-only zoom (View → Zoom → Zoom Text Only, and the Settings font
+   size) multiplies the USED font-size of every element — px declarations
+   included — and changes nothing else. So the page's type doubles while the
+   viewport, and every rect solved from it, stays exactly where it was. Measured
+   at 1440×900 with the ending on screen: the words left the band they are solved
+   into by 195.6 px and landed on 114 record prints, and the flood stayed shown
+   because the model never learned the scale that was supposed to drop it.
+
+   THE PROBE IS PX ON PURPOSE, and that is what makes the ratio the right input:
+   every size this module models is a px literal or a `clamp()` resolved to px,
+   and a px probe measures exactly the multiplier a browser applies to those.
+   Chrome's "Font size" setting moves the DEFAULT size (the `medium` keyword) and
+   leaves px declarations alone — it reports 1 here, correctly, because it does
+   not move a single size this module predicts.
+
+   KNOWN LIMIT, deliberately not modelled: a browser MINIMUM font size floors
+   small text without touching large text, so one ratio over-states the growth of
+   the type already above the floor. That errs toward a taller band and a dropped
+   flood — the conservative direction, and the same direction §10 already rules.
+   -------------------------------------------------------------------------- */
+
+/** The probe's own declared size. `#text-probe` in index.astro sets exactly this, inline. */
+export const TEXT_PROBE_BASE = 16;
+
+/**
+ * The live text scale, from the probe's rendered size.
+ *
+ * FLOORED AT 1. Text SMALLER than modelled is harmless — every box is then
+ * bigger than the words need — while `textScale < 1` is a state no gate has ever
+ * swept. The floor keeps the runtime inside the model's proven range.
+ */
+export function textScaleOf(probePx: number, base = TEXT_PROBE_BASE): number {
+  if (!Number.isFinite(probePx) || probePx <= 0) return 1;
+  return Math.max(1, probePx / base);
+}
+
 /**
  * The type scale of §11 / the cadence prototype's CSS, resolved for one viewport.
  * `clamp(min, Nvw, max)` is resolved against the viewport width, then multiplied

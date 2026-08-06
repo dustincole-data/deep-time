@@ -91,6 +91,18 @@ const nf = (n: number) => n.toLocaleString('en-US');
       too close together to be drawn on this page at all. Left and right arrow keys move between arrivals.
     </p>
 
+    {/* THE TEXT-SCALE PROBE. layout.ts solves every box from a modelled type
+        size, and a text-only zoom (Firefox) multiplies the rendered size of px
+        type without moving the viewport — so the model has to be TOLD, or its
+        whole 200% half is unreachable. `relayout()` reads this one element's
+        rendered size and divides. The size is inline so no stylesheet can move
+        it, and it is the one element on the page whose font-size is content.
+
+        It carries a glyph so it has a BOX, which is the other half: a text-only
+        zoom fires no event of its own, so the probe's own resize is the signal
+        that the type changed under a viewport that did not. */}
+    <span id="text-probe" style="font-size:16px" aria-hidden="true">M</span>
+
     <canvas id="field" aria-hidden="true"></canvas>
 
     {/* The held frame. All the words go here, read at the visitor's own pace. */}
@@ -321,6 +333,14 @@ const nf = (n: number) => n.toLocaleString('en-US');
   .sr-only {
     position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
     overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+  }
+
+  /* Out of the flow and off the glass, but STILL RENDERED — `display: none` is
+     what would make it unmeasurable. Its font-size is declared inline, never
+     here, so this rule can never quietly change what the model measures. */
+  #text-probe {
+    position: absolute; top: 0; left: 0;
+    visibility: hidden; pointer-events: none; white-space: pre;
   }
 
   /* ---------- no-JS: a plain chronological document ---------- */

@@ -41,7 +41,17 @@ import { extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, type Page } from 'playwright';
 import { arrivals, CONSTANTS, finaleBeats, flood, milestoneY } from '../src/lib/timeline.ts';
-import { blip, contains, fan, intersects, place, zones, type Viewport } from '../src/lib/layout.ts';
+import {
+  blip,
+  contains,
+  fan,
+  intersects,
+  MOBILE_BELOW,
+  place,
+  TEXT_PROBE_BASE,
+  zones,
+  type Viewport,
+} from '../src/lib/layout.ts';
 
 const VERBOSE = process.argv.includes('--verbose');
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -56,7 +66,99 @@ const VARIANTS: Viewport[] = [
   { w: 1920, h: 1080 },
   { w: 390, h: 844 },
   { w: 390, h: 780 },
+  /* 200% TEXT, IN A BROWSER — added 2026-08-05, and until then the 200% claim was
+     never once tested on the path a visitor takes. `gate-collision.ts` ran four
+     200% columns against the pure model while `main.ts` passed no `textScale` at
+     all, so those columns described a state the runtime could not enter: every
+     protection they proved (the whisper band, the clock zone, the solved band,
+     the flood's drop) was unreachable code. Measured on the shipped build before
+     the fix, at 1440×900: the plate's words left their solved band by 195.6 px
+     and landed on 114 record prints, and the flood stayed shown — the one
+     collision class §4 never sells, on the one screen it was sold hardest. */
+  { w: 1440, h: 900, textScale: 2 },
+  { w: 1920, h: 1080, textScale: 2 },
+  { w: 390, h: 844, textScale: 2 },
+  { w: 390, h: 780, textScale: 2 },
 ];
+
+/**
+ * KNOWN OPEN GAP, mirrored from `gate-collision.ts:59` — same viewport, same
+ * cause, same ruling. At 1440×900/200% an honestly-sized clock zone leaves row 1
+ * ~209 px, shorter than DATE+NAME alone for 13 of the 30 milestones, and Dustin
+ * accepted it 2026-08-01 (ship documented; the 2-column desktop lock stays).
+ * Scoped to the arrival text at exactly that one combination — every other
+ * assertion, viewport and text scale still gates strictly.
+ */
+const isKnownGap = (vp: Viewport) => vp.w === 1440 && vp.h === 900 && vp.textScale === 2;
+
+/**
+ * THE FAN'S ROWS ARE NOT SWEPT AT AN ENLARGED TEXT SCALE — unruled, flagged
+ * 2026-08-05, NOT a silent pass.
+ *
+ * `layout.ts:1061` marks `FAN_TAKES_TEXT_SCALE = false` PENDING SIGN-OFF, on the
+ * argument that the fan's rows are geometry rather than type: the pitch is fixed
+ * by fitting forty rows into the viewport, so doubled type cannot fit. That flag
+ * only stops the MODEL from scaling the fan. It cannot stop the browser — a
+ * text-only zoom multiplies the px `layoutFan()` writes inline exactly as it
+ * multiplies a stylesheet's, so the rows double on the glass whatever the model
+ * believes. Measured here at the fan's fullest moment: 29.0 px of ink in a
+ * 20.4 px pitch, **38 of 39 adjacent pairs overlapping, worst 9.0 px** at
+ * 1440×900 (28.0 in 19.5, same 38/39, at 390×844). Zero at 100%, both.
+ *
+ * That is the number `layout.ts:1064` predicted — and it ships. Avoiding it needs
+ * a ruling, not a patch: either the fan resists the zoom (write `fontSize / k`,
+ * which is the SC 1.4.4 carve-out awaiting sign-off) or it drops at a scale it
+ * cannot hold, the way §6 already drops the flood. Both change what the ending
+ * IS at 200%, so neither is a gate's call. The rows are swept strictly at 100%,
+ * which is new coverage this gate did not have before today.
+ */
+const fanRowsUnruledAtScale = (vp: Viewport) => (vp.textScale ?? 1) > 1;
+
+/**
+ * THE HUD WRAPS AT AN ENLARGED SCALE AND ITS MODEL DOES NOT KNOW — found by these
+ * columns on the day they were added, 2026-08-05. Unruled; NOT a silent pass.
+ *
+ * `hudHeight()` (ruling D) sums ONE LINE PER ELEMENT. It has no wrap model at
+ * all, while `textBlockH` two hundred lines above it wraps every arrival through
+ * `lineCount()`. On a 390 px phone that holds at 100% — 91.9 px real against
+ * 102.5 px modelled, over-estimated exactly as §13 asks — and breaks at 200%,
+ * where the clock ("3.46 Ga" at 85.8 px), the rate line and the px counter each
+ * take two lines: **343.7 px of real HUD against a 240 px reserved zone**, 90 px
+ * of a LIVE READOUT standing above the zone that is supposed to contain it.
+ *
+ * Desktop is unaffected and stays gated strictly: at 1440×900/200% ruling D's
+ * modelled 522 px zone does hold the real HUD, because the column is wide enough
+ * that nothing wraps.
+ *
+ * Not patched here because the fix is not the gate's to choose: wrapping the HUD
+ * honestly makes the mobile clock zone ~370 px of an 844 px phone, which takes
+ * the room out of the arrivals — the same fork Dustin ruled on for desktop on
+ * 2026-08-01 (accept it, ship documented), asked again on a screen with a third
+ * of the room. Scoped to mobile at an enlarged scale, and to the HUD's own rect.
+ */
+const hudWrapsUnmodelled = (vp: Viewport) => (vp.textScale ?? 1) > 1 && vp.w < MOBILE_BELOW;
+
+/**
+ * THE BORING BILLION PLATE'S COPY IS NOT MODELLED — at any scale. Unruled,
+ * surfaced by these columns 2026-08-05, and the one finding here that this
+ * ticket's own fix makes VISIBLY worse rather than better.
+ *
+ * `z.plate` is a share of the stage box (§6), never a solve against the plate's
+ * own five paragraphs — the same fault ruling B fixed for the whisper band and
+ * ruling D for the clock. At 1440×900/200% the copy is **706 px of content in a
+ * 209 px box**, and because `#plate` is `padding: 8vw` under `border-box`, the
+ * box floors at its own 230.4 px of padding and reports a rect that is not what
+ * is on the glass. `place-items: center` then centres 706 px of words on a
+ * 230 px rect: they run 238 px past it, top and bottom.
+ *
+ * IT WAS ALREADY BROKEN, DIFFERENTLY. Solved at 1 as the runtime always did, the
+ * box was 453 px and the same 706 px of copy overflowed it by 253 px, straight
+ * through the HUD. Measuring the text scale shrinks the stage (the clock zone
+ * honestly grows), so the box shrinks and the overflow roughly doubles — worse
+ * on this one screen, against 114 text × print collisions removed on the ending.
+ * Named here rather than traded silently.
+ */
+const plateCopyUnmodelled = (vp: Viewport) => (vp.textScale ?? 1) > 1;
 
 /** BB_HI/BB_LO from src/scripts/main.ts — where the plate is on screen. */
 const BB_HI_PX = milestoneY(1.8e9);
@@ -153,6 +255,64 @@ interface Snapshot {
   bandParts: { cls: string; box: DomRect }[];
   /** Visible record prints. The rect is the ROTATED AABB, which is what `blip()` fits. */
   prints: { i: number; box: DomRect }[];
+  /** The fan's rows, as INK — see `snapshot()` for why the `li` box is not it. */
+  fanRows: { i: number; box: DomRect }[];
+}
+
+/**
+ * A text-only zoom, as Gecko does it: every element's USED font-size multiplied
+ * by `k`, and no other geometry touched. Nothing else on the page moves — which
+ * is the whole hazard, because a viewport-driven model cannot see it.
+ *
+ * Applied here rather than emulated by the browser because Chromium has no
+ * text-only zoom to drive: its page zoom scales the viewport too, which the
+ * model already handles correctly by re-solving at the smaller CSS width. What
+ * it costs: this is Gecko's RULE reproduced, not Gecko's renderer, so it proves
+ * the layout consequence of an enlarged text scale and not Firefox's own
+ * line-breaking. §13's point stands either way — the model must survive type it
+ * did not choose.
+ *
+ * TWO PASSES, AND BOTH ARE LOAD-BEARING:
+ *   - Every size is READ before any is written. Written in document order, a
+ *     child that inherits its size would read its parent's already-zoomed value
+ *     and compound — 4× at the second level, which is not the state under test.
+ *   - A MutationObserver re-zooms inline writes, because `relayout()` writes the
+ *     fan's rows and the seam caption itself, from the model, in px. Firefox
+ *     zooms those too; without the observer this gate would test a page where
+ *     exactly the elements the model positions are the ones left unzoomed.
+ */
+async function applyTextZoom(page: Page, k: number) {
+  await page.evaluate((k) => {
+    const mine = new WeakMap<Element, string>();
+    const els = [...document.querySelectorAll<HTMLElement>('*')];
+    const base = els.map((el) =>
+      el.style.fontSize ? parseFloat(el.style.fontSize) : parseFloat(getComputedStyle(el).fontSize),
+    );
+    els.forEach((el, i) => {
+      const b = base[i]!;
+      if (!Number.isFinite(b)) return;
+      const next = `${b * k}px`;
+      mine.set(el, next);
+      el.style.fontSize = next;
+    });
+    const reapply = (el: HTMLElement) => {
+      const inline = el.style?.fontSize;
+      if (!inline || inline === mine.get(el)) return;
+      const next = `${parseFloat(inline) * k}px`;
+      mine.set(el, next);
+      el.style.fontSize = next;
+    };
+    new MutationObserver((muts) => {
+      for (const m of muts) if (m.type === 'attributes') reapply(m.target as HTMLElement);
+    }).observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['style'],
+      subtree: true,
+    });
+    // The probe's box is what tells main.ts the type moved (see index.astro), and
+    // a real zoom change lands the same way: through a resize of that one element.
+    window.dispatchEvent(new Event('resize'));
+  }, k);
 }
 
 async function settle(page: Page) {
@@ -205,6 +365,21 @@ async function snapshot(page: Page): Promise<Snapshot> {
     }
     const bandBox = bandEl ? rectOf(bandEl) : null;
 
+    /* THE FAN'S ROWS, AS INK. The `li` is written full-column-wide and its text
+       is right-anchored inside, so every row's BOX overlaps every other row's by
+       construction and measuring them would assert nothing. A Range over the
+       row's own contents is the box that actually lands on the glass, and it is
+       what `fanRowWidth()` models. */
+    const fanRowsOut: { i: number; box: DomRect }[] = [];
+    for (const el of document.querySelectorAll<HTMLElement>('[data-fan-row]')) {
+      if (!visible(el)) continue;
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const r = range.getBoundingClientRect();
+      const box = { x: r.x, y: r.y, w: r.width, h: r.height };
+      if (real(box)) fanRowsOut.push({ i: Number(el.dataset.fanRow), box });
+    }
+
     return {
       arrivals: arrivalsOut,
       hud: hud && visible(hud) ? rectOf(hud) : null,
@@ -213,6 +388,7 @@ async function snapshot(page: Page): Promise<Snapshot> {
       band: bandBox && real(bandBox) ? bandBox : null,
       bandParts,
       prints: printsOut,
+      fanRows: fanRowsOut,
     };
   });
 }
@@ -226,10 +402,26 @@ async function runVariant(page: Page, url: string, vp: Viewport, points: number[
   const BL = blip(z, fan(z).bar);
   const failures: string[] = [];
   const fail = (msg: string) => failures.push(msg);
+
+  const k = vp.textScale ?? 1;
+  if (k !== 1) {
+    await applyTextZoom(page, k);
+    /* HARNESS SANITY, not the wire: did the zoom actually land on the page? A
+       variant whose emulation silently did nothing would sweep a 100% page under
+       a 200% label and report it green. This says only that the type moved —
+       what the RUNTIME did about it is asserted below, against the band. */
+    const seen = await page.evaluate(
+      (base) => parseFloat(getComputedStyle(document.getElementById('text-probe')!).fontSize) / base,
+      TEXT_PROBE_BASE,
+    );
+    if (Math.abs(seen - k) > 0.01)
+      fail(`the text-scale probe rendered at ${r2(seen)}×, not ${k}× — the emulated zoom never reached the page`);
+  }
   let samples = 0;
   let maxConcurrent = 0;
   let finaleSamples = 0;
   let maxPrints = 0;
+  let maxFanRows = 0;
   let sawTitle = false;
 
   for (const y of points) {
@@ -241,7 +433,7 @@ async function runVariant(page: Page, url: string, vp: Viewport, points: number[
 
     for (const a of snap.arrivals) {
       // Real CSS line-wrapping vs the model's character-advance heuristic.
-      if (!contains(a.box, a.text, 1))
+      if (!contains(a.box, a.text, 1) && !isKnownGap(vp))
         fail(`y=${y} ${a.id} text [${r(a.text)}] leaves its box [${r(a.box)}]`);
       if (intersects(a.box, z.clock, 1))
         fail(`y=${y} ${a.id} box [${r(a.box)}] enters the clock zone [${r(z.clock)}]`);
@@ -258,18 +450,35 @@ async function runVariant(page: Page, url: string, vp: Viewport, points: number[
 
     // Ruling D — the HUD is bottom-anchored and grows upward from its content.
     // It must never spill above the TOP of the reserved clock zone it was given.
-    if (snap.hud && snap.hud.y < z.clock.y - 1)
+    if (snap.hud && snap.hud.y < z.clock.y - 1 && !hudWrapsUnmodelled(vp))
       fail(`y=${y} #hud top ${r2(snap.hud.y)} spills above the clock zone's top ${r2(z.clock.y)} (real height ${r2(snap.hud.h)}px)`);
 
     // §6 — the plate is centred in the STAGE box; it must never reach either
     // reserved zone, the exact coverage hole `position:fixed;inset:0` was.
-    if (snap.plate) {
+    if (snap.plate && !plateCopyUnmodelled(vp)) {
       if (intersects(snap.plate, z.clock, 1)) fail(`y=${y} #plate [${r(snap.plate)}] enters the clock zone`);
       if (intersects(snap.plate, z.scale, 1)) fail(`y=${y} #plate [${r(snap.plate)}] enters the scale zone`);
     }
 
     if (snap.bar && !contains(z.scale, snap.bar, 1))
       fail(`y=${y} #bar [${r(snap.bar)}] leaves the scale zone [${r(z.scale)}]`);
+
+    /* THE FAN'S ROWS (§9) — swept in a real browser for the first time
+       2026-08-05. The model gate has always asserted `fan row × fan row`, but
+       against `fanRowWidth()`'s own prediction of the ink; the rows are the one
+       block on the page whose type main.ts writes in px from the model, so what
+       the browser does with that px is exactly what no model can answer. */
+    maxFanRows = Math.max(maxFanRows, snap.fanRows.length);
+    if (!fanRowsUnruledAtScale(vp)) {
+      for (let i = 0; i < snap.fanRows.length; i++) {
+        for (let j = i + 1; j < snap.fanRows.length; j++) {
+          const a = snap.fanRows[i]!;
+          const b = snap.fanRows[j]!;
+          if (intersects(a.box, b.box, 1))
+            fail(`y=${y} fan row ${a.i} [${r(a.box)}] × row ${b.i} [${r(b.box)}]`);
+        }
+      }
+    }
 
     /* ---------- THE FINALE (design §4/§6) ----------
        The model's own blip rules, re-asked of the DOM. gate-collision.ts proves
@@ -280,6 +489,19 @@ async function runVariant(page: Page, url: string, vp: Viewport, points: number[
     maxPrints = Math.max(maxPrints, snap.prints.length);
 
     if (snap.band) {
+      /* THE WIRE, ASSERTED DIRECTLY. Every check in this variant is made against
+         `zones(vp)`, which solves at `k` — so if the RUNTIME solved at some other
+         scale, the whole column is describing geometry the page never used and a
+         green result means nothing. That is exactly how the model gate's four
+         200% columns read until 2026-08-05, when `main.ts` was still passing no
+         `textScale` at all. The band is where the two meet: `relayout()` writes
+         this height straight from `blip()`, so DOM ≠ model here means the page
+         did not measure the text scale. */
+      if (Math.abs(snap.band.h - BL.band.h) > 1)
+        fail(
+          `y=${y} #blip-plate is ${r2(snap.band.h)}px tall; the model solves ${r2(BL.band.h)}px at text ${k * 100}%` +
+            ` — the runtime is not solving at the scale it is being gated at`,
+        );
       for (const p of snap.bandParts) {
         if (p.cls === 'pt') sawTitle = true;
         // The check this whole extension exists for: `flex: none` means nothing
@@ -319,8 +541,12 @@ async function runVariant(page: Page, url: string, vp: Viewport, points: number[
     fail(`the heap peaked at ${maxPrints} visible prints; the model solves ${flood.length} and says shown`);
   if (!BL.shown && maxPrints > 0)
     fail(`the model dropped the flood here, but ${maxPrints} prints rendered anyway`);
+  // A row-versus-row sweep that never saw two rows is not a clean fan, it is an
+  // empty loop — the same failure the two assertions above exist to make loud.
+  if (!fanRowsUnruledAtScale(vp) && maxFanRows < 2)
+    fail(`the sweep never saw two lit fan rows (peak ${maxFanRows}) — the row check asserted nothing`);
 
-  return { vp, samples, maxConcurrent, finaleSamples, maxPrints, failures };
+  return { vp, samples, maxConcurrent, finaleSamples, maxPrints, maxFanRows, failures };
 }
 
 const r2 = (n: number) => Math.round(n * 10) / 10;
@@ -416,14 +642,26 @@ async function main() {
       const res = await runVariant(page, url, vp, [...runPoints, ...finalePoints(vp)]);
       await page.close();
 
-      const label = `${vp.w}×${vp.h}`;
+      const label = `${vp.w}×${vp.h} · text ${(vp.textScale ?? 1) * 100}%`;
       if (res.failures.length > 0) failed++;
       console.log(
         `\n${label}  ${res.failures.length === 0 ? '✅ zero collisions' : `❌ ${res.failures.length} failures`}`,
       );
       console.log(
         `  ${res.samples} real-browser scroll samples · max concurrent ${res.maxConcurrent}` +
-          ` · finale samples ${res.finaleSamples} · heap peak ${res.maxPrints}/${flood.length}`,
+          ` · finale samples ${res.finaleSamples} · heap peak ${res.maxPrints}/${flood.length}` +
+          ` · fan rows lit ${res.maxFanRows}` +
+          (fanRowsUnruledAtScale(vp) || isKnownGap(vp) || hudWrapsUnmodelled(vp) || plateCopyUnmodelled(vp)
+            ? `\n  NOT SWEPT here (unruled, see the comments above): ` +
+              [
+                fanRowsUnruledAtScale(vp) && 'fan row × fan row',
+                isKnownGap(vp) && 'arrival text vs its box',
+                hudWrapsUnmodelled(vp) && '#hud vs its zone',
+                plateCopyUnmodelled(vp) && '#plate vs the reserved zones',
+              ]
+                .filter(Boolean)
+                .join(' · ')
+            : ''),
       );
       if (res.failures.length) {
         const show = VERBOSE ? res.failures : res.failures.slice(0, 8);

@@ -24,6 +24,7 @@ import {
   showsArt,
   showsLine,
   textHeight,
+  textScaleOf,
   windowsOverlap,
   zones,
   type Rect,
@@ -395,6 +396,51 @@ describe('enlarged text (§10, rulings A/B/C)', () => {
         expect([vp.w, p.id, p.dwell >= 150]).toEqual([vp.w, p.id, true]);
       }
     }
+  });
+});
+
+describe('the measured text scale (§10, 2026-08-05)', () => {
+  /* Everything above this block asks the model what it does AT a text scale.
+     None of it could fire on the live page, because `main.ts` passed no
+     `textScale` at all until this date and `zones()` defaulted it to 1 — the
+     200% half of the contract was unreachable, and the gate's 200% columns were
+     describing a state the runtime could not enter. This is the one piece of
+     that path expressible without a DOM: the probe's rendered size in, the
+     scale the model solves at out. */
+
+  it('reads the ratio the browser rendered the probe at', () => {
+    expect(textScaleOf(16)).toBe(1);
+    expect(textScaleOf(32)).toBe(2);
+    expect(textScaleOf(24)).toBe(1.5);
+    // Firefox's text zoom steps are not integers, and neither is the result.
+    expect(textScaleOf(19.2)).toBeCloseTo(1.2, 10);
+  });
+
+  it('floors at 1 — a smaller scale is a state no gate has swept', () => {
+    // Text below the modelled size leaves every box bigger than its words need,
+    // which is safe; modelling it is not, so the runtime stays in proven range.
+    expect(textScaleOf(8)).toBe(1);
+    expect(textScaleOf(15.9)).toBe(1);
+  });
+
+  it('never hands the model a scale that is not a number', () => {
+    // `parseFloat(getComputedStyle(...).fontSize)` is NaN on a detached element,
+    // and NaN would propagate into every rect on the page as NaN — CSS rejects a
+    // whole declaration containing one, so the ending would silently not paint.
+    expect(textScaleOf(Number.NaN)).toBe(1);
+    expect(textScaleOf(0)).toBe(1);
+    expect(textScaleOf(Number.POSITIVE_INFINITY)).toBe(1);
+    expect(textScaleOf(-16)).toBe(1);
+  });
+
+  it('is the scale the finale is actually solved at', () => {
+    // The end of the wire: the number this returns is what drops the flood at
+    // 200% on the frozen solve viewport (§6 / §10 — text costs art, never
+    // legibility). Solved at 1, as the runtime did until today, it does not.
+    const solved = (probePx: number) =>
+      blip(zones({ ...DESKTOP, textScale: textScaleOf(probePx) }), fan(zones(DESKTOP)).bar);
+    expect(solved(16).shown).toBe(true);
+    expect(solved(32).shown).toBe(false);
   });
 });
 

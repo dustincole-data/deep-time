@@ -47,6 +47,7 @@ import {
   frame,
   hudBottomInset,
   place,
+  textScaleOf,
   zones,
   type Blip,
   type Fan,
@@ -85,6 +86,8 @@ const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
    ========================================================================= */
 const cv = $<HTMLCanvasElement>('field');
 const ctx = cv.getContext('2d', { alpha: false })!;
+/** Declares `font-size: 16px` inline and renders nothing — `relayout()` divides its rendered size by that. */
+const textProbe = $('text-probe');
 const hudClock = $('hud-clock');
 const hudEra = $('hud-era');
 const hudMoon = $('hud-moon');
@@ -195,7 +198,15 @@ function relayout() {
   // collapsing as you scroll resizes a fixed, full-height canvas.
   lastFieldY = -1e9;
 
-  Z = zones({ w: W, h: H });
+  /* §10's whole 200% half arrives HERE or nowhere. Every text-scale protection
+     layout.ts owns — the whisper band, the clock zone, the finale's solved band,
+     the flood's drop — reads `textScale`, and this call passed none until
+     2026-08-05, so all of it was unreachable on the live page while the gate's
+     200% columns reported it safe. A text-only zoom moves the type and not the
+     viewport, so the only way to know is to measure a rendered size. */
+  const textScale = textScaleOf(parseFloat(getComputedStyle(textProbe).fontSize));
+
+  Z = zones({ w: W, h: H, textScale });
   F = fan(Z);
   placed = place(arrivals, Z);
 
@@ -819,7 +830,14 @@ addEventListener('keydown', (e) => {
 /* ============================================================================
    GO
    ========================================================================= */
-new ResizeObserver(relayout).observe(cv);
+const ro = new ResizeObserver(relayout);
+ro.observe(cv);
+/* A text-only zoom changes no viewport and fires no event of its own, so the
+   canvas never resizes and nothing would re-solve: a visitor who turns their
+   text up WHILE READING would keep the boxes solved for the old size. The
+   probe's own box is the signal — it is the one element on the page whose size
+   is the type's. */
+ro.observe(textProbe);
 relayout();
 requestAnimationFrame(draw);
 

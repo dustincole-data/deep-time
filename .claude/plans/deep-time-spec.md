@@ -643,6 +643,12 @@ for each arrival (and the HUD, the whisper band, the Boring Billion plate):
 
 **Text at 200% costs art, never legibility.** The layout contract bottom-anchors text and gives art the remainder, and art drops out below 46 px of available height — so enlarged text eats the picture and then the picture leaves. The box never overflows. **The collision sweep gains a 200%-text pass.**
 
+> **AMENDED 2026-08-05 — the 200% pass was MODEL-ONLY, and unreachable.** Every rule above is written against `Viewport.textScale`, and `main.ts` never passed one: `zones()` defaulted it to 1 on every frame the site has ever rendered, so the four 200% columns of the collision sweep proved the model consistent with itself at a scale the runtime could not enter. A text-only zoom (Firefox) multiplies the rendered size of px type and moves no viewport, so nothing re-solved. Measured on the shipped build at 1440×900: the finale's words left their solved band by **195.6 px** and landed on **114 record prints**, and the flood stayed shown because the drop this section licenses never fired.
+>
+> **Closed by measuring it.** `#text-probe` (index.astro) declares 16 px inline and renders nothing; `relayout()` divides its rendered size by 16 and passes the ratio to `zones()`, and a `ResizeObserver` on the probe re-solves when a visitor changes their text size mid-page. The real-browser gate now runs the same four viewports **at 200% as well as 100%** — eight variants — with the zoom applied as Gecko applies it, and asserts the runtime is solving at the scale it is being gated at.
+>
+> **Three consequences of an enlarged scale are now measurable, and all three are UNRULED** (`scripts/gate-browser.ts` names each, scoped, with its numbers): the fan's rows overlap 38 of 39 adjacent pairs; the HUD's modelled height counts one line per element and a phone's clock, rate and counter all wrap (343.7 px real against a 240 px zone); and the Boring Billion plate's copy is not modelled at any scale (706 px of words in a 209 px box). None is new to this date; each needs a ruling rather than a patch.
+
 ### Screen reader — three fixed points, not fifty-four
 
 The document is already right: 55 arrivals in chronological order as real `<figure><img alt><figcaption>`. What is added is **where the scale argument is said out loud**, and it is three places — nothing is added to the cards.
@@ -729,7 +735,7 @@ aria-label="True-scale bar: 34 percent of Earth's history passed."
 |---|---|
 | 1.1.1 Non-text | `alt` = the analogy clause, build-asserted. Leader-line SVG `aria-hidden` |
 | 1.4.3 Contrast (text) | **≥ 4.5:1**, servo scrim, solved per box at build |
-| 1.4.4 / 1.4.12 Resize & spacing | 200% text costs the art, never the box — swept |
+| 1.4.4 / 1.4.12 Resize & spacing | 200% text costs the art, never the box — swept in the model **and, since 2026-08-05, in a real browser at 200%** (the runtime measures the scale; it did not until that date). **Three exclusions, all unruled: the fan's rows, the HUD on a phone, the Boring Billion plate's copy — see the amendment in this section** |
 | 1.4.11 Non-text contrast | **≥ 3:1** across each subject's boundary, build-enforced |
 | 2.1.1 / 2.1.2 Keyboard | jump model above; nothing traps focus |
 | 2.2.2 Pause, Stop, Hide | **does not apply** — no motion starts automatically |
@@ -1027,7 +1033,7 @@ The decoded figure is the one that matters — a phone dies on resident bitmaps,
 | **Load** | LCP ≤ 1.5 s on Fast 4G · no long task > 50 ms after first paint | — |
 | **Text contrast** | every text box ≥ 4.5:1 against the field across its dwell — asserted at build | — |
 | **Non-text contrast** | every arrival ≥ 3:1 across its own boundary — asserted from the art manifest at build | — |
-| **Collisions** | zero pairwise intersections over the scroll sweep, at **four** viewports (1440×900, **1920×1080**, 390×844, 390×780) **and at 200% text** | **8 modelled variants ✅ · 4 real-browser ✅** (2026-08-04) |
+| **Collisions** | zero pairwise intersections over the scroll sweep, at **four** viewports (1440×900, **1920×1080**, 390×844, 390×780) **and at 200% text** | **8 modelled variants ✅ · 8 real-browser ✅** (2026-08-05 — the real-browser pass gained the four 200%-text variants, and the runtime gained the measurement that makes them reachable) |
 | **Milestone floor** | zero sub-600 px gaps across all 55 arrivals | ✅ |
 | **Real device** | one full scroll on Dustin's phone, both ends, before ship | — |
 

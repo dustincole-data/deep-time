@@ -72,7 +72,7 @@ five paragraphs on that screen at any type size above the §11 floor.
 | **F1** | `padding: 8vw` → clamped px (e.g. `clamp(16px, 2.5vw, 28px)`) | box stops lying: +182.4 px usable at 1440, +262.2 at 1920, +14.4 at 390 | one CSS line; no model, no §6 | **necessary, never sufficient** — 428.9 px still over at 1440/200% |
 | **F2** | divide the text zoom out of the plate (`Fan.writeScale` precedent) | copy → 295.1 desktop / 256.5 phone | the plate ignores the visitor's text-size setting — on the page's one block of **pure prose**, not a diagram like the fan | with F1: fixes 1920 + both phones; **1440/200% still 133.7 over** |
 | **F3** | solve the box against its own copy (rulings B and D precedent) | box becomes honest; kills the padding lie structurally | new `plateCopyHeight()` in layout.ts + a model test | **does not solve it alone**: needs 590.3, room is 256.2 — off by 382.1 |
-| **F4** | drop tenants at an enlarged scale (**ruling F precedent**) | drop ladder @1440/200%: `.cnt` 162.8 · `.body` 214.4 · `.sub` 53 · `.kicker` 22 · `.t` 110.2 | to fit 161.4 px you drop **body + counter + sub** — the plate keeps a kicker and a title | the counter is "the only thing that moves" (`index.astro:180`); the phone also loses the body. The sr-only text keeps the words for screen readers, so the **large-text visitor is the only one who loses them** |
+| **F4** | drop tenants at an enlarged scale (**ruling F precedent**) | drop ladder @1440/200%: `.cnt` 162.8 · `.body` 214.4 · `.sub` 53 · `.kicker` 22 · `.t` 110.2 | to fit 161.4 px you drop **body + counter + sub** — the plate keeps a kicker and a title | the counter is "the only thing that moves" (`index.astro:180`); the phone also loses the body. **`#plate` is `aria-hidden="true"` (`index.astro:181`) and the sr-only paragraph at `:196` carries different words — these five paragraphs exist nowhere but as pixels, so a dropped one is gone for everybody** |
 | **F5** | fit-to-box continuous scale | always fits by construction | factor at 1440/200% is 161.4/590.3 = **0.273** → title 29.5 px, body **8.7 px** | below the §11 floor; degenerates into F4 |
 | **F6** | let the plate take the column right of the clock (**§6 change**) | 1440: 814.8 × 778.5 — copy 831.1 wide wraps the title to 2 lines → 700.5 tall, **fits with 78 px spare**. 1920 fits unwrapped | §6 says "centred in the stage box"; the plate stops being centred, moves under different arrivals | desktop-only — phone room is 86.6 px wide |
 | **F7** | `overflow: hidden` | trivial | 1440/200% loses body + counter + most of the title; phones lose body + counter | self-rejecting against "the plate carries every word" |
@@ -87,6 +87,12 @@ five paragraphs on that screen at any type size above the §11 floor.
   Fits everywhere. Costs the counter on all four 200% columns and the body on both phones.
 - **(c) Keep both, leave the stage box** — F1 + F3 + F6 on desktop, F2 or F4 on the phone.
   Fits everywhere, keeps every word, needs a §6 ruling and two code paths.
+
+Because the plate is `aria-hidden`, **F2 is strictly gentler than F4 on the visitor who is
+actually affected**: at 200% F2 leaves every word on the glass at 100% metrics (16 px body,
+54 px title), while F4 removes those words from the page entirely, for everyone. If (b) is ruled,
+the words should at least be added to the sr-only channel — though that reaches screen-reader
+users, not the large-text visitor who lost them.
 
 A fourth, if 1440×900/200% may stay the documented worst case (it is already `isKnownGap`):
 **(a) everywhere + drop only `.cnt` on that one column** → 213.7 px in 256.2 px of room, 42.5 px

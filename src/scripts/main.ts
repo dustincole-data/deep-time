@@ -195,11 +195,18 @@ function relayout() {
   cv.height = Math.round(H * DPR);
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   // Writing width/height CLEARED the bitmap just now, so the cached field is
-  // gone whether or not the scroll moved. At ladder level 4 the repaint below
-  // is throttled to once per 250px of scroll, so without this the next frame
-  // draws nothing and the visitor sees the html background — a black screen
-  // until they scroll another 250px. On iOS this fires constantly: the URL bar
-  // collapsing as you scroll resizes a fixed, full-height canvas.
+  // gone whether or not the scroll moved. On iOS this fires constantly — the
+  // URL bar collapsing as you scroll resizes a fixed, full-height canvas many
+  // times over one gesture. Flagging the field stale for the NEXT rAF
+  // (`lastFieldY = -1e9`) used to be the whole fix, but that is one composited
+  // frame too late: draw()'s repaint runs on the frame AFTER this one, and the
+  // browser paints whatever the canvas holds — nothing — in between. Verified
+  // with a compositor-level capture (Page.screencastFrame, not a page-side
+  // rAF sampler, which shares this same one-frame lag and never sees it): the
+  // field goes solid black while the DOM chrome on top of it stays correct,
+  // repeatedly, for as long as the resize keeps firing. The repaint at the end
+  // of this function (§12b) closes that gap by painting before this task ever
+  // yields back to the browser.
   lastFieldY = -1e9;
 
   /* §10's whole 200% half arrives HERE or nowhere. Every text-scale protection
@@ -273,6 +280,17 @@ function relayout() {
   B = finaleBeats(Math.max(0, last.y + last.dwell - RUN_END));
 
   layoutBlip();
+
+  // §12b — repaint the field NOW, synchronously, in the same task that just
+  // cleared it. `relayout()` runs to completion before this task yields back
+  // to the browser, so a repaint anywhere in this function lands before the
+  // next paint; waiting for draw()'s own rAF does not.
+  const sy = window.scrollY;
+  const years = yearsAgo(sy);
+  const inFinale = sy >= RUN_END;
+  const drain = inFinale ? smooth(0, B.drainEnd, sy - RUN_END) : 0;
+  drawField(sy, years, drain);
+  lastFieldY = sy;
 }
 
 /**

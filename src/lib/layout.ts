@@ -76,12 +76,14 @@
 import {
   arrivals as ALL_ARRIVALS,
   arrivalY,
+  eras,
   fanRows,
   FINALE_CFG,
   flood,
   INTRO,
   plain,
   RUN,
+  YEARS_PER_PX,
   type Arrival,
   type FanRowData,
   type Tier,
@@ -539,27 +541,104 @@ export function textHeight(a: Arrival, z: Zones, availW: number, withLine = show
    against the viewport exactly as the CSS `clamp()`s do, and `normal`
    line-height is taken as 1.25, matching the convention TEXT already sets.
    Mobile drops `.modelled` and `.rule` (§8's media query) — nothing else changes.
+
+   RULING F, 2026-08-05 — THE HUD WRAPS, AND ON A PHONE IT SHEDS TWO LINES.
+
+   Ruling D summed ONE LINE PER ELEMENT and never asked how wide the column was,
+   while `textBlockH` two hundred lines above it has wrapped every arrival through
+   `lineCount()` since the beginning. On a 390 px phone that held at 100% — 91.9 px
+   real against 102.5 px modelled, over-estimated exactly as §13 asks — and broke
+   the moment the type doubled: measured in a browser at 390×844/200%, the clock
+   ("4.60 Ga" at 85.8 px), the rate line and the px counter each take TWO lines,
+   for 343.7 px of live readout in a 240 px reserved zone. 129.7 px of it stood
+   above the zone that is supposed to contain it.
+
+   THE FIX IS TWO MOVES, and only the first is bookkeeping:
+
+     1. Every line goes through `lineCount()` against `hudAvailW()` — the `max-width`
+        main.ts actually gives the HUD. On desktop nothing wraps at either scale, so
+        this reduces to ruling D's arithmetic exactly and that column is unmoved.
+
+     2. On a phone at an enlarged scale the HUD keeps the CLOCK and the ERA and
+        drops the rate line and the counter (`hudLean`). Modelled honestly that is
+        232.4 px against the same 240 px zone — the stage keeps every pixel it has,
+        and the clock keeps the full 200% it was asked for.
+
+   Wrapping honestly WITHOUT the second move was the alternative, and it costs the
+   phone 129.7 px: the clock zone goes to 369.7 px of an 844 px screen, the stage's
+   single band drops 377.2 → 247.5 px, and 3 of 51 cards (7 of 51 at 780) no longer
+   fit the box they are drawn in. That is the collision class §4 never sells, so the
+   two lines go instead — Dustin's ruling, 2026-08-05. §8 already makes the same
+   trade one breakpoint down; this is that trade one scale up.
+
+   The widths are calibrated, not guessed. Measured off-layout in Chromium at
+   390×844, the four lines are 3.43 / 9.75 / 12.92 / 12.89 em against the model's
+   3.51 / 10.12 / 13.28 / 13.66 — over by 2–6%, which is the direction §13 rules.
    ========================================================================= */
 
 const NORMAL_LH = 1.25;
 /** `#hud` sets no font-size of its own, so `.modelled` and `.rule`'s `em` margins resolve against the browser default. */
 const HUD_BASE_FONT = 16;
+/** `relayout()` writes `max-width: Z.clock.w - 24`; the HUD's `left` inset is the other half of that 24. */
+const HUD_GUTTER = 24;
 
 /** The HUD's own `bottom` inset from its reserved zone's bottom edge — the single source main.ts's `relayout()` positions it from. */
 export const hudBottomInset = (mobile: boolean): number => (mobile ? T.mobile : T.desktop).hudBottomInset;
+
+/** The column the HUD wraps into — `#hud`'s `max-width` in main.ts's `relayout()`, verbatim. */
+const hudAvailW = (w: number, mobile: boolean): number =>
+  w * (mobile ? T.mobile : T.desktop).clockWFrac - HUD_GUTTER;
+
+/**
+ * RULING F — a phone at an enlarged scale runs the lean HUD: clock · era, and
+ * nothing below them.
+ *
+ * A SCALE TEST, NOT A MEDIA QUERY, and that is the whole reason it lives here:
+ * a text-only zoom moves no media query at all (§10) — the type doubles while
+ * every breakpoint reports exactly what it did before. Only the probe sees it,
+ * so only the model can act on it, and main.ts writes the class from this.
+ */
+export const hudLean = (vp: Required<Viewport>, mobile: boolean): boolean => mobile && vp.textScale > 1;
+
+/* The widest string each HUD line can ever hold — the same discipline ruling B
+   already applies to the whisper band, sourced from the same constants the page
+   renders from so a copy change cannot leave the model behind. */
+/** main.ts:620 — `${ga.toFixed(2)} Ga` at or above 1 Ga, `${Ma} Ma` below it. The four-digit Ga form is the wide one. */
+const HUD_CLOCK_WIDEST = '4.60 Ga';
+/** index.astro:133, verbatim. */
+const HUD_RATE = `1 px = ${YEARS_PER_PX.toLocaleString('en-US')} years`;
+/** main.ts:641 at the end of the run, which is where both numbers are longest. */
+const HUD_COUNT_WIDEST = `${RUN.toLocaleString('en-US')} / ${RUN.toLocaleString('en-US')} px`;
 
 /** Modelled height of the HUD's own content stack — see index.astro's `#hud` rules. */
 export function hudHeight(vp: Required<Viewport>, mobile: boolean): number {
   const { w, textScale: k } = vp;
   const cl = (lo: number, vw: number, hi: number) => clamp(w * vw, lo, hi);
+  const availW = hudAvailW(w, mobile);
 
-  // #hud-clock { line-height: .94 }
+  // #hud-clock { font-weight: 700; letter-spacing: -.035em; line-height: .94 }
   const clockSize = (mobile ? cl(30, 0.11, 44) : cl(34, 0.05, 74)) * k;
-  let h = clockSize * 0.94;
+  const clock: TypeSpec = {
+    size: clockSize,
+    lineHeight: 0.94,
+    tracking: -0.035,
+    upper: false,
+    weight: 1.05,
+  };
+  let h = blockH(HUD_CLOCK_WIDEST, clock, availW);
 
-  // #hud-era { margin-top: .8em }; line-height 'normal' taken as 1.25
+  // #hud-era { margin-top: .8em; font-weight: 600; letter-spacing: .22em };
+  // line-height 'normal' taken as 1.25. Every label is one unbroken word, so the
+  // band is the tallest of them rather than the sum — `eraAt()`'s whole range.
   const eraSize = cl(11, 0.012, 14) * k;
-  h += eraSize * 0.8 + eraSize * NORMAL_LH;
+  const era: TypeSpec = {
+    size: eraSize,
+    lineHeight: NORMAL_LH,
+    tracking: 0.22,
+    upper: true,
+    weight: 1.03,
+  };
+  h += eraSize * 0.8 + Math.max(...eras.map((e) => blockH(e.label, era, availW)));
 
   if (!mobile) {
     const base = HUD_BASE_FONT * k;
@@ -574,8 +653,18 @@ export function hudHeight(vp: Required<Viewport>, mobile: boolean): number {
     h += base * 0.9 * 2 + 1;
   }
 
-  // .rate, #hud-count — line-height 1.8 each
-  h += 11 * k * 1.8 * 2;
+  // .rate, #hud-count { font-weight: 500; letter-spacing: .16em; line-height: 1.8 }
+  // — both dropped by ruling F on a phone at an enlarged scale.
+  if (!hudLean(vp, mobile)) {
+    const readout: TypeSpec = {
+      size: 11 * k,
+      lineHeight: 1.8,
+      tracking: 0.16,
+      upper: true,
+      weight: 1,
+    };
+    h += blockH(HUD_RATE, readout, availW) + blockH(HUD_COUNT_WIDEST, readout, availW);
+  }
 
   return h;
 }

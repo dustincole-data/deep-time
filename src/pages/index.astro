@@ -486,6 +486,12 @@ const nf = (n: number) => n.toLocaleString('en-US');
     font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase;
     opacity: 0.5; line-height: 1.8;
   }
+  /* RULING F, 2026-08-05 — the lean HUD: clock · era, and nothing under them.
+     A phone at 200% wraps all four lines into 343.7px against a 240px zone, and
+     these two are what the stage can afford to lose. NOT a media query: a
+     text-only zoom moves none of them (§10), so main.ts writes the class from
+     layout.ts's `hudLean()` and this rule stays unconditional. */
+  #hud.lean .rate, #hud.lean #hud-count { display: none; }
 
   /* ---------- the true-scale bar: one object, 4.60 Ga to the last frame ---------- */
   .js #bar { position: fixed; z-index: 3; pointer-events: none; }

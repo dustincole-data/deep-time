@@ -46,7 +46,6 @@ import {
   contains,
   fan,
   intersects,
-  MOBILE_BELOW,
   place,
   TEXT_PROBE_BASE,
   zones,
@@ -92,28 +91,24 @@ const VARIANTS: Viewport[] = [
 const isKnownGap = (vp: Viewport) => vp.w === 1440 && vp.h === 900 && vp.textScale === 2;
 
 /**
- * THE HUD WRAPS AT AN ENLARGED SCALE AND ITS MODEL DOES NOT KNOW — found by these
- * columns on the day they were added, 2026-08-05. Unruled; NOT a silent pass.
+ * THE HUD WRAPPED AT AN ENLARGED SCALE AND ITS MODEL DID NOT KNOW — found by these
+ * columns on the day they were added, 2026-08-05, carved out for one day, and
+ * RULED the same week. There is no carve-out here any more: mobile at 200% gates
+ * as strictly as every other column, which is the only reason this paragraph is
+ * worth keeping.
  *
- * `hudHeight()` (ruling D) sums ONE LINE PER ELEMENT. It has no wrap model at
- * all, while `textBlockH` two hundred lines above it wraps every arrival through
- * `lineCount()`. On a 390 px phone that holds at 100% — 91.9 px real against
- * 102.5 px modelled, over-estimated exactly as §13 asks — and breaks at 200%,
- * where the clock ("3.46 Ga" at 85.8 px), the rate line and the px counter each
- * take two lines: **343.7 px of real HUD against a 240 px reserved zone**, 90 px
- * of a LIVE READOUT standing above the zone that is supposed to contain it.
+ * What it found: `hudHeight()` (ruling D) summed ONE LINE PER ELEMENT and never
+ * asked how wide the column was, while `textBlockH` wrapped every arrival through
+ * `lineCount()`. At 390×844/200% the clock ("4.60 Ga" at 85.8 px), the rate line
+ * and the px counter each took two lines — 343.7 px of real HUD against a 240 px
+ * reserved zone, 129.7 px of a LIVE READOUT above the zone meant to contain it.
  *
- * Desktop is unaffected and stays gated strictly: at 1440×900/200% ruling D's
- * modelled 522 px zone does hold the real HUD, because the column is wide enough
- * that nothing wraps.
- *
- * Not patched here because the fix is not the gate's to choose: wrapping the HUD
- * honestly makes the mobile clock zone ~370 px of an 844 px phone, which takes
- * the room out of the arrivals — the same fork Dustin ruled on for desktop on
- * 2026-08-01 (accept it, ship documented), asked again on a screen with a third
- * of the room. Scoped to mobile at an enlarged scale, and to the HUD's own rect.
+ * Ruling F (layout.ts) wraps the HUD honestly AND drops the rate line and the
+ * counter on a phone at an enlarged scale, which lands the honest stack at
+ * 232.4 px inside the same 240 px zone. The alternative — wrap and pay — cost the
+ * stage 129.7 px of an 844 px screen and put 3 of 51 cards outside their own box,
+ * so the two lines went instead. Desktop never wrapped and is untouched.
  */
-const hudWrapsUnmodelled = (vp: Viewport) => (vp.textScale ?? 1) > 1 && vp.w < MOBILE_BELOW;
 
 /**
  * THE BORING BILLION PLATE'S COPY IS NOT MODELLED — at any scale. Unruled,
@@ -463,7 +458,7 @@ async function runVariant(page: Page, url: string, vp: Viewport, points: number[
 
     // Ruling D — the HUD is bottom-anchored and grows upward from its content.
     // It must never spill above the TOP of the reserved clock zone it was given.
-    if (snap.hud && snap.hud.y < z.clock.y - 1 && !hudWrapsUnmodelled(vp))
+    if (snap.hud && snap.hud.y < z.clock.y - 1)
       fail(`y=${y} #hud top ${r2(snap.hud.y)} spills above the clock zone's top ${r2(z.clock.y)} (real height ${r2(snap.hud.h)}px)`);
 
     // §6 — the plate is centred in the STAGE box; it must never reach either
@@ -668,11 +663,10 @@ async function main() {
         `  ${res.samples} real-browser scroll samples · max concurrent ${res.maxConcurrent}` +
           ` · finale samples ${res.finaleSamples} · heap peak ${res.maxPrints}/${flood.length}` +
           ` · fan rows lit ${res.maxFanRows}` +
-          (isKnownGap(vp) || hudWrapsUnmodelled(vp) || plateCopyUnmodelled(vp)
+          (isKnownGap(vp) || plateCopyUnmodelled(vp)
             ? `\n  NOT SWEPT here (unruled, see the comments above): ` +
               [
                 isKnownGap(vp) && 'arrival text vs its box',
-                hudWrapsUnmodelled(vp) && '#hud vs its zone',
                 plateCopyUnmodelled(vp) && '#plate vs the reserved zones',
               ]
                 .filter(Boolean)

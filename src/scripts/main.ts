@@ -46,6 +46,7 @@ import {
   fan,
   frame,
   hudBottomInset,
+  hudLean,
   place,
   textScaleOf,
   zones,
@@ -230,6 +231,10 @@ function relayout() {
   hud.style.left = `${Z.clock.x + (mobile ? 18 : 24)}px`;
   hud.style.bottom = `${H - (Z.clock.y + Z.clock.h) + hudBottomInset(mobile)}px`;
   hud.style.maxWidth = `${Z.clock.w - 24}px`;
+  // Ruling F — the two secondary readouts go on a phone at an enlarged scale, so
+  // the honest HUD still fits the zone it was given. `hudLean` is the single
+  // source; the CSS rule it drives carries no breakpoint of its own.
+  hud.classList.toggle('lean', hudLean(Z.viewport, mobile));
 
   barEl.style.left = `${F.bar.x}px`;
   barEl.style.top = `${F.bar.y}px`;

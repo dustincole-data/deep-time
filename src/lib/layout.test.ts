@@ -18,6 +18,7 @@ import {
   fan,
   frame,
   hudHeight,
+  hudLean,
   intersects,
   place,
   sameRect,
@@ -636,6 +637,60 @@ describe('the HUD sizes its own reserved zone, so it can never spill (ruling D)'
     const base = zones(DESKTOP).clock.h;
     const big = zones({ ...DESKTOP, textScale: 2 }).clock.h;
     expect(big).toBeGreaterThan(base);
+  });
+});
+
+describe('the HUD wraps, and a phone at an enlarged scale runs it lean (ruling F)', () => {
+  /* The bug ruling F closes: before it, `hudHeight` summed one line per element
+     at any width, so a phone at 200% modelled 240px of HUD while the browser drew
+     343.7px of it — the clock, the rate line and the counter each on two lines. */
+  it('counts the lines the column forces, not one per element', () => {
+    const wide = { w: 390, h: 844, textScale: 2 };
+    const narrow = hudHeight({ ...wide }, true);
+    // The same type in the desktop column, which is 523.2px and wraps none of it.
+    expect(hudHeight({ w: 1440, h: 900, textScale: 2 }, false)).toBeGreaterThan(narrow);
+    // The clock alone doubles its height between the two scales BECAUSE it wraps:
+    // 1 line of 42.9px type against 2 lines of 85.8px is more than the 2× of size.
+    const one = hudHeight({ ...PHONE, textScale: 1 }, true);
+    expect(narrow / one).toBeGreaterThan(2);
+  });
+
+  it('drops the rate line and the counter only on a phone, only above 100%', () => {
+    expect(hudLean({ ...PHONE, textScale: 2 }, true)).toBe(true);
+    expect(hudLean({ ...PHONE, textScale: 1 }, true)).toBe(false);
+    expect(hudLean({ ...DESKTOP, textScale: 2 }, false)).toBe(false);
+  });
+
+  it('keeps the phone lean enough that the stage never pays for the HUD', () => {
+    // The whole point of the ruling: the clock zone stays at its 240px floor at
+    // 200%, so the arrivals keep every pixel they had. Wrapping without the drop
+    // would have taken it to 369.7px and put 3 of 51 cards outside their box.
+    for (const vp of [PHONE, SHORT_PHONE]) {
+      const z = zones({ ...vp, textScale: 2 });
+      expect([vp.h, z.clock.h]).toEqual([vp.h, 240]);
+      // The floor holds because the honest stack fits under it, not by luck:
+      // 232.4px of modelled HUD (26 of that the bottom inset) against 240.
+      expect([vp.h, hudHeight(z.viewport, true) + 26 <= 240]).toEqual([vp.h, true]);
+    }
+  });
+
+  it('leaves the desktop column exactly where ruling D put it', () => {
+    // Nothing wraps at 523.2px, so the wrap model must reduce to the old sum:
+    // clock .94 + era (.8em margin + 1.25) + the modelled block + rate + counter.
+    const k = 2;
+    const cl = (lo: number, vw: number, hi: number) => Math.min(Math.max(1440 * vw, lo), hi);
+    const expected =
+      cl(34, 0.05, 74) * k * 0.94 +
+      cl(11, 0.012, 14) * k * 0.8 +
+      cl(11, 0.012, 14) * k * 1.25 +
+      16 * k * 1.1 +
+      9.5 * k * 1.25 +
+      9.5 * k * 0.6 +
+      11.5 * k * 1.9 * 2 +
+      16 * k * 0.9 * 2 +
+      1 +
+      11 * k * 1.8 * 2;
+    expect(hudHeight({ ...DESKTOP, textScale: k }, false)).toBeCloseTo(expected, 6);
   });
 });
 

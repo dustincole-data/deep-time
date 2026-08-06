@@ -27,6 +27,7 @@ import {
   flood,
   milestones,
   plain,
+  PLATE_CFG,
   pxFromNow,
   spokenDate,
   spokenName,
@@ -177,16 +178,16 @@ const nf = (n: number) => n.toLocaleString('en-US');
       }
     </main>
 
-    {/* Named, and left empty on purpose. The counter is the only thing that moves. */}
+    {/* Named, and left empty on purpose. The counter is the only thing that moves.
+        Every string comes from `PLATE_CFG` so the markup and `plateBox`'s model
+        cannot describe different text — the rule `#blip-plate` has always followed,
+        and the one this plate did not until ruling G (2026-08-06). */}
     <div id="plate" aria-hidden="true">
       <div class="in">
-        <p class="kicker">1.8 – 0.8 billion years ago</p>
-        <p class="t">The Boring Billion</p>
-        <p class="sub">geologists' name for it</p>
-        <p class="body">
-          The chemistry settles.<br />The oxygen stops rising.<br />Nothing much happens for a thousand
-          million years.
-        </p>
+        <p class="kicker">{PLATE_CFG.kicker}</p>
+        <p class="t">{PLATE_CFG.title}</p>
+        <p class="sub">{PLATE_CFG.sub}</p>
+        <p class="body" set:html={PLATE_CFG.body.join('<br />')} />
         <p class="cnt"><b id="plate-count">0</b><span id="plate-years"></span></p>
       </div>
     </div>
@@ -517,11 +518,32 @@ const nf = (n: number) => n.toLocaleString('en-US');
      zones (§5 rule 1) and is swept by gate-collision.ts. z-index 1, BELOW
      main's arrivals (z-index 2): §6 says the four real arrivals still render
      on top of it. */
+  /* RULING G, 2026-08-06 — the box is solved to the words (`plateBox`), so the
+     words are placed against the box rather than left to a grid.
+
+     `padding: 8vw` is GONE, and it was not cosmetic: under `border-box` it floored
+     the box at 230.4 px against a modelled 209.4 px at 1440×900/200 %, so `#plate`
+     reported a rect that was not what was on the glass — and the box itself then
+     entered the clock zone. `display: grid; place-items: center` is gone with it:
+     an `auto` row track grows to its content, so centring had nothing to centre
+     and every pixel of overflow ran downward into the clock. Absolute centring on
+     the box cannot do that whatever the copy does.
+
+     `--plate-k` is `1 / textScale` (`Zones.plateCopy.writeScale`), and `.in`'s
+     width is written at `measure × textScale`: the block lays out at the enlarged
+     size in a proportionally wider measure — so the line breaks are identical —
+     and is then divided back down. Same divide as `Fan.writeScale`, same reason. */
   .js #plate {
-    position: fixed; z-index: 1; display: grid; place-items: center;
-    pointer-events: none; opacity: 0; text-align: center; padding: 8vw;
+    position: fixed; z-index: 1;
+    pointer-events: none; opacity: 0; text-align: center;
   }
-  #plate .in { max-width: 34rem; }
+  .js #plate .in {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%) scale(var(--plate-k, 1));
+  }
+  /* Ruling G's one rung: at 1440×900 with 200 % text the held-at-100 % copy still
+     will not fit the room the clock leaves, and the counter is what goes. */
+  .js #plate.lean .cnt { display: none; }
   #plate p { margin: 0; }
   #plate .kicker {
     font-size: 10px; letter-spacing: 0.32em; text-transform: uppercase; opacity: 0.5;

@@ -1012,6 +1012,25 @@
     "purpose, at 49px and 251px from Chicxulub. Numbers recomputed from `constants` by the tests,",
     "same as the rest of this copy."
   ],
+  "boringBillion": {
+    "_comment": [
+      "The plate's five paragraphs, lifted out of index.astro's markup 2026-08-06 so the",
+      "MODEL and the MARKUP cannot describe different text. `blipBandHeight` has read the",
+      "finale's copy from `finale.copy` since it was written, for exactly this reason; the",
+      "Boring Billion plate was solved against a share of the stage instead and never read",
+      "its own words at all. `body` is an array because its line breaks are AUTHORED —",
+      "index.astro joins it with <br />, and each entry wraps on its own."
+    ],
+    "kicker": "1.8 – 0.8 billion years ago",
+    "title": "The Boring Billion",
+    "sub": "geologists' name for it",
+    "body": [
+      "The chemistry settles.",
+      "The oxygen stops rising.",
+      "Nothing much happens for a thousand million years."
+    ],
+    "counterUnit": "million years to go"
+  },
   "finale": {
     "beats": {
       "drainPad": 40,

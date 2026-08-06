@@ -29,6 +29,7 @@ import {
   windowsOverlap,
   zones,
   type Rect,
+  type Viewport,
 } from './layout.ts';
 
 const DESKTOP = { w: 1440, h: 900 };
@@ -604,20 +605,85 @@ describe('the copy spends the constants, exactly (§8, §13)', () => {
   });
 });
 
-describe('the Boring Billion plate has a real rect (§6), and it is swept', () => {
-  it('gives the plate a rect inside the stage, at every gate viewport', () => {
-    for (const vp of GATE_VIEWPORTS) {
+describe('the Boring Billion plate is solved to its own copy (§6, ruling G)', () => {
+  /* These ran at 100 % ONLY until 2026-08-06, which is how a plate that overflowed
+     by 475 px at 200 % kept a green model gate: `plate` was `stage`, so "inside the
+     stage" was true by definition and the 200 % columns were never asked. */
+  const ALL: Viewport[] = [...GATE_VIEWPORTS, ...GATE_VIEWPORTS.map((v) => ({ ...v, textScale: 2 }))];
+  const at = (vp: Viewport) => `${vp.w}×${vp.h}/${(vp.textScale ?? 1) * 100}%`;
+  /** The one column where the copy cannot fit the stage — see `plateBox`. */
+  const BORROWS = (vp: Viewport) => vp.w === 1440 && vp.h === 900 && vp.textScale === 2;
+
+  it('never lets the plate reach into the clock or scale zones, at either text scale', () => {
+    for (const vp of ALL) {
       const z = zones(vp);
-      expect([vp.w, contains(z.stage, z.plate)]).toEqual([vp.w, true]);
+      const label = at(vp);
+      expect([label, intersects(z.plate, z.clock)]).toEqual([label, false]);
+      expect([label, intersects(z.plate, z.scale)]).toEqual([label, false]);
     }
   });
 
-  it('never lets the plate reach into the clock or scale zones', () => {
-    for (const vp of GATE_VIEWPORTS) {
+  it('keeps the plate inside the stage everywhere but the one column that cannot', () => {
+    for (const vp of ALL) {
       const z = zones(vp);
-      expect([vp.w, intersects(z.plate, z.clock)]).toEqual([vp.w, false]);
-      expect([vp.w, intersects(z.plate, z.scale)]).toEqual([vp.w, false]);
+      const label = at(vp);
+      expect([label, contains(z.stage, z.plate)]).toEqual([label, !BORROWS(vp)]);
     }
+  });
+
+  it('keeps it inside the room the whisper band and the clock leave, always', () => {
+    for (const vp of ALL) {
+      const z = zones(vp);
+      const top = z.whisper.y + z.whisper.h;
+      const room = { x: z.stage.x, y: top, w: z.stage.w, h: z.clock.y - top };
+      const label = at(vp);
+      expect([label, contains(room, z.plate)]).toEqual([label, true]);
+    }
+  });
+
+  it('holds the copy at 100% metrics, so its height does not move with the text scale', () => {
+    for (const vp of GATE_VIEWPORTS) {
+      const one = zones(vp);
+      const two = zones({ ...vp, textScale: 2 });
+      const label = `${vp.w}×${vp.h}`;
+      // The measure never moves. The height only moves where a tenant was dropped.
+      expect([label, two.plateCopy.w]).toEqual([label, one.plateCopy.w]);
+      if (!two.plateCopy.counterDropped)
+        expect([label, two.plateCopy.h]).toEqual([label, one.plateCopy.h]);
+      expect([label, one.plateCopy.writeScale, two.plateCopy.writeScale]).toEqual([label, 1, 0.5]);
+    }
+  });
+
+  it('drops the counter at exactly one gate column, and keeps every word at the rest', () => {
+    const dropped = ALL.filter((vp) => zones(vp).plateCopy.counterDropped).map(at);
+    expect(dropped).toEqual(['1440×900/200%']);
+  });
+
+  /* The arithmetic itself, term by term — the same shape the ruling-D loop uses.
+     If a `#plate` rule in index.astro moves and this model does not, this is what
+     says so, rather than the browser gate finding it three columns later. */
+  it('predicts the copy block at 1440 from index.astro\'s own numbers', () => {
+    const z = zones({ w: 1440, h: 900 });
+    const kicker = 10 * 1.1;
+    const kickerGap = 10 * 1.4;
+    const title = 54 * 1.02;
+    const subGap = 15 * 0.7;
+    const sub = 15 * 1.1;
+    const bodyGap = 16 * 1.6;
+    const body = 3 * 16 * 1.7; // three authored lines, none of which wrap at 544px
+    const cntGap = 16 * 2.4;
+    const count = 22 * 1.1;
+    const cntInner = 16 * 0.5;
+    const unit = 10 * 1.1;
+    expect(z.plateCopy.h).toBeCloseTo(
+      kicker + kickerGap + title + subGap + sub + bodyGap + body + cntGap + count + cntInner + unit,
+      6,
+    );
+    // And the counter is worth exactly what the ruling priced it at.
+    expect(z.plateCopy.h - zones({ w: 1440, h: 900, textScale: 2 }).plateCopy.h).toBeCloseTo(
+      cntGap + count + cntInner + unit,
+      6,
+    );
   });
 });
 

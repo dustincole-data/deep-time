@@ -111,26 +111,32 @@ const isKnownGap = (vp: Viewport) => vp.w === 1440 && vp.h === 900 && vp.textSca
  */
 
 /**
- * THE BORING BILLION PLATE'S COPY IS NOT MODELLED — at any scale. Unruled,
- * surfaced by these columns 2026-08-05, and the one finding here that this
- * ticket's own fix makes VISIBLY worse rather than better.
+ * THE BORING BILLION PLATE'S COPY IS MODELLED NOW — carved out 2026-08-05, priced
+ * 2026-08-06, RULED the same day. There is no carve-out here any more: all eight
+ * columns sweep the plate's box AND its rendered words against the reserved zones.
  *
- * `z.plate` is a share of the stage box (§6), never a solve against the plate's
- * own five paragraphs — the same fault ruling B fixed for the whisper band and
- * ruling D for the clock. At 1440×900/200% the copy is **706 px of content in a
- * 209 px box**, and because `#plate` is `padding: 8vw` under `border-box`, the
- * box floors at its own 230.4 px of padding and reports a rect that is not what
- * is on the glass. `place-items: center` then centres 706 px of words on a
- * 230 px rect: they run 238 px past it, top and bottom.
+ * What the carve-out got wrong, found by measuring it before proposing a fix:
+ *   - At 100% text NOTHING overflowed. All four 100% columns held the copy with
+ *     4.3–86.4 px to spare. It was a 200%-only defect, not "broken at any scale".
+ *   - `place-items: center` was a NO-OP, not the cause. A grid row track is `auto`,
+ *     so it grew to the copy and left centring nothing to centre: the words were
+ *     pinned at the padding edge and every pixel of overflow ran DOWNWARD, into
+ *     the clock. Measured `ovTop` was exactly `−padding` at all eight columns —
+ *     never "238 px past it, top and bottom".
+ *   - The copy was 590.3 px at 1440×900/200%, not 706 (762.6 px on a phone).
+ *   - `.in` is `fit-content`, so its width is the TITLE's max-content width
+ *     (415.5 px at 100%), never the `max-width: 34rem` the CSS suggests.
  *
- * IT WAS ALREADY BROKEN, DIFFERENTLY. Solved at 1 as the runtime always did, the
- * box was 453 px and the same 706 px of copy overflowed it by 253 px, straight
- * through the HUD. Measuring the text scale shrinks the stage (the clock zone
- * honestly grows), so the box shrinks and the overflow roughly doubles — worse
- * on this one screen, against 114 text × print collisions removed on the ending.
- * Named here rather than traded silently.
+ * What was really on the glass at 200%, in ink rather than in zones: the title sat
+ * on the live clock at 1440×900 (217 × 58.7 px over `1.78 Ga`), the body sat on
+ * `1.78 Ga` and `PROTEROZOIC` on both phones, and the counter — the only thing on
+ * the plate that moves — was entirely below the fold there (160.5 px at 844,
+ * 216 px at 780). 1920×1080 was the one 200% column with no ink collision at all.
+ *
+ * The ruling (Dustin, 2026-08-06) is fork (d): solve the box against the copy,
+ * hold the plate's type at 100 % metrics, and drop the counter only where the copy
+ * still will not fit — which is 1440×900/200% and nowhere else.
  */
-const plateCopyUnmodelled = (vp: Viewport) => (vp.textScale ?? 1) > 1;
 
 /** BB_HI/BB_LO from src/scripts/main.ts — where the plate is on screen. */
 const BB_HI_PX = milestoneY(1.8e9);
@@ -221,6 +227,8 @@ interface Snapshot {
   hud: DomRect | null;
   bar: DomRect | null;
   plate: DomRect | null;
+  /** `#plate .in` — the plate's five paragraphs as the browser drew them. */
+  plateCopy: DomRect | null;
   /** `#blip-plate` — the band the flood was solved around. Never `#plate`. */
   band: DomRect | null;
   /** The band's visible tenants, each measured as the browser actually set it. */
@@ -387,6 +395,7 @@ async function snapshot(page: Page): Promise<Snapshot> {
       hud: hud && visible(hud) ? rectOf(hud) : null,
       bar: bar && visible(bar) ? rectOf(bar) : null,
       plate: plate && visible(plate) ? rectOf(plate) : null,
+      plateCopy: plate && visible(plate) ? rectOf(plate.querySelector('.in')!) : null,
       band: bandBox && real(bandBox) ? bandBox : null,
       bandParts,
       prints: printsOut,
@@ -461,11 +470,29 @@ async function runVariant(page: Page, url: string, vp: Viewport, points: number[
     if (snap.hud && snap.hud.y < z.clock.y - 1)
       fail(`y=${y} #hud top ${r2(snap.hud.y)} spills above the clock zone's top ${r2(z.clock.y)} (real height ${r2(snap.hud.h)}px)`);
 
-    // §6 — the plate is centred in the STAGE box; it must never reach either
-    // reserved zone, the exact coverage hole `position:fixed;inset:0` was.
-    if (snap.plate && !plateCopyUnmodelled(vp)) {
+    // §6 — the plate must never reach either reserved zone, the exact coverage
+    // hole `position:fixed;inset:0` was.
+    if (snap.plate) {
       if (intersects(snap.plate, z.clock, 1)) fail(`y=${y} #plate [${r(snap.plate)}] enters the clock zone`);
       if (intersects(snap.plate, z.scale, 1)) fail(`y=${y} #plate [${r(snap.plate)}] enters the scale zone`);
+
+      /* THE WORDS, NOT THE BOX. The box is what the model writes; the copy is what
+         the browser does with it, and until 2026-08-06 nothing compared the two.
+         `#plate .in` is the block the visitor reads — its rect already carries the
+         `scale()` that holds the plate at 100 % metrics, so this is ink. */
+      if (snap.plateCopy) {
+        if (!contains(snap.plate, snap.plateCopy, 1))
+          fail(
+            `y=${y} #plate copy [${r(snap.plateCopy)}] leaves its box [${r(snap.plate)}]` +
+              ` by ${r2(snap.plateCopy.y + snap.plateCopy.h - snap.plate.y - snap.plate.h)}px at the bottom`,
+          );
+        if (intersects(snap.plateCopy, z.clock, 1))
+          fail(`y=${y} #plate copy [${r(snap.plateCopy)}] enters the clock zone [${r(z.clock)}]`);
+        if (intersects(snap.plateCopy, z.scale, 1))
+          fail(`y=${y} #plate copy [${r(snap.plateCopy)}] enters the scale zone`);
+        if (snap.plateCopy.y < -1 || snap.plateCopy.y + snap.plateCopy.h > vp.h + 1)
+          fail(`y=${y} #plate copy [${r(snap.plateCopy)}] is off screen (viewport is ${vp.h}px tall)`);
+      }
     }
 
     if (snap.bar && !contains(z.scale, snap.bar, 1))
@@ -663,14 +690,8 @@ async function main() {
         `  ${res.samples} real-browser scroll samples · max concurrent ${res.maxConcurrent}` +
           ` · finale samples ${res.finaleSamples} · heap peak ${res.maxPrints}/${flood.length}` +
           ` · fan rows lit ${res.maxFanRows}` +
-          (isKnownGap(vp) || plateCopyUnmodelled(vp)
-            ? `\n  NOT SWEPT here (unruled, see the comments above): ` +
-              [
-                isKnownGap(vp) && 'arrival text vs its box',
-                plateCopyUnmodelled(vp) && '#plate vs the reserved zones',
-              ]
-                .filter(Boolean)
-                .join(' · ')
+          (isKnownGap(vp)
+            ? `\n  NOT SWEPT here (unruled, see the comments above): arrival text vs its box`
             : ''),
       );
       if (res.failures.length) {

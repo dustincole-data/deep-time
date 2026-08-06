@@ -84,6 +84,8 @@ export interface FinaleBeats {
 
 export const CONSTANTS = raw.constants;
 export const FINALE_CFG = raw.finale;
+/** The Boring Billion plate's own words (§6) — read by the markup AND by `plateBox`. */
+export const PLATE_CFG = raw.boringBillion;
 export const { INTRO, RUN, FINALE, TOTAL, RUN_END, YEARS_PER_PX, EARTH_AGE, READABILITY_FLOOR_PX } = raw.constants;
 
 export const eras: Era[] = raw.eras;

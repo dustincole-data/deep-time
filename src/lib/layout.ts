@@ -82,6 +82,7 @@ import {
   flood,
   INTRO,
   plain,
+  PLATE_CFG,
   RUN,
   YEARS_PER_PX,
   type Arrival,
@@ -125,8 +126,10 @@ export interface Zones {
   stage: Rect;
   /** One band across the top of the stage, for field whispers only (ruling B). */
   whisper: Rect;
-  /** The Boring Billion plate (§6) — centred in the stage box, never the viewport. Arrivals render on top of it; it is not a slot and is exempt from the tiling check. */
+  /** The Boring Billion plate (§6) — SOLVED to its own five paragraphs, then centred in the stage. Arrivals render on top of it; it is not a slot and is exempt from the tiling check. */
   plate: Rect;
+  /** How the plate's words are set inside `plate` — the measure, the divide, and whether the counter survives (§6, ruling G). */
+  plateCopy: PlateCopy;
   slots: Slot[];
   /** Per column: the full-height rect a lone card takes (contract rule 5). */
   colFull: Rect[];
@@ -136,6 +139,31 @@ export interface Zones {
   rowsCollapsed: boolean;
   /** The fade half-window every arrival gets before contention shortens it. */
   fade: number;
+}
+
+/**
+ * How the Boring Billion plate's words are set — the output of ruling G
+ * (Dustin, 2026-08-06), and the reason `Zones.plate` is no longer a share of the
+ * stage.
+ */
+export interface PlateCopy {
+  /** The copy's own height at 100 % metrics, which is the only height it ever has. */
+  h: number;
+  /** The measure the words are set to, at 100 % metrics. */
+  w: number;
+  /**
+   * `1 / textScale`, written onto `#plate .in` as a `scale()` — the same divide
+   * `Fan.writeScale` makes, for the same reason. The plate is held at 100 %
+   * metrics because at 200 % its five paragraphs cannot fit the room ANY
+   * arrangement leaves them (see `plateBox`).
+   */
+  writeScale: number;
+  /**
+   * True when even the held-at-100 % copy will not fit, and the counter goes.
+   * Fires at exactly one gate column, 1440×900 at 200 % text; everywhere else
+   * the plate keeps all five paragraphs.
+   */
+  counterDropped: boolean;
 }
 
 export interface Placed {
@@ -719,6 +747,161 @@ function stageMetrics(
   return { padX, stageW, gutX, whisperH, topOff, rowTop, rowBot, clockH };
 }
 
+/* ----------------------------------------------------------------------------
+   THE BORING BILLION PLATE (§6) — RULING G, 2026-08-06
+
+   `z.plate` was `stage`: a share of the box, never a solve against the plate's
+   own five paragraphs — the same fault ruling B fixed for the whisper band and
+   ruling D for the clock, left standing here because nothing had measured it.
+
+   MEASURED FIRST, then ruled. At 100 % text nothing overflowed at all (4.3–86.4 px
+   of slack on all four columns); at 200 % the copy ran 388–475 px past its box on
+   desktop and 417–472 px on a phone, every pixel of it DOWNWARD into the clock —
+   `place-items: center` was a no-op, because an `auto` grid row track grows to its
+   content and leaves centring nothing to centre. In ink: the title sat on the live
+   clock at 1440×900 (217 × 58.7 px over `1.78 Ga`) and the counter — the only
+   thing on the plate that moves — was entirely below the fold on both phones.
+
+   THE NUMBER THAT DECIDED IT: at 1440×900/200 % the room between the whisper band
+   and the clock zone is 256.2 px, and the copy is 295.1 px even with its type held
+   at 100 % metrics. No box on that screen holds all five paragraphs. So the ruling
+   is three moves, in this order:
+
+     1. The box is SOLVED to the copy (this function), not handed a share.
+     2. The type is HELD at 100 % metrics — `writeScale`, the divide `Fan.writeScale`
+        already makes for the fan's rows. The plate is `aria-hidden`, so its words
+        exist nowhere but as pixels: holding them at 100 % keeps every word on the
+        glass for the visitor who enlarged their text, where dropping paragraphs
+        would take them off the page for everybody.
+     3. Only if it STILL will not fit does the counter go — one rung, one screen.
+
+   The copy is therefore SCALE-INVARIANT: 295.1 px on a desktop and 256.5 px on a
+   phone, at both text scales. That is what makes this model small enough to trust.
+   -------------------------------------------------------------------------- */
+
+/** `#plate .in`'s measure at 100 % metrics, capped by the room its box leaves. */
+const PLATE_MEASURE_MAX = 544;
+/** Clear space between the plate's words and the edge of its box, each side. */
+const PLATE_CLEAR = { desktop: 24, mobile: 16 } as const;
+/** The box stops this far short of the clock zone, so "fits exactly" is never the claim. */
+const PLATE_KEEPOUT = 4;
+/**
+ * `line-height: normal` for Archivo, as the browser resolves it. Measured off the
+ * built page: 10 px → 11, 20 px → 22. Used for every plate tenant that does not
+ * set its own, and it rounds UP against the browser, which is the safe direction.
+ */
+const PLATE_NORMAL_LH = 1.1;
+/** `#plate`'s gaps, as `em` of the type they separate — index.astro sets exactly these. */
+const PLATE_COPY_GAPS = {
+  /** kicker → title, of the kicker's own size (`margin-bottom: 1.4em`). */
+  kicker: 1.4,
+  /** title → sub, of the sub's own size (`margin-top: 0.7em`). */
+  sub: 0.7,
+  /** sub → body, of the body's own size (`margin-top: 1.6em`). */
+  body: 1.6,
+  /** body → counter, of the counter's inherited 16 px (`margin-top: 2.4em`). */
+  counter: 2.4,
+  /** Inside the counter, between the number and its unit (`gap: 0.5em` of 16 px). */
+  counterGap: 0.5,
+} as const;
+/** The size `.cnt` inherits, and therefore what its `em` gaps resolve against. */
+const PLATE_INHERITED = 16;
+
+/**
+ * The plate's copy block at 100 % metrics. EVERY string comes from `PLATE_CFG`,
+ * never from a literal here — the same rule `blipBandHeight` follows, and the one
+ * this block did not follow until 2026-08-06, when its words lived only in the
+ * markup and the model was solving a share of the stage against nothing at all.
+ *
+ * `body` wraps per authored line: index.astro joins the array with `<br />`, so
+ * each entry is its own paragraph as far as wrapping is concerned.
+ */
+function plateCopyHeight(w: number, measure: number, withCounter: boolean): number {
+  const cl = (lo: number, vw: number, hi: number) => clamp(w * vw, lo, hi);
+  const c = PLATE_CFG;
+
+  // Every size below is index.astro's `#plate` rules verbatim, resolved at this
+  // width and NEVER multiplied by the text scale — that is the ruling.
+  const kicker: TypeSpec = { size: 10, lineHeight: PLATE_NORMAL_LH, tracking: 0.32, upper: true, weight: 1 };
+  const title: TypeSpec = { size: cl(26, 0.046, 54), lineHeight: 1.02, tracking: -0.04, upper: false, weight: 1.15 };
+  const sub: TypeSpec = { size: cl(12, 0.013, 15), lineHeight: PLATE_NORMAL_LH, tracking: 0, upper: false, weight: 1 };
+  const body: TypeSpec = { size: cl(13, 0.014, 16), lineHeight: 1.7, tracking: 0, upper: false, weight: 1 };
+  const count: TypeSpec = { size: cl(15, 0.019, 22), lineHeight: PLATE_NORMAL_LH, tracking: 0, upper: false, weight: 1.1 };
+  const unit: TypeSpec = { size: 10, lineHeight: PLATE_NORMAL_LH, tracking: 0.26, upper: true, weight: 1 };
+
+  const bodyH = c.body.reduce((acc, s) => acc + blockH(plain(s), body, measure), 0);
+  let h =
+    blockH(plain(c.kicker), kicker, measure) +
+    kicker.size * PLATE_COPY_GAPS.kicker +
+    blockH(plain(c.title), title, measure) +
+    sub.size * PLATE_COPY_GAPS.sub +
+    blockH(plain(c.sub), sub, measure) +
+    body.size * PLATE_COPY_GAPS.body +
+    bodyH;
+
+  if (withCounter) {
+    h +=
+      PLATE_INHERITED * PLATE_COPY_GAPS.counter +
+      count.size * count.lineHeight +
+      PLATE_INHERITED * PLATE_COPY_GAPS.counterGap +
+      unit.size * unit.lineHeight;
+  }
+  return h;
+}
+
+/**
+ * The plate's box, and how its words are set inside it.
+ *
+ * The box is centred in the STAGE whenever the copy fits there — §6's own words,
+ * and what every column but one still does. When it does not, the box falls back
+ * to the whole room between the whisper band and the clock zone, which is the
+ * most any box can have without entering a reserved zone. `stage.h` is smaller
+ * than that room because `rowBot` also answers to `STAGE_BOTTOM_FRAC`; borrowing
+ * the difference is what buys 1440×900/200 % its 46.8 px.
+ */
+function plateBox(
+  stage: Rect,
+  whisperBot: number,
+  clockTop: number,
+  vp: Required<Viewport>,
+  mobile: boolean,
+): { rect: Rect; copy: PlateCopy } {
+  const base = mobile ? PLATE_CLEAR.mobile : PLATE_CLEAR.desktop;
+  /* The measure answers to the WIDTH alone, never to the room — that is what keeps
+     the copy's height scale-invariant, and therefore what makes this model small. */
+  const measure = Math.min(PLATE_MEASURE_MAX, stage.w - 2 * base);
+  const avail = clockTop - whisperBot - PLATE_KEEPOUT;
+
+  const full = plateCopyHeight(vp.w, measure, true);
+  /* Rung 1 of 1. A ladder with a second rung would be a ladder nobody has ever
+     climbed: the gate sweeps all eight columns, so copy that outgrows even this
+     fails loudly rather than quietly losing a third paragraph. */
+  const counterDropped = full + 2 * base > avail;
+  const copyH = counterDropped ? plateCopyHeight(vp.w, measure, false) : full;
+  /* Clear space yields before the words do. At 1440×900/200 % the dropped counter
+     still leaves only 20.9 px a side where 24 was asked for, and 24 px of air is
+     not worth 6 px of the clock zone. */
+  const clear = Math.min(base, Math.max(0, (avail - copyH) / 2));
+  const h = copyH + 2 * clear;
+
+  // Centred in the stage if it fits there; otherwise centred in the whole room.
+  const fitsStage = h <= stage.h;
+  const top = fitsStage
+    ? stage.y + (stage.h - h) / 2
+    : whisperBot + (clockTop - whisperBot - h) / 2;
+
+  return {
+    rect: { x: stage.x, y: top, w: stage.w, h },
+    copy: {
+      h: h - 2 * clear,
+      w: measure,
+      // The divide, at the DOM boundary — see `Fan.writeScale`.
+      writeScale: 1 / vp.textScale,
+      counterDropped,
+    },
+  };
+}
+
 export function zones(vp: Viewport): Zones {
   const w = vp.w;
   const h = vp.h;
@@ -820,6 +1003,11 @@ export function zones(vp: Viewport): Zones {
 
   const stage: Rect = { x: padX, y: rowTop, w: stageW, h: rowBot - rowTop };
 
+  // §6, ruling G — solved to the plate's own five paragraphs, then centred in the
+  // stage box. It is not a slot and carries no tiling check: arrivals render on
+  // top of it by design (§6), same way the field itself is a backdrop.
+  const plate = plateBox(stage, whisper.y + whisper.h, clock.y, viewport, mobile);
+
   return {
     viewport,
     mobile,
@@ -827,10 +1015,8 @@ export function zones(vp: Viewport): Zones {
     scale,
     stage,
     whisper,
-    // §6: "centred in the stage box" — the stage box, never the viewport. It is
-    // not a slot and carries no tiling check: arrivals render on top of it by
-    // design (§6), same way the field itself is a backdrop, not content.
-    plate: stage,
+    plate: plate.rect,
+    plateCopy: plate.copy,
     slots,
     colFull,
     nCols: cols,

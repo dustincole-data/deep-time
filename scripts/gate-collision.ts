@@ -159,7 +159,20 @@ function run(vp: Viewport): Result {
       if (intersects(r, rr)) fail('slot × reserved', `${name} ${fmtRect(r)} enters the ${rname} ${fmtRect(rr)}`);
     }
   }
-  if (!contains(z.stage, z.plate)) fail('zone geometry', `the plate ${fmtRect(z.plate)} is not inside the stage ${fmtRect(z.stage)}`);
+  /* RULING G, 2026-08-06 — the plate is solved to its own copy, so "inside the
+     stage" is no longer the contract. It was, and that is exactly why this line
+     could not see the bug: `z.plate` WAS `z.stage`, so this assertion was true by
+     definition at every viewport while the words ran 475 px past the box.
+
+     The contract now is the room the two reserved zones and the whisper band
+     leave. At one column (1440×900/200 %) the copy needs 46.8 px more than
+     `STAGE_BOTTOM_FRAC` leaves the stage, and borrowing it is the ruling. */
+  const roomTop = z.whisper.y + z.whisper.h;
+  const plateRoom: Rect = { x: z.stage.x, y: roomTop, w: z.stage.w, h: z.clock.y - roomTop };
+  if (!contains(plateRoom, z.plate))
+    fail('zone geometry', `the plate ${fmtRect(z.plate)} is not inside the room the clock leaves ${fmtRect(plateRoom)}`);
+  if (z.plateCopy.h > z.plate.h)
+    fail('zone geometry', `the plate's copy (${z.plateCopy.h.toFixed(1)}px) is taller than the box solved for it (${z.plate.h.toFixed(1)}px)`);
   if (intersects(z.clock, z.scale)) fail('zone geometry', 'the two reserved zones overlap each other');
   // Slots and the whisper band must tile the stage without touching. A colFull
   // deliberately covers its own column's slots, so it is compared only across columns.

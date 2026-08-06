@@ -36,6 +36,7 @@ import {
   eraAt,
   finaleBeats,
   milestones,
+  PLATE_CFG,
   spokenDate,
   spokenName,
   yearsAgo,
@@ -100,6 +101,8 @@ const barHead = $('bar-head');
 const barEl = $('bar');
 const introEl = $('intro');
 const plateEl = $('plate');
+/** The plate's copy block — the thing `plateBox` solves the box around (ruling G). */
+const plateCopyEl = plateEl.querySelector<HTMLElement>('.in')!;
 const plateCount = $('plate-count');
 const plateYears = $('plate-years');
 const finaleEl = $('finale');
@@ -241,13 +244,24 @@ function relayout() {
   barEl.style.width = `${F.bar.w}px`;
   barEl.style.height = `${F.bar.h}px`;
 
-  // §6: "centred in the stage box" — never the viewport. Swept by
-  // gate-collision.ts as `z.plate`, which can never reach the clock or scale
-  // zones the way a bare `inset: 0` could.
+  /* §6, ruling G — the box is SOLVED to the plate's own five paragraphs
+     (`plateBox`), never handed a share of the stage, and it can no longer reach
+     the clock or scale zones the way a bare `inset: 0` could. */
   plateEl.style.left = `${Z.plate.x}px`;
   plateEl.style.top = `${Z.plate.y}px`;
   plateEl.style.width = `${Z.plate.w}px`;
   plateEl.style.height = `${Z.plate.h}px`;
+
+  /* THE DIVIDE, at the DOM boundary — `Fan.writeScale`'s move, made for the same
+     reason. The words lay out at the enlarged size in a measure widened by the
+     same factor (so the line breaks do not move), then `scale()` divides the whole
+     block back to 100 % metrics. The plate is `aria-hidden`: its words exist
+     nowhere but as pixels, so holding them keeps every one of them on the glass
+     for a visitor who enlarged their text, where dropping paragraphs would take
+     them off the page for everybody. */
+  plateCopyEl.style.width = `${Z.plateCopy.w / Z.plateCopy.writeScale}px`;
+  plateEl.style.setProperty('--plate-k', String(Z.plateCopy.writeScale));
+  plateEl.classList.toggle('lean', Z.plateCopy.counterDropped);
 
   layoutFan();
   buildTicks();
@@ -672,9 +686,12 @@ function draw(now: number) {
   if (years <= BB_HI && years >= BB_LO) {
     const o = Math.min(smooth(BB_HI, BB_HI - 4e6, years), 1 - smooth(BB_LO + 16e6, BB_LO, years));
     plateEl.style.opacity = String(o * 0.94);
-    const togo = Math.max(0, Math.round((years - BB_LO) / YEARS_PER_PX));
-    plateCount.textContent = togo.toLocaleString('en-US');
-    plateYears.textContent = `${Math.round((years - BB_LO) / 1e6)} million years to go`;
+    // Ruling G — where the counter was dropped there is nothing to count into.
+    if (!Z.plateCopy.counterDropped) {
+      const togo = Math.max(0, Math.round((years - BB_LO) / YEARS_PER_PX));
+      plateCount.textContent = togo.toLocaleString('en-US');
+      plateYears.textContent = `${Math.round((years - BB_LO) / 1e6)} ${PLATE_CFG.counterUnit}`;
+    }
   } else if (plateEl.style.opacity !== '0') {
     plateEl.style.opacity = '0';
   }

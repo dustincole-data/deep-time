@@ -278,19 +278,48 @@ interface Snapshot {
  *     any write, `em` and `%` have already resolved against the unzoomed parent.
  */
 async function applyTextZoom(page: Page, k: number) {
-  await page.evaluate((k) => {
+  return page.evaluate((k) => {
     const els = [...document.querySelectorAll<HTMLElement>('*')];
     const sizeOf = (el: Element | null) =>
       el ? parseFloat(getComputedStyle(el).fontSize) : Number.NaN;
     const base = els.map((el) => (el.style.fontSize ? parseFloat(el.style.fontSize) : sizeOf(el)));
-    // Its own declaration, or its parent's, passed down? Only the former is
-    // scaled here; an inheritor follows whatever its parent ends up at.
-    const declares = els.map((el, i) => {
+
+    /* Its own declaration, or its parent's, passed down? Only the former is scaled
+       here; an inheritor follows whatever its parent ends up at.
+
+       ASKED OF THE STYLESHEET, NOT OF THE COMPUTED SIZE — fixed 2026-08-06, and it
+       was the third silent hole in this emulation. The old rule compared an
+       element's computed size to its parent's and treated "equal" as "inherits",
+       so any element whose OWN declaration happened to resolve to its parent's
+       size was skipped and left to follow. Measured at 1920×1080/200%, that was
+       `.ar .s` — the arrival description line, `clamp(14px, 1.15vw, 16px)`,
+       resolving to the same 16px its parent inherits — on all 30 of them, plus
+       `#plate .body` and `#closing-block .closing`. 196 of 905 elements zoomed
+       where 228 should have: the 200% desktop columns were sweeping arrival text
+       and the finale's closing sentence at HALF SIZE and reporting green.
+
+       `font-size: inherit` is excluded on purpose. `#blip-plate .pk` declares it,
+       and materialising a px size there would sever the inheritance `layoutFan()`
+       writes — the exact failure the second bullet of this comment block records. */
+    const sels: string[] = [];
+    const walk = (rules: CSSRuleList) => {
+      for (const rule of rules as unknown as (CSSStyleRule & CSSGroupingRule & CSSMediaRule)[]) {
+        if (rule.type === 1 && rule.style?.fontSize && rule.style.fontSize !== 'inherit')
+          sels.push(rule.selectorText);
+        else if (rule.media && matchMedia(rule.conditionText ?? rule.media.mediaText).matches)
+          walk(rule.cssRules);
+        else if (rule.cssRules && !rule.media) walk(rule.cssRules);
+      }
+    };
+    for (const sheet of document.styleSheets) {
+      try { walk(sheet.cssRules); } catch { /* a sheet we cannot read declares nothing we own */ }
+    }
+    /** Declared in the page's own CSS, or inline. Independent of any heuristic. */
+    const mustZoom = els.map((el) => {
       if (el.style.fontSize) return true;
-      const parent = el.parentElement;
-      if (!parent) return true;
-      return Math.abs(base[i]! - sizeOf(parent)) > 0.01;
+      return sels.some((s) => { try { return el.matches(s); } catch { return false; } });
     });
+    const declares = els.map((el, i) => mustZoom[i]! || !el.parentElement);
 
     // The stylesheet pass FIRST, unhooked: these are absolute, already-zoomed
     // values, and running them through the hook would apply `k` twice.
@@ -322,6 +351,35 @@ async function applyTextZoom(page: Page, k: number) {
         },
       });
     }
+
+    /* THE INVARIANT, ASSERTED BACK OFF THE PAGE — and asserted against the
+       STYLESHEET, not against the rule above. Every silent failure this emulation
+       has had looked identical from the outside: a green column that had zoomed
+       less than it claimed. A check written against `declares` cannot catch that,
+       because a rule that wrongly skips an element also excuses itself from the
+       check — which is exactly how `.ar .s` went 30-for-30 unnoticed. So the list
+       under test is `mustZoom`: everything the page's own CSS gives a size to must
+       now RENDER at `k` times that size, whatever the rule decided.
+
+       Returned rather than thrown, so `runVariant` reports it as a failure of the
+       variant instead of a crash of the harness. */
+    const violations: string[] = [];
+    els.forEach((el, i) => {
+      const b = base[i]!;
+      if (!Number.isFinite(b) || !mustZoom[i]) return;
+      const now = sizeOf(el);
+      if (Math.abs(now - b * k) > 0.01)
+        violations.push(
+          `${el.tagName.toLowerCase()}${el.className ? '.' + String(el.className).split(' ')[0] : ''}` +
+            ` declares ${b}px and rendered ${now}px, not ${b * k}px`,
+        );
+    });
+    return {
+      zoomed: declares.filter(Boolean).length,
+      declared: mustZoom.filter(Boolean).length,
+      total: els.length,
+      violations: violations.slice(0, 5),
+    };
   }, k);
 }
 
@@ -415,8 +473,14 @@ async function runVariant(page: Page, url: string, vp: Viewport, points: number[
   const failures: string[] = [];
   const fail = (msg: string) => failures.push(msg);
 
+  let zoomedEls = 0;
   if (k !== 1) {
-    await applyTextZoom(page, k);
+    const z0 = await applyTextZoom(page, k);
+    zoomedEls = z0.zoomed;
+    // The emulation checking itself — see `applyTextZoom`'s closing block.
+    for (const v of z0.violations) fail(`the emulated zoom missed an element: ${v}`);
+    if (z0.declared === 0)
+      fail(`the emulated zoom found no font-size declarations at all — it read no stylesheet`);
     /* The probe's own box just changed, which is the only signal a text-only zoom
        gives — main.ts re-solves off its ResizeObserver, and every size it writes
        from here on goes through the hook. Two settles: one for the observer to
@@ -585,7 +649,7 @@ async function runVariant(page: Page, url: string, vp: Viewport, points: number[
   if (maxFanRows < 2)
     fail(`the sweep never saw two lit fan rows (peak ${maxFanRows}) — the row check asserted nothing`);
 
-  return { vp, samples, maxConcurrent, finaleSamples, maxPrints, maxFanRows, failures };
+  return { vp, samples, maxConcurrent, finaleSamples, maxPrints, maxFanRows, zoomedEls, failures };
 }
 
 const r2 = (n: number) => Math.round(n * 10) / 10;
@@ -690,6 +754,7 @@ async function main() {
         `  ${res.samples} real-browser scroll samples · max concurrent ${res.maxConcurrent}` +
           ` · finale samples ${res.finaleSamples} · heap peak ${res.maxPrints}/${flood.length}` +
           ` · fan rows lit ${res.maxFanRows}` +
+          (res.zoomedEls ? ` · type zoomed on ${res.zoomedEls} elements` : '') +
           (isKnownGap(vp)
             ? `\n  NOT SWEPT here (unruled, see the comments above): arrival text vs its box`
             : ''),

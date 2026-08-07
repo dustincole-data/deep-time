@@ -607,10 +607,24 @@ const nf = (n: number) => n.toLocaleString('en-US');
      the right — `blip()` stops it clear of the bar's reserved zone. */
   .js #blip { display: block; position: absolute; inset: 0; overflow: hidden; }
   /* One print. `blip()` writes the rect and the rotation in the resize path;
-     nothing but opacity is written in the frame. */
+     nothing but opacity is written in the frame.
+
+     THE POLAROID CARD — 2026-08-07, Dustin's ruling: the heap read as a flat
+     contact sheet, not a stack of prints. `box-sizing: border-box` is the whole
+     trick — the border and the deeper bottom margin eat INTO the rect `blip()`
+     already solved and cleared, so the card reads as a physical print without
+     moving a single pixel of the footprint the collision gate reasons about.
+     `--paper` because the frame is the same warm stock the rest of the page is
+     set on, not a stark print-shop white. The shadow is what lifts a print off
+     the ones under it — without it the "overlap" reads as clipping, not a stack. */
   .js #blip .bc {
     position: absolute; left: 0; top: 0; opacity: 0; object-fit: cover;
     transform-origin: 50% 50%;
+    box-sizing: border-box;
+    background: var(--paper);
+    border: clamp(2px, 0.3vw, 5px) solid var(--paper);
+    border-bottom-width: clamp(7px, 1.4vw, 18px);
+    box-shadow: 0 clamp(2px, 0.5vw, 6px) clamp(6px, 1.2vw, 16px) rgba(0, 0, 0, 0.45);
   }
   .js #blip-bracket {
     position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;

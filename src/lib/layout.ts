@@ -2062,8 +2062,15 @@ const BLIP_BLEED = 0.5;
 /**
  * A print is drawn OVER its slot rather than inside it, which is what makes the
  * mass shingle instead of tile. Multiples of the slot's SHORT side.
+ *
+ * RAISED 2026-08-07, Dustin's ruling — the heap read as a flat contact sheet
+ * (edge-to-edge, barely shingled) rather than a pile of prints. More overlap is
+ * what a polaroid stack actually looks like, and it is free: `field.h/unit.h`
+ * and `field.w/unit.w` in the size solve below already cap the drawn footprint
+ * to the field, so a bigger multiplier only pulls MORE prints up to that cap —
+ * it cannot push one past it.
  */
-const BLIP_SHINGLE = 1.55;
+const BLIP_SHINGLE = 2.1;
 /** How far a print may wander off its slot centre, as a fraction of the slot. */
 const BLIP_JITTER = 0.5;
 /** Print sizes vary — the record is not a contact sheet. Multiples of the shingle. */

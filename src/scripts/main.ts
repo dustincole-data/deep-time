@@ -107,10 +107,9 @@ const cv = $<HTMLCanvasElement>('field');
 const ctx = cv.getContext('2d', { alpha: false })!;
 /** Declares `font-size: 16px` inline and renders nothing — `relayout()` divides its rendered size by that. */
 const textProbe = $('text-probe');
-const hudClock = $('hud-clock');
+const hudNum = $('hud-num');
+const hudUnit = $('hud-unit');
 const hudEra = $('hud-era');
-const hudMoon = $('hud-moon');
-const hudDay = $('hud-day');
 const hudCount = $('hud-count');
 const hudEl = $('hud');
 const barFill = $('bar-fill');
@@ -624,10 +623,9 @@ function ladder(now: number) {
    ========================================================================= */
 const BB_HI = 1.8e9;
 const BB_LO = 0.8e9;
-let lastClock = '';
+let lastNum = '';
+let lastUnit = '';
 let lastEra = '';
-let lastMoon = '';
-let lastDay = '';
 let lastCount = '';
 let lastBarPct = -1;
 let lastFieldY = -1e9;
@@ -690,27 +688,29 @@ function draw(now: number) {
   }
 
   // 5 — HUD writes, guarded on string inequality.
+  /* THE CLOCK SAYS THE WORDS, 2026-08-07. It read "4.60 Ga" from the first
+     frame at a visitor who has never met the notation, and nothing on the page
+     ever expanded it — Dustin's call: kill the jargon rather than gloss it.
+     Number and unit are separate nodes because they change at completely
+     different rates: the number ~460 times over the scroll, the unit exactly
+     once, when the count crosses 1 Ga. `layout.ts`'s HUD_NUM_WIDEST and
+     HUD_UNIT_WIDEST are the other half of these two lines. */
   const ga = years / 1e9;
-  const clock = ga >= 1 ? `${ga.toFixed(2)} Ga` : `${Math.round(years / 1e6)} Ma`;
-  if (clock !== lastClock) {
-    hudClock.textContent = clock;
-    lastClock = clock;
+  const big = ga >= 1;
+  const num = big ? ga.toFixed(2) : Math.round(years / 1e6).toLocaleString('en-US');
+  const unit = big ? 'billion years ago' : 'million years ago';
+  if (num !== lastNum) {
+    hudNum.textContent = num;
+    lastNum = num;
+  }
+  if (unit !== lastUnit) {
+    hudUnit.textContent = unit;
+    lastUnit = unit;
   }
   const era = eraAt(years / 1e6);
   if (era !== lastEra) {
     hudEra.textContent = era;
     lastEra = era;
-  }
-  const m = moonAt(years);
-  const ms = `${m.scale.toFixed(2)}× wide`;
-  if (ms !== lastMoon) {
-    hudMoon.textContent = ms;
-    lastMoon = ms;
-  }
-  const ds = `${m.day.toFixed(1)} hours`;
-  if (ds !== lastDay) {
-    hudDay.textContent = ds;
-    lastDay = ds;
   }
   const count = `${Math.round(clamp(sy - INTRO, 0, RUN)).toLocaleString('en-US')} / ${RUN.toLocaleString('en-US')} px`;
   if (count !== lastCount) {

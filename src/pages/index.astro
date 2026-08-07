@@ -120,14 +120,6 @@ const nf = (n: number) => n.toLocaleString('en-US');
           <li>One pixel is {nf(YEARS_PER_PX)} years.</li>
           <li>The scale never changes.</li>
           <li>Humans appear in the last 175 of them.</li>
-          {/* THE LEGEND, and it rides IN the list on purpose. The clock is
-              already on the glass while this frame is held, reading "4.60 Ga"
-              at a visitor who has never met the notation, and every arrival
-              card downstream is dated in Ma — so the units get said once, here,
-              before the scroll starts. A separate paragraph cost 210 px at
-              1440×900/200%, where the intro has none to spare; as a list item
-              it costs 130. */}
-          <li class="key"><b>Ga</b> = billions of years ago. <b>Ma</b> = millions.</li>
         </ul>
         <p class="scroll">scroll</p>
       </div>
@@ -136,14 +128,16 @@ const nf = (n: number) => n.toLocaleString('en-US');
     {/* The clock. aria-hidden in its entirety: it changes ~460 times and its px
         counter every frame — no announcement policy survives that (§10). */}
     <div id="hud" aria-hidden="true">
-      <p id="hud-clock">4.60 Ga</p>
+      {/* THE CLOCK SAYS THE WORDS (2026-08-07). It read "4.60 Ga" at a visitor
+          who has never met the notation and nothing on the page expanded it.
+          Number over unit, not "4.60 billion years ago" on one line: the flat
+          form word-wraps to three lines at 200% (the words are long and the
+          zone is 523 px), which took the phone's clock zone to 276 px against
+          ruling F's 240 px floor — it would have bought plain English by
+          taking pixels off the arrivals. Stacked, the only thing that wraps is
+          a label that was always going to be small. */}
+      <p id="hud-clock"><b id="hud-num">4.60</b><span id="hud-unit">billion years ago</span></p>
       <p id="hud-era">HADEAN</p>
-      <div class="modelled">
-        <p class="kicker">Modelled</p>
-        <p><span>moon</span><b id="hud-moon">2.51× wide</b></p>
-        <p><span>day</span><b id="hud-day">6.0 hours</b></p>
-      </div>
-      <div class="rule"></div>
       <p class="rate">1 px = {nf(YEARS_PER_PX)} years</p>
       <p id="hud-count">0 / {nf(RUN)} px</p>
     </div>
@@ -473,10 +467,6 @@ const nf = (n: number) => n.toLocaleString('en-US');
     list-style: none; margin: 2.1em 0 0; padding: 0; display: grid; gap: 0.45em;
     font-size: clamp(13px, 1.4vw, 16px); opacity: 0.82;
   }
-  /* The one item in the list that is a key, not a claim: same rhythm, half a
-     step back so it reads as the footnote it is. */
-  #intro .key { margin-top: 0.5em; opacity: 0.66; }
-  #intro .key b { font-weight: 650; opacity: 0.85; }
   #intro .scroll {
     margin: 2.4em 0 0; font-size: 10px; letter-spacing: 0.34em;
     text-transform: uppercase; opacity: 0.45;
@@ -488,29 +478,41 @@ const nf = (n: number) => n.toLocaleString('en-US');
     text-shadow: 0 2px 22px rgba(0, 0, 0, 0.5);
   }
   #hud p { margin: 0; }
-  #hud-clock {
-    font-size: clamp(34px, 5vw, 74px); font-weight: 700; letter-spacing: -0.035em;
-    line-height: 0.94;
+  /* 74 → 46 (2026-08-07, his call). The clock is ambient — it changes ~460
+     times over the scroll and is never the thing being read — and at 72 px on a
+     1440 screen the HUD stack ran ~310 px, a third of the height. `hudHeight`'s
+     `clockSize` mirrors this clamp; the two are one number in two files. */
+  #hud-clock { display: block; }
+  #hud-num {
+    display: block; font-size: clamp(26px, 3.2vw, 46px); font-weight: 700;
+    letter-spacing: -0.035em; line-height: 0.94;
   }
+  /* The unit is a label, not a reading: it changes once in the whole scroll,
+     when the count crosses 1 Ga. Sized and tracked like the era beneath it, a
+     step brighter so the pair reads as one sentence. */
+  #hud-unit {
+    display: block; font-size: clamp(10px, 1.05vw, 12.5px); font-weight: 600;
+    letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.55;
+    margin-top: 0.5em;
+  }
+  /* 0.8em → 1.5em, 2026-08-07. The unit label under the number is small tracked
+     uppercase and so is this, and at the old gap the two read as one block:
+     "BILLION YEARS AGO / HADEAN". The unit belongs to the number; the era is its
+     own fact, and the space is what says so. */
   #hud-era {
     font-size: clamp(11px, 1.2vw, 14px); font-weight: 600; letter-spacing: 0.22em;
-    text-transform: uppercase; opacity: 0.72; margin-top: 0.8em;
+    text-transform: uppercase; opacity: 0.92; margin-top: 1.5em;
   }
-  #hud .rule { height: 1px; background: currentColor; opacity: 0.22; margin: 0.9em 0; width: 128px; }
-  #hud .modelled { margin-top: 1.1em; }
-  /* MODELLED is a group header, said once — one row instead of two repetitions of
-     "(modelled)" held for four minutes, and it scopes exactly the two numbers under it. */
-  #hud .kicker {
-    font-size: 9.5px; letter-spacing: 0.28em; text-transform: uppercase; opacity: 0.45;
-    margin-bottom: 0.6em;
-  }
-  #hud .modelled p { display: flex; gap: 1em; font-size: 11.5px; opacity: 0.66; line-height: 1.9; }
-  #hud .modelled span { width: 3.2em; opacity: 0.7; }
-  #hud .modelled b { font-weight: 500; }
+  /* The `Modelled` block (moon · day) and its rule were cut 2026-08-07. The
+     phone never showed them, and the Moon fact still reaches every visitor as
+     the 4,450 Ma whisper. */
   #hud .rate, #hud-count {
     font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase;
     opacity: 0.5; line-height: 1.8;
   }
+  /* The rule used to open this gap. `hudHeight` prices it as .rate's own
+     margin, so it is expressed in that element's em and nowhere else. */
+  #hud .rate { margin-top: 1.3em; }
   /* RULING F, 2026-08-05 — the lean HUD: clock · era, and nothing under them.
      A phone at 200% wraps all four lines into 343.7px against a 240px zone, and
      these two are what the stage can afford to lose. NOT a media query: a
@@ -717,10 +719,7 @@ const nf = (n: number) => n.toLocaleString('en-US');
   /* 759.98, not 760: the breakpoint must agree with layout.ts's MOBILE_BELOW, or
      the collision gate is measuring a page that does not exist. */
   @media (max-width: 759.98px) {
-    /* §8: mobile drops the modelled block, leaving clock · era · scale reminder.
-       Nothing is lost — the Moon fact reaches the phone as the 4,450 Ma whisper. */
-    #hud .modelled, #hud .rule { display: none; }
-    #hud-clock { font-size: clamp(30px, 11vw, 44px); }
+    #hud-num { font-size: clamp(22px, 7.6vw, 30px); }
     /* `blipBandHeight`'s `lineW` on the mobile branch — a phone column has no
        room to hold the sentence to a 62% measure. */
     .js #closing-block { width: min(470px, 92%); }

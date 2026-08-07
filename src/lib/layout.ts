@@ -243,7 +243,11 @@ export const MOBILE_BELOW = 760;
 const T = {
   desktop: {
     scaleW: 78,
-    clockH: 264,
+    /* Was 264, when the stack was clock(74) · era · Modelled · rule · rate ·
+       count. With the Modelled block gone and the clock at 46 the content
+       solves to ~112 px at 1440; the floor is what the zone can never go BELOW,
+       so it is set just clear of that and `hudHeight` governs from here. */
+    clockH: 130,
     clockWFrac: 0.38,
     padXFrac: 0.05,
     topOffFrac: 0.085,
@@ -258,7 +262,10 @@ const T = {
   },
   mobile: {
     scaleW: 46,
-    clockH: 240,
+    /* Was 240. The phone never showed the Modelled block, so its whole saving
+       here is the clock: 44 → 28, and the spelled-out string takes two lines in
+       a 233 px zone, solving to ~114 px. */
+    clockH: 130,
     clockWFrac: 0.66,
     padXFrac: 0.06,
     topOffFrac: 0.105,
@@ -751,8 +758,13 @@ export const hudLean = (vp: Required<Viewport>, mobile: boolean): boolean => mob
 /* The widest string each HUD line can ever hold — the same discipline ruling B
    already applies to the whisper band, sourced from the same constants the page
    renders from so a copy change cannot leave the model behind. */
-/** main.ts:620 — `${ga.toFixed(2)} Ga` at or above 1 Ga, `${Ma} Ma` below it. The four-digit Ga form is the wide one. */
-const HUD_CLOCK_WIDEST = '4.60 Ga';
+/* main.ts spells the unit out (2026-08-07), stacked: the number on its own
+   line, the unit as a small label under it. Widest number is the four-digit
+   comma'd `Ma` form; widest unit is `million` (a wider word than `billion`).
+   Kept as strings, not widths, because `lineCount` is what prices a wrap and
+   the unit label does wrap on a phone at an enlarged scale. */
+const HUD_NUM_WIDEST = '4,567';
+const HUD_UNIT_WIDEST = 'million years ago';
 /** index.astro:133, verbatim. */
 const HUD_RATE = `1 px = ${YEARS_PER_PX.toLocaleString('en-US')} years`;
 /** main.ts:641 at the end of the run, which is where both numbers are longest. */
@@ -765,7 +777,10 @@ export function hudHeight(vp: Required<Viewport>, mobile: boolean): number {
   const availW = hudAvailW(w, mobile);
 
   // #hud-clock { font-weight: 700; letter-spacing: -.035em; line-height: .94 }
-  const clockSize = (mobile ? cl(30, 0.11, 44) : cl(34, 0.05, 74)) * k;
+  // Shrunk 2026-08-07 (his call): desktop 74 → 46, phone 44 → 30. The old
+  // desktop clock was 72 px at 1440 and the whole HUD ran ~310 px tall, a third
+  // of the screen, for a readout that is ambient.
+  const clockSize = (mobile ? cl(22, 0.076, 30) : cl(26, 0.032, 46)) * k;
   const clock: TypeSpec = {
     size: clockSize,
     lineHeight: 0.94,
@@ -773,9 +788,21 @@ export function hudHeight(vp: Required<Viewport>, mobile: boolean): number {
     upper: false,
     weight: 1.05,
   };
-  let h = blockH(HUD_CLOCK_WIDEST, clock, availW);
+  let h = blockH(HUD_NUM_WIDEST, clock, availW);
 
-  // #hud-era { margin-top: .8em; font-weight: 600; letter-spacing: .22em };
+  // #hud-unit { margin-top: .5em; font-weight: 600; letter-spacing: .18em };
+  // line-height 'normal' taken as 1.25, as everywhere else in this function.
+  const unitSize = cl(10, 0.0105, 12.5) * k;
+  const unit: TypeSpec = {
+    size: unitSize,
+    lineHeight: NORMAL_LH,
+    tracking: 0.18,
+    upper: true,
+    weight: 1.03,
+  };
+  h += unitSize * 0.5 + blockH(HUD_UNIT_WIDEST, unit, availW);
+
+  // #hud-era { margin-top: 1.5em; font-weight: 600; letter-spacing: .22em };
   // line-height 'normal' taken as 1.25. Every label is one unbroken word, so the
   // band is the tallest of them rather than the sum — `eraAt()`'s whole range.
   const eraSize = cl(11, 0.012, 14) * k;
@@ -786,20 +813,12 @@ export function hudHeight(vp: Required<Viewport>, mobile: boolean): number {
     upper: true,
     weight: 1.03,
   };
-  h += eraSize * 0.8 + Math.max(...eras.map((e) => blockH(e.label, era, availW)));
+  h += eraSize * 1.5 + Math.max(...eras.map((e) => blockH(e.label, era, availW)));
 
-  if (!mobile) {
-    const base = HUD_BASE_FONT * k;
-    // .modelled { margin-top: 1.1em }, against its own (inherited) font-size
-    h += base * 1.1;
-    // .kicker { margin-bottom: .6em }; line-height 'normal' taken as 1.25
-    const kickerSize = 9.5 * k;
-    h += kickerSize * NORMAL_LH + kickerSize * 0.6;
-    // .modelled p — two rows (moon, day), line-height 1.9
-    h += 11.5 * k * 1.9 * 2;
-    // .rule { margin: .9em 0 } + its own 1px height
-    h += base * 0.9 * 2 + 1;
-  }
+  /* The `Modelled` block (moon · day) and the rule above the readouts were cut
+     2026-08-07 — his call, with the clock shrink. Nothing is lost that the page
+     did not already do without: the phone has never shown either, and the Moon
+     fact reaches every visitor as the 4,450 Ma whisper. */
 
   // .rate, #hud-count { font-weight: 500; letter-spacing: .16em; line-height: 1.8 }
   // — both dropped by ruling F on a phone at an enlarged scale.
@@ -811,6 +830,9 @@ export function hudHeight(vp: Required<Viewport>, mobile: boolean): number {
       upper: true,
       weight: 1,
     };
+    // .rate { margin-top: 1.3em } — the gap the deleted rule used to hold open,
+    // now expressed in the readout's own em.
+    h += 11 * k * 1.3;
     h += blockH(HUD_RATE, readout, availW) + blockH(HUD_COUNT_WIDEST, readout, availW);
   }
 

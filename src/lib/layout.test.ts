@@ -71,18 +71,24 @@ const windowSamples = (p: { y: number; fadeIn: number; fadeOut: number; dwell: n
 describe('the reserved zones (§5, rule 1)', () => {
   it('gives the clock the bottom-left and the bar the right edge', () => {
     const d = zones(DESKTOP);
-    // Ruling D: the clock zone is at least 264px, but grows to whatever the
-    // modelled HUD content plus its own bottom inset actually need — here that
-    // is taller than the floor, so the floor is not what is under test.
+    /* Ruling D: the zone is the modelled HUD plus its own bottom inset, never
+       less than the floor. Asserted against `hudHeight` rather than a pinned
+       number so the two cannot drift — and bounded by the 264 the floor used to
+       be, which is the whole point of the 2026-08-07 shrink: the clock stopped
+       taking a third of the screen for a readout nobody reads. */
     expect(d.clock.x).toBe(0);
     expect(d.clock.w).toBe(547.2);
-    expect(d.clock.h).toBeGreaterThan(264);
+    expect(d.clock.h).toBeCloseTo(hudHeight(d.viewport, false) + 34, 6);
+    expect(d.clock.h).toBeGreaterThanOrEqual(130);
+    expect(d.clock.h).toBeLessThan(264);
     expect(d.clock.y + d.clock.h).toBe(900);
     expect(d.scale).toEqual({ x: 1362, y: 0, w: 78, h: 900 });
 
     const m = zones(PHONE);
     expect(m.clock.y + m.clock.h).toBe(844);
-    expect(m.clock.h).toBeGreaterThanOrEqual(240);
+    expect(m.clock.h).toBeCloseTo(hudHeight(m.viewport, true) + 26, 6);
+    expect(m.clock.h).toBeGreaterThanOrEqual(130);
+    expect(m.clock.h).toBeLessThan(240);
     expect(m.clock.w).toBeCloseTo(257.4, 6);
     expect(m.scale).toEqual({ x: 344, y: 0, w: 46, h: 844 });
   });
@@ -683,8 +689,12 @@ describe('the Boring Billion plate is solved to its own copy (§6, ruling G)', (
      stage" was true by definition and the 200 % columns were never asked. */
   const ALL: Viewport[] = [...GATE_VIEWPORTS, ...GATE_VIEWPORTS.map((v) => ({ ...v, textScale: 2 }))];
   const at = (vp: Viewport) => `${vp.w}×${vp.h}/${(vp.textScale ?? 1) * 100}%`;
-  /** The one column where the copy cannot fit the stage — see `plateBox`. */
-  const BORROWS = (vp: Viewport) => vp.w === 1440 && vp.h === 900 && vp.textScale === 2;
+  /* 1440×900/200% used to be the one column where the copy could not fit the
+     stage, and it paid for that by dropping the plate's counter. The clock
+     shrink of 2026-08-07 took that zone from ~488 px to ~173 px and handed the
+     difference straight back to the stage, so there is no borrowing column
+     left. These three tests are worth more as an assertion that the exception
+     is GONE than they were policing it. */
 
   it('never lets the plate reach into the clock or scale zones, at either text scale', () => {
     for (const vp of ALL) {
@@ -695,11 +705,11 @@ describe('the Boring Billion plate is solved to its own copy (§6, ruling G)', (
     }
   });
 
-  it('keeps the plate inside the stage everywhere but the one column that cannot', () => {
+  it('keeps the plate inside the stage at every column, with no exception left', () => {
     for (const vp of ALL) {
       const z = zones(vp);
       const label = at(vp);
-      expect([label, contains(z.stage, z.plate)]).toEqual([label, !BORROWS(vp)]);
+      expect([label, contains(z.stage, z.plate)]).toEqual([label, true]);
     }
   });
 
@@ -726,9 +736,9 @@ describe('the Boring Billion plate is solved to its own copy (§6, ruling G)', (
     }
   });
 
-  it('drops the counter at exactly one gate column, and keeps every word at the rest', () => {
+  it('keeps every word of the plate at every column, counter included', () => {
     const dropped = ALL.filter((vp) => zones(vp).plateCopy.counterDropped).map(at);
-    expect(dropped).toEqual(['1440×900/200%']);
+    expect(dropped).toEqual([]);
   });
 
   /* The arithmetic itself, term by term — the same shape the ruling-D loop uses.
@@ -751,11 +761,11 @@ describe('the Boring Billion plate is solved to its own copy (§6, ruling G)', (
       kicker + kickerGap + title + subGap + sub + bodyGap + body + cntGap + count + cntInner + unit,
       6,
     );
-    // And the counter is worth exactly what the ruling priced it at.
-    expect(z.plateCopy.h - zones({ w: 1440, h: 900, textScale: 2 }).plateCopy.h).toBeCloseTo(
-      cntGap + count + cntInner + unit,
-      6,
-    );
+    /* The counter is still priced at exactly this, and that price is what the
+       drop would cost if a column ever needed it again. It costs nothing today:
+       no column drops it, so 200% and 100% now solve to the same block. */
+    expect(cntGap + count + cntInner + unit).toBeCloseTo(81.6, 6);
+    expect(z.plateCopy.h - zones({ w: 1440, h: 900, textScale: 2 }).plateCopy.h).toBe(0);
   });
 });
 
@@ -783,14 +793,24 @@ describe('the HUD wraps, and a phone at an enlarged scale runs it lean (ruling F
      at any width, so a phone at 200% modelled 240px of HUD while the browser drew
      343.7px of it — the clock, the rate line and the counter each on two lines. */
   it('counts the lines the column forces, not one per element', () => {
-    const wide = { w: 390, h: 844, textScale: 2 };
-    const narrow = hudHeight({ ...wide }, true);
+    const narrow = hudHeight({ w: 390, h: 844, textScale: 2 }, true);
     // The same type in the desktop column, which is 523.2px and wraps none of it.
     expect(hudHeight({ w: 1440, h: 900, textScale: 2 }, false)).toBeGreaterThan(narrow);
-    // The clock alone doubles its height between the two scales BECAUSE it wraps:
-    // 1 line of 42.9px type against 2 lines of 85.8px is more than the 2× of size.
-    const one = hudHeight({ ...PHONE, textScale: 1 }, true);
-    expect(narrow / one).toBeGreaterThan(2);
+
+    /* The claim, stated directly: at 390/200% the phone runs lean (clock · era),
+       and its 233px column cannot hold `MILLION YEARS AGO` at 20px on one line.
+       So the honest height must EXCEED the sum of one line per element — which
+       is exactly what a model that counted elements instead of lines would
+       return, and what this function was rewritten to stop doing. */
+    const cl = (lo: number, vw: number, hi: number) => Math.min(Math.max(390 * vw, lo), hi);
+    const k = 2;
+    const oneLineEach =
+      cl(22, 0.076, 30) * k * 0.94 +
+      cl(10, 0.0105, 12.5) * k * 0.5 +
+      cl(10, 0.0105, 12.5) * k * 1.25 +
+      cl(11, 0.012, 14) * k * 1.5 +
+      cl(11, 0.012, 14) * k * 1.25;
+    expect(narrow).toBeGreaterThan(oneLineEach);
   });
 
   it('drops the rate line and the counter only on a phone, only above 100%', () => {
@@ -800,33 +820,39 @@ describe('the HUD wraps, and a phone at an enlarged scale runs it lean (ruling F
   });
 
   it('keeps the phone lean enough that the stage never pays for the HUD', () => {
-    // The whole point of the ruling: the clock zone stays at its 240px floor at
-    // 200%, so the arrivals keep every pixel they had. Wrapping without the drop
-    // would have taken it to 369.7px and put 3 of 51 cards outside their box.
+    /* The ruling's point: the arrivals never pay for the HUD wrapping. It used
+       to hold by the zone sitting exactly on its 240px floor; since the clock
+       shrink it comes in UNDER what the floor used to be, which is the same
+       guarantee with room to spare. 240 stays here as the ceiling it must never
+       cross again — wrapping without the lean drop took it to 369.7px and put
+       3 of 51 cards outside their box. */
     for (const vp of [PHONE, SHORT_PHONE]) {
       const z = zones({ ...vp, textScale: 2 });
-      expect([vp.h, z.clock.h]).toEqual([vp.h, 240]);
-      // The floor holds because the honest stack fits under it, not by luck:
-      // 232.4px of modelled HUD (26 of that the bottom inset) against 240.
-      expect([vp.h, hudHeight(z.viewport, true) + 26 <= 240]).toEqual([vp.h, true]);
+      expect([vp.h, z.clock.h <= 240]).toEqual([vp.h, true]);
+      // And it is the honest stack that fits, not the floor doing the work.
+      expect([vp.h, hudHeight(z.viewport, true) + 26 <= z.clock.h]).toEqual([vp.h, true]);
     }
   });
 
   it('leaves the desktop column exactly where ruling D put it', () => {
-    // Nothing wraps at 523.2px, so the wrap model must reduce to the old sum:
-    // clock .94 + era (.8em margin + 1.25) + the modelled block + rate + counter.
+    /* The sum is written out from index.astro's rules so the two cannot drift:
+       clock .94 + era (.8em margin + 1.25) + .rate's .55em + rate + counter.
+       Re-stated 2026-08-07 when the clock went 74 → 46 and the Modelled block
+       and its rule were cut — if this expression stops matching the stylesheet,
+       that is the failure this test exists to catch. */
     const k = 2;
     const cl = (lo: number, vw: number, hi: number) => Math.min(Math.max(1440 * vw, lo), hi);
+    /* Nothing wraps at 523.2 px: `4,567` is short and `MILLION YEARS AGO` is set
+       at label size. That is the reason the clock is stacked rather than flat —
+       a flat "4,567 million years ago" wraps to three lines here, and the sum
+       below would have to carry a line count that changes with the viewport. */
     const expected =
-      cl(34, 0.05, 74) * k * 0.94 +
-      cl(11, 0.012, 14) * k * 0.8 +
+      cl(26, 0.032, 46) * k * 0.94 +
+      cl(10, 0.0105, 12.5) * k * 0.5 +
+      cl(10, 0.0105, 12.5) * k * 1.25 +
+      cl(11, 0.012, 14) * k * 1.5 +
       cl(11, 0.012, 14) * k * 1.25 +
-      16 * k * 1.1 +
-      9.5 * k * 1.25 +
-      9.5 * k * 0.6 +
-      11.5 * k * 1.9 * 2 +
-      16 * k * 0.9 * 2 +
-      1 +
+      11 * k * 1.3 +
       11 * k * 1.8 * 2;
     expect(hudHeight({ ...DESKTOP, textScale: k }, false)).toBeCloseTo(expected, 6);
   });
@@ -902,12 +928,27 @@ describe('the solve is frozen at 1440×900 and centred above it (ruling E)', () 
   });
 
   it('drops the clamp rather than squeeze a card the live viewport could hold', () => {
-    // The case the 1920×1080 gate variant caught the day it was added: freezing
-    // to the 1440×900/200% reference exported its known HUD gap to monitors with
-    // the height to avoid it.
+    /* The case the 1920×1080 gate variant caught the day it was added: freezing
+       to the 1440×900/200% reference exported its known HUD gap to monitors with
+       the height to avoid it.
+
+       The two are EQUAL as of 2026-08-07 and that is the good outcome, not a
+       lost assertion: the gap was the 488px clock zone, the shrink took it to
+       173, and the reference column came up to meet the wide one instead of the
+       wide one having to escape. The clamp is still dropped — it simply has
+       nothing left to rescue here. `>=` is the invariant that survives either
+       way; a strict `>` would now be asserting that the bug is still there. */
     const wide = zones({ w: 1920, h: 1080, textScale: 2 });
     const refBig = zones({ ...DESKTOP, textScale: 2 });
-    expect(wide.stage.h).toBeGreaterThan(refBig.stage.h);
+    // Equal to within float noise — the two solves differ by 1.4e-13, which is
+    // the same number arrived at down two different arithmetic paths.
+    expect(wide.stage.h).toBeCloseTo(refBig.stage.h, 6);
+    expect(wide.stage.h).toBeGreaterThan(refBig.stage.h - 1e-6);
+    /* And the reference column is no longer the squeezed one it was named for:
+       its clock zone was 488.31px before the 2026-08-07 shrink and is 312.93
+       now. (Not the 264 desktop floor — that is a 100% number, and this column
+       is at 200%, where an honest HUD is taller by construction.) */
+    expect(refBig.clock.h).toBeLessThan(488.31);
   });
 
   it('never lets the frozen stage enter a reserved zone', () => {

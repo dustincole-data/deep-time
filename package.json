@@ -8,6 +8,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "test": "vitest run",
+    "og": "node scripts/make-og.ts",
     "gate:collision": "node scripts/gate-collision.ts",
     "gate:browser": "astro build && node scripts/gate-browser.ts"
   },

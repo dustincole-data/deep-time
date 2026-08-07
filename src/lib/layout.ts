@@ -281,6 +281,21 @@ export const SOLVE_H = 900;
 const STAGE_BOTTOM_FRAC = 0.72;
 /** Half the fade window, as a fraction of viewport height. */
 const FADE_FRAC = 0.55;
+/**
+ * MOBILE RUNS ITS OWN, SMALLER FADE — 2026-08-07, Dustin's ruling after "everything
+ * after Snowball Earth is stuck small on the left." It wasn't: mobile is one column,
+ * so every card sits at the same x by construction, and "small" was real — measured
+ * 87% of pre-Snowball mobile cards draw at full-column ("tall") size against 5%
+ * after it, because `FADE_FRAC`'s window (dwell + 2×fade, up to ~1,270 px at these
+ * heights) exceeds the ~600–900 px gaps between consecutive real events there, so
+ * nothing ever goes solo. Fade is the dominant term, not dwell — a 45% dwell cut
+ * alone (via `MOBILE_DWELL_OF_GAP`) moved the tall rate only 5%→10%; cutting fade to
+ * 0.2 alongside it reaches 29–81% (390×844 / 390×780), on par with the rest of the
+ * page. Below ~0.18 more cards start missing `READABILITY_FLOOR_PX`; 0.2 is the
+ * floor of that margin, not a round number. See `layout.test.ts`'s `followsPortrait`
+ * for the one case this could not clear on its own.
+ */
+const MOBILE_FADE_FRAC = 0.2;
 /** §5: the card glides ≤28 px inside its slot. */
 const GLIDE_MAX = 28;
 const GLIDE_FRAC = 0.07;
@@ -299,6 +314,15 @@ const GLIDE_FRAC = 0.07;
 const GLIDE_FRAC_BAND = 0.02;
 /** §5: dwell is gap-adaptive, clamped 150–660 px. */
 const DWELL_OF_GAP = 0.9;
+/**
+ * A smaller share of the gap on mobile, alongside `MOBILE_FADE_FRAC` — a blanket
+ * `DWELL_MAX` cut was tried first and rejected: it shrank a wide-gap card's dwell
+ * exactly as much as a tight one's, and cost `moon-torn-out` (1,500 px of its own
+ * room) its 600 px floor for no reason its own data explains. Scaling the RATIO
+ * instead leaves a generous gap's dwell to still reach the 660 cap on its own —
+ * only a tight gap actually shrinks, which is the only place shrinking was needed.
+ */
+const MOBILE_DWELL_OF_GAP = 0.5;
 const DWELL_MIN = 150;
 const DWELL_MAX = 660;
 /**
@@ -1128,7 +1152,7 @@ export function zones(vp: Viewport): Zones {
        no visitor can see, on a stage that ruling E had already frozen to be
        identical. The two columns whose whole point is that they solve the same
        were solving the same geometry with different crowding. */
-    fade: Math.min(h, SOLVE_H) * FADE_FRAC,
+    fade: Math.min(h, SOLVE_H) * (mobile ? MOBILE_FADE_FRAC : FADE_FRAC),
   };
 }
 
@@ -1174,7 +1198,7 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
     const portrait = a.art === 'planet';
     const dwell = portrait
       ? clamp(PORTRAIT_DWELL[a.id] ?? gap * DWELL_OF_GAP, PORTRAIT_DWELL_MIN, PORTRAIT_DWELL_MAX)
-      : clamp(gap * DWELL_OF_GAP, DWELL_MIN, DWELL_MAX);
+      : clamp(gap * (z.mobile ? MOBILE_DWELL_OF_GAP : DWELL_OF_GAP), DWELL_MIN, DWELL_MAX);
     return {
       id: a.id,
       tier: a.tier,

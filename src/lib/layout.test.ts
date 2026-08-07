@@ -446,12 +446,27 @@ describe('enlarged text (§10, rulings A/B/C)', () => {
         )
         .map((a) => a.id),
     );
+    /* THE SECOND, BACKWARD-FACING CASE — 2026-08-07, closing the item this session's
+       mobile fade/dwell retune opened. The check above is about the gap AFTER an
+       arrival; a portrait's PROTECTED dwell (§11 — a claim about the depicted
+       state's real duration, not a number this file may shrink) can just as well
+       eat the gap BEFORE the arrival that follows it, leaving that arrival's lead-in
+       squeezed toward zero regardless of how generous the fade budget is. Structural,
+       not a hand list: any arrival whose immediate predecessor is a portrait qualifies
+       — three of the four current cases still clear 600 px on their own forward gap
+       alone and this line costs them nothing; only `ice-retreats`, right after
+       Snowball Earth's 1,200 px dwell (the longest of the four), actually needs it. */
+    const cardsOnly = arrivals.filter((a) => a.tier !== 'F');
+    const followsPortrait = new Set(
+      cardsOnly.filter((a, i) => i > 0 && cardsOnly[i - 1]!.art === 'planet').map((a) => a.id),
+    );
+    const exempt = (id: string) => belowFloor.has(id) || followsPortrait.has(id);
     for (const vp of GATE_VIEWPORTS) {
       const z = at2(vp);
       for (const p of place(arrivals, z).filter((x) => x.tier !== 'F')) {
-        const read = p.onScreenPx >= 600 || belowFloor.has(p.id);
+        const read = p.onScreenPx >= 600 || exempt(p.id);
         expect([vp.w, p.id, read]).toEqual([vp.w, p.id, true]);
-        const held = p.dwell >= 150 || belowFloor.has(p.id);
+        const held = p.dwell >= 150 || exempt(p.id);
         expect([vp.w, p.id, held]).toEqual([vp.w, p.id, true]);
       }
     }

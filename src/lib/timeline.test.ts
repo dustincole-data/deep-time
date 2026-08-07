@@ -192,10 +192,12 @@ describe('the verified set (§7)', () => {
     ]);
   });
 
-  it('has exactly the six abstract milestones §8 names', () => {
-    expect(arrivals.filter((a) => a.art === 'abstract').map((a) => a.ma)).toEqual([
-      4300, 2700, 2220, 1000, 201.4, 33.9,
-    ]);
+  it('has no abstract milestones left — real art is baked for all six §8 named', () => {
+    // 2026-08-07: every one of §8's six placeholder-art milestones now has a real
+    // baked specimen photo (bake-art.ts), so the mobile line-for-art swap has
+    // nothing left to apply to. The mechanism stays for a future milestone that
+    // genuinely has no photographable subject; today's set has none.
+    expect(arrivals.filter((a) => a.art === 'abstract').map((a) => a.ma)).toEqual([]);
   });
 
   it('has exactly the four planet portraits (§11)', () => {

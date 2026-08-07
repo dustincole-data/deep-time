@@ -120,7 +120,7 @@
       "date": "4,300 Ma",
       "name": "Steam and acid rain",
       "line": "The air is CO₂. The rain is acid. There is nothing yet you would call land.",
-      "art": "abstract",
+      "art": "subject",
       "analogy": "a single pitted, etched volcanic rock in mid-toned warm grey and rust, its pits shown as shallow dents a shade or two darker than the surface, with pale streaks of rain running down its face",
       "negative": "not a landscape or a storm scene — one rock specimen and nothing else in its quarter of the picture, no loose fragments or stray marks floating near it. Nothing anywhere on the rock may be black or near-black: the pits are mid-grey dents, not dark holes, and the rock overall is a light-to-mid value. The rain is drawn as pale streaks ON the rock's face, running down it. Two rounds (2026-07-31): the first was near-black and the key punched every pit out of the artwork; the second keyed correctly but lost the rain and left a stray orange fragment floating above the rock.",
       "source": "Zahnle et al. 2007, *Space Sci. Rev.*"
@@ -292,7 +292,7 @@
       "date": "2,700 Ma",
       "name": "Whiffs of oxygen",
       "line": "Oxygen appears in patches, hundreds of millions of years before the air changes.",
-      "art": "abstract",
+      "art": "subject",
       "analogy": "a cluster of small bubbles rising off a mat of green scum, like carbonation",
       "negative": "not fire or an explosion — gas bubbles, not flame",
       "source": "Anbar et al. 2007, *Science*"
@@ -379,7 +379,7 @@
       "date": "2,220 Ma",
       "name": "The Great Oxidation ends",
       "line": "Oxygen is permanent. The haze never comes back.",
-      "art": "abstract",
+      "art": "subject",
       "analogy": "a rust-red rock slab seen close, with a crack of open blue sky at the top",
       "negative": "not a full landscape — one slab, the sky a sliver behind it",
       "source": "Poulton et al. 2021, *Nature* — ~2.22 Ga"
@@ -465,7 +465,7 @@
       "date": "1,000 Ma",
       "name": "Rodinia",
       "line": "Every continent, gathered into one mass.",
-      "art": "abstract",
+      "art": "subject",
       "analogy": "a specimen of folded gneiss — a banded rock whose pink, grey and pale mineral stripes are bent into tight parallel folds, as if the layers had been squeezed from both sides",
       "negative": "not a map, not a landmass, not a continent and not a globe — one rock specimen seen close. The bands are smooth continuous folded stripes, not cracks and not loose brushstrokes. Nothing anywhere on it may be black or near-black. Two rounds (2026-07-31) drew the modern African continent, with Madagascar, when this milestone was prompted as a landmass silhouette — a negative naming Africa did not stop it. The subject is therefore the rock that continental collision makes (the Grenville orogeny, ~1.1–0.9 Ga, is Rodinia's assembly) rather than the shape of the supercontinent.",
       "source": "Li et al. 2008, *Precambrian Res.*"
@@ -680,7 +680,7 @@
       "date": "201.4 Ma",
       "name": "The Triassic–Jurassic extinction",
       "line": "The Atlantic starts to open. Half of everything dies, and the dinosaurs inherit it.",
-      "art": "abstract",
+      "art": "subject",
       "analogy": "a phytosaur — a long low four-legged reptile whose snout is drawn out into a slender straight rod lined with small teeth, ending in a smooth solid rounded tip like the blunt end of a wooden spoon handle; set on top of the skull, directly between and just in front of the eyes, is a raised dome like a small volcano, and the two nostril openings sit on the summit of that dome, far back from the snout; four short legs, a long heavy tail, and a warm sandy bronze hide with soft darker bronze banding along the back; the eye is a small amber bead",
       "negative": "not a modern crocodile, alligator or gharial, and the word gharial is deliberately not used in the description above because three rounds that did use it (2026-07-31, 2026-08-01) all drew one: a gharial carries its nostril at the very tip of its snout, which is the single feature that would make this animal the wrong animal. There is nothing whatsoever on the snout tip — no hole, no dot, no opening, no dark mark — and the only openings on the head sit on top of the raised dome back between the eyes. The eye is never a solid black dot, or the luminance key punches it out of the artwork. The snout is long and slender, not short and broad. The whole animal from snout tip to tail tip sits well inside its own quarter of the picture with clear empty space all around it. An earlier round drew a tailless animal that ran off its frame and baked cropped. The round that shipped failed a further way: nothing near-black was ever asked for, and 2.4% of its own area keyed out into interior holes that the halo then filled with light, while the 3:1 boundary gate scored it a comfortable 4.17:1. Keep the whole animal light-to-mid in value, and render the shadow under the jaw, between the legs and along the tail as a shade or two darker than the bronze, never as a dark hollow.",
       "source": "ICS T/J boundary 201.4 Ma",
@@ -758,7 +758,7 @@
       "date": "33.9 Ma",
       "name": "Antarctica freezes",
       "line": "The greenhouse world ends. The modern icehouse begins.",
-      "art": "abstract",
+      "art": "subject",
       "analogy": "a slab of ice calving off a dark rock cliff into the sea",
       "negative": "not a whole ice-covered planet like Snowball Earth — one coastal cliff, one iceberg",
       "source": "Hutchinson et al. 2021, *Clim. Past*"

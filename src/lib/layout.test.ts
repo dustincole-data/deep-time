@@ -262,8 +262,10 @@ describe('dwell and the fade window (§5, rules 5 and 6)', () => {
 describe('what the contract forces on mobile (§5, §8)', () => {
   const m = zones(PHONE);
   const d = zones(DESKTOP);
-  const byId = new Map(arrivals.map((a) => [a.id, a]));
-  const ABSTRACT = ['steam-and-acid-rain', 'whiffs-of-oxygen', 'great-oxidation-ends', 'rodinia', 'triassic-jurassic-extinction', 'antarctica-freezes'];
+  // 2026-08-07: real art now exists for every §8 placeholder milestone, so
+  // ABSTRACT is empty — the swap mechanism stays live for a future milestone
+  // with no photographable subject, but nothing in today's set uses it.
+  const ABSTRACT: string[] = [];
 
   it('drops the description line on a phone, and keeps it on desktop', () => {
     for (const a of arrivals) {
@@ -272,13 +274,8 @@ describe('what the contract forces on mobile (§5, §8)', () => {
     }
   });
 
-  it('swaps line for art on exactly the six abstract milestones', () => {
+  it('swaps line for art on exactly the abstract milestones (today, none)', () => {
     expect(arrivals.filter((a) => a.art === 'abstract').map((a) => a.id)).toEqual(ABSTRACT);
-    for (const id of ABSTRACT) {
-      const a = byId.get(id)!;
-      expect([id, showsArt(a, d)]).toEqual([id, true]);
-      expect([id, showsArt(a, m)]).toEqual([id, false]);
-    }
   });
 
   it('is layout-neutral: swapping contents inside a box moves no rectangle', () => {
@@ -290,7 +287,8 @@ describe('what the contract forces on mobile (§5, §8)', () => {
 
   it('keeps art on a phone for all but a handful of subjects', () => {
     // §5 measured it: without the dropped line, 16 of 37 subjects showed no art
-    // on a phone. With it, 3 — plus the six abstract ones, which give art up by design.
+    // on a phone. With it, 3 — plus the six abstract ones, which gave art up by
+    // design until 2026-08-07, when real art replaced every one of them.
     const placed = place(arrivals, m).filter((p) => p.tier !== 'F');
     const dropped = placed.filter((p) => !p.hasArt && !ABSTRACT.includes(p.id));
     expect(dropped.length).toBeLessThanOrEqual(3);

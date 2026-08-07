@@ -284,6 +284,19 @@ const FADE_FRAC = 0.55;
 /** §5: the card glides ≤28 px inside its slot. */
 const GLIDE_MAX = 28;
 const GLIDE_FRAC = 0.07;
+/**
+ * A BAND CARD'S GLIDE IS THE ONE THING SPENDABLE ON ITS OWN FLOOR — 2026-08-07.
+ * `sex` is the fragile case: 276×700 canvas, a 0.45 opaque fill, still `hasArt`
+ * at 390×780 but drawing under `ART_MIN_DRAWN` and dropping to nothing (§10's
+ * "drop, don't shrink" rule doing exactly its job, on an asset thin enough to
+ * hit it). A tall card already has its whole column and 28 px of travel is
+ * cheap there; a band card is paying every one of those same px against a
+ * availH already halved by its neighbour, so the same fraction costs it more.
+ * Shrinking travel ONLY where a card shares its band buys `sex` back over the
+ * floor (390×780: 89 → 111 px of availH, the same room 390×844 already gives
+ * it) without moving a single tall card's glide, on mobile or desktop.
+ */
+const GLIDE_FRAC_BAND = 0.02;
 /** §5: dwell is gap-adaptive, clamped 150–660 px. */
 const DWELL_OF_GAP = 0.9;
 const DWELL_MIN = 150;
@@ -348,9 +361,19 @@ export const ART_MIN_H = 46;
  * dropped, not shrunk**, and `frame()` returns no rect at all.
  *
  * Measured after the three sizing fixes of 2026-08-06: nothing is under it at
- * 100 % text at any gate viewport (min 46.4 desktop, 46.7 phone), and at
- * 1440×900/200 % — where an honest clock zone leaves a card ~209 px — it drops
- * most of the set, which is §10 working rather than §10 failing.
+ * 100 % text at any gate viewport (min 46.4 desktop, 46.7 phone) — a claim that
+ * went stale the moment T. rex and the first primates came back 2026-07-31 and
+ * nobody re-measured it. Found 2026-08-07 from a real complaint: `sex` (a 276×700
+ * canvas at 45 % opaque fill, the most fragile asset in the set) had crossed back
+ * under the floor and was dropping silently at 390×780 — the exact viewport §12
+ * added for the iOS URL bar, with no gate watching this number to catch it.
+ *
+ * Fixed by `GLIDE_FRAC_BAND` below: a band card (one sharing its slot, never
+ * `tall`) now travels less on its glide, which is spendable room a solo card
+ * doesn't need to give up. Re-measured after the fix: min 84.0 px desktop
+ * (`great-dying`), min 67.0 px phone (`sex`, 390×780) — both comfortably clear,
+ * and at 1440×900/200 % — where an honest clock zone leaves a card ~209 px — it
+ * still drops most of the set, which is §10 working rather than §10 failing.
  */
 export const ART_MIN_DRAWN = 44;
 /** Breathing room between the art's bottom edge and the top of the text block. */
@@ -594,13 +617,16 @@ function typeScale(vp: Required<Viewport>, mobile: boolean, tier: Tier) {
  * Does this arrival render its description line at this viewport, before ruling A?
  *
  * §5: on mobile the description is dropped — a phone band cannot hold art +
- * name + a line. §8: EXCEPT the six abstract milestones, where the line
- * replaces the art instead, because a stand-in for *whiffs of oxygen* carries
- * no fact by construction.
+ * name + a line. §8: EXCEPT an `art: 'abstract'` milestone, where the line
+ * replaces the art instead, because a true placeholder — one standing in for
+ * something with no photographable subject — carries no fact by construction.
+ * As of 2026-08-07 nothing in the shipped set is tagged `abstract`: real art
+ * now exists for all six §8 originally named, so the swap is dormant, not
+ * removed — it fires again the day a milestone genuinely has no subject to bake.
  */
 export const showsLine = (a: Pick<Arrival, 'art'>, z: Zones): boolean => !z.mobile || a.art === 'abstract';
 
-/** The mirror of `showsLine`: the six abstract milestones give their art up on a phone. */
+/** The mirror of `showsLine`: an `art: 'abstract'` milestone gives its art up on a phone (dormant — see `showsLine`). */
 export const showsArt = (a: Pick<Arrival, 'art'>, z: Zones): boolean =>
   a.art !== null && !(z.mobile && a.art === 'abstract');
 
@@ -1289,7 +1315,7 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
     // A portrait is centred, not anchored to a column edge — §11: "composed
     // centred and square", and it has no column to sit against.
     it.right = !isF && !it.portrait && z.nCols > 1 && z.slots[it.slot]!.col === 1;
-    it.glide = isF ? 0 : Math.min(GLIDE_MAX, it.rect.h * GLIDE_FRAC);
+    it.glide = isF ? 0 : Math.min(GLIDE_MAX, it.rect.h * (it.tall ? GLIDE_FRAC : GLIDE_FRAC_BAND));
   }
 
   const byId = new Map(arrivals.map((a) => [a.id, a]));

@@ -336,16 +336,41 @@ function run(vp: Viewport): Result {
          gate could see it — but "art sizes wildly inconsistent" is the defect
          Dustin reported twice, and a contract that is purely topological cannot
          answer it. Measured on the SUBJECT, because the canvas carries 18–33 %
-         transparent margin and the visitor sees only what is opaque. */
-      if (v.art) {
-        const s = subjectRect(v.art, ART_METRICS[v.id]);
-        // Apparent size, the same measure `frame()` drops on — a wide organism
-        // and a narrow one are not punished for their shape.
-        if (Math.sqrt(s.w * s.h) < ART_MIN_DRAWN - 1e-6)
-          fail(
-            'picture under the floor',
-            `${v.id} draws a ${r2(s.w)}×${r2(s.h)}px subject at y=${r2(y)} — under the ${ART_MIN_DRAWN}px floor`,
-          );
+         transparent margin and the visitor sees only what is opaque.
+
+         SCOPED TO 100% TEXT, matching layout.test.ts's own "clears the floor
+         everywhere at 100% text, which IS the size claim" — 200% is §10 working
+         as designed (text costs art before it costs legibility), not a claim
+         this gate has ever made. Without the guard, the check below found 1,279
+         "failures" the moment it could see the null-art half, every one of them
+         inside the already-documented 200%-text squeeze. */
+      if ((vp.textScale ?? 1) === 1) {
+        if (v.art) {
+          const s = subjectRect(v.art, ART_METRICS[v.id]);
+          // Apparent size, the same measure `frame()` drops on — a wide organism
+          // and a narrow one are not punished for their shape.
+          if (Math.sqrt(s.w * s.h) < ART_MIN_DRAWN - 1e-6)
+            fail(
+              'picture under the floor',
+              `${v.id} draws a ${r2(s.w)}×${r2(s.h)}px subject at y=${r2(y)} — under the ${ART_MIN_DRAWN}px floor`,
+            );
+        } else {
+          /* THE OTHER HALF OF THE FLOOR CHECK — added 2026-08-07, after `sex`
+             dropped silently at 390×780 and this gate stayed green. The check
+             above can only fire when `v.art` is non-null; the moment `frame()`
+             drops a picture for being under `ART_MIN_DRAWN`, `v.art` IS null and
+             the block above is skipped — so a picture crossing the floor and a
+             picture that was never asked to render looked identical to this gate.
+             `p.hasArt` is the model's OWN claim that this arrival should draw a
+             picture; `frame()` disagreeing with its own placement decision is
+             exactly the silent regression this gate exists to catch. */
+          const p = placed.find((q) => q.id === v.id)!;
+          if (p.hasArt)
+            fail(
+              'picture under the floor',
+              `${v.id} has art per place() but frame() drew none at y=${r2(y)} — dropped under the ${ART_MIN_DRAWN}px floor`,
+            );
+        }
       }
     }
 

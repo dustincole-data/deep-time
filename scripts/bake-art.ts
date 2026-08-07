@@ -34,6 +34,10 @@
  *
  *   node scripts/bake-art.ts
  *   node scripts/bake-art.ts --verbose
+ *   node scripts/bake-art.ts --record-only   # re-bakes only the record register —
+ *     skips the painted register's MANIFEST loop (the slow halo/contrast solve over
+ *     every arrival sheet) and preserves its existing art.json entries untouched,
+ *     so adding a handful of new record photos doesn't cost a full site rebake.
  */
 import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -44,6 +48,7 @@ import { place, zones } from '../src/lib/layout.ts';
 import { fieldAt, type RGB } from '../src/lib/field.ts';
 
 const VERBOSE = process.argv.includes('--verbose');
+const RECORD_ONLY = process.argv.includes('--record-only');
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const OUT_DIR = join(ROOT, 'public', 'art');
 const ART_JSON = join(ROOT, 'src', 'data', 'art.json');
@@ -881,10 +886,14 @@ async function main() {
   await mkdir(RECORD_OUT_DIR, { recursive: true });
   const browser = await chromium.launch();
   const page = await browser.newPage();
-  const art: Record<string, any> = {};
+  /* `--record-only` seeds from the CURRENT art.json rather than `{}`, so the
+     painted register's entries survive skipping the MANIFEST loop below —
+     without this, writeFile would ship an art.json containing only the
+     record register and silently delete every painted arrival's baked art. */
+  const art: Record<string, any> = RECORD_ONLY ? JSON.parse(await readFile(ART_JSON, 'utf8')) : {};
 
   try {
-    for (const entry of MANIFEST) {
+    for (const entry of RECORD_ONLY ? [] : MANIFEST) {
       const buf = await readFile(join(ROOT, entry.file));
       const dataUrl = `data:image/png;base64,${buf.toString('base64')}`;
       const isPlanetBySubject: Record<string, boolean> = {};

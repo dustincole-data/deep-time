@@ -399,6 +399,70 @@
       "source": "Buzz Aldrin's bootprint, lunar surface, 20-21 July 1969 (NASA Photo ID AS11-40-5877)",
       "licence": "PD",
       "credit": "NASA / Buzz Aldrin"
+    },
+    {
+      "id": "apollo-soyuz-handshake",
+      "yearsAgo": 51,
+      "name": "Apollo-Soyuz Handshake",
+      "source": "Astronaut Thomas Stafford and cosmonaut Aleksei Leonov shake hands in orbit, first joint US-Soviet spaceflight, 17 July 1975 (NASA Photo ID S75-29432)",
+      "licence": "PD",
+      "credit": "NASA"
+    },
+    {
+      "id": "march-on-washington",
+      "yearsAgo": 63,
+      "name": "March on Washington",
+      "source": "Civil Rights March on Washington, 28 August 1963 (U.S. Information Agency photo; National Archives NAID 542044)",
+      "licence": "PD",
+      "credit": "Rowland Scherman, U.S. Information Agency / National Archives"
+    },
+    {
+      "id": "pale-blue-dot",
+      "yearsAgo": 36,
+      "name": "Pale Blue Dot",
+      "source": "Earth as seen by Voyager 1 from roughly 6 billion km away, 14 February 1990 (NASA/JPL image PIA00452)",
+      "licence": "PD",
+      "credit": "NASA/JPL-Caltech"
+    },
+    {
+      "id": "pillars-of-creation",
+      "yearsAgo": 31,
+      "name": "Pillars of Creation",
+      "source": "Star-forming pillars in the Eagle Nebula (M16), Hubble Space Telescope, captured 1 April 1995, released 2 November 1995",
+      "licence": "PD",
+      "credit": "NASA, ESA, STScI, J. Hester and P. Scowen (Arizona State University)"
+    },
+    {
+      "id": "iss-first-crew",
+      "yearsAgo": 26,
+      "name": "ISS Expedition 1",
+      "source": "Official crew portrait, first resident crew of the International Space Station, which arrived 2 November 2000 (NASA Photo ID ISS01-S-002)",
+      "licence": "PD",
+      "credit": "NASA"
+    },
+    {
+      "id": "human-genome-complete",
+      "yearsAgo": 23,
+      "name": "The Human Genome Project",
+      "source": "DNA gel electrophoresis; International Human Genome Sequencing Consortium's sequence completed and announced 14 April 2003",
+      "licence": "PD",
+      "credit": "National Human Genome Research Institute"
+    },
+    {
+      "id": "mars-rover-self-portrait",
+      "yearsAgo": 14,
+      "name": "Curiosity on Mars",
+      "source": "Self-portrait mosaic at Rocknest, Gale Crater, Mars, 31 October 2012 — Sol 84 (NASA/JPL image PIA16239)",
+      "licence": "PD",
+      "credit": "NASA/JPL-Caltech/Malin Space Science Systems"
+    },
+    {
+      "id": "covid-vaccine",
+      "yearsAgo": 6,
+      "name": "The COVID-19 Vaccine",
+      "source": "U.S. military's first COVID-19 vaccination, Walter Reed National Military Medical Center, 14 December 2020 (U.S. Dept. of Defense photo)",
+      "licence": "PD",
+      "credit": "Lisa Ferdinando / U.S. Department of Defense"
     }
   ]
 }

@@ -1418,5 +1418,69 @@
     "alt": "Apollo 11",
     "licence": "PD",
     "credit": "NASA / Buzz Aldrin"
+  },
+  "record/march-on-washington": {
+    "file": "/art/record/march-on-washington.webp",
+    "w": 160,
+    "h": 108,
+    "alt": "March on Washington",
+    "licence": "PD",
+    "credit": "Rowland Scherman, U.S. Information Agency / National Archives"
+  },
+  "record/apollo-soyuz-handshake": {
+    "file": "/art/record/apollo-soyuz-handshake.webp",
+    "w": 160,
+    "h": 110,
+    "alt": "Apollo-Soyuz Handshake",
+    "licence": "PD",
+    "credit": "NASA"
+  },
+  "record/pale-blue-dot": {
+    "file": "/art/record/pale-blue-dot.webp",
+    "w": 118,
+    "h": 160,
+    "alt": "Pale Blue Dot",
+    "licence": "PD",
+    "credit": "NASA/JPL-Caltech"
+  },
+  "record/pillars-of-creation": {
+    "file": "/art/record/pillars-of-creation.webp",
+    "w": 160,
+    "h": 158,
+    "alt": "Pillars of Creation",
+    "licence": "PD",
+    "credit": "NASA, ESA, STScI, J. Hester and P. Scowen (Arizona State University)"
+  },
+  "record/iss-first-crew": {
+    "file": "/art/record/iss-first-crew.webp",
+    "w": 160,
+    "h": 128,
+    "alt": "ISS Expedition 1",
+    "licence": "PD",
+    "credit": "NASA"
+  },
+  "record/human-genome-complete": {
+    "file": "/art/record/human-genome-complete.webp",
+    "w": 160,
+    "h": 160,
+    "alt": "The Human Genome Project",
+    "licence": "PD",
+    "credit": "National Human Genome Research Institute"
+  },
+  "record/mars-rover-self-portrait": {
+    "file": "/art/record/mars-rover-self-portrait.webp",
+    "w": 115,
+    "h": 160,
+    "alt": "Curiosity on Mars",
+    "licence": "PD",
+    "credit": "NASA/JPL-Caltech/Malin Space Science Systems"
+  },
+  "record/covid-vaccine": {
+    "file": "/art/record/covid-vaccine.webp",
+    "w": 160,
+    "h": 107,
+    "alt": "The COVID-19 Vaccine",
+    "licence": "PD",
+    "credit": "Lisa Ferdinando / U.S. Department of Defense"
   }
 }

@@ -303,6 +303,20 @@ const DWELL_MAX = 660;
  * The dwells are §11's own table, which is the spec's data and not a formula
  * this file may re-derive: the longest portrait is the one whose state really
  * lasted longest, and the shortest is the one that was over in a second.
+ *
+ * A DWELL HERE IS A CLAIM, NOT A GUARANTEE — ruled 2026-08-07, closing the item
+ * 598ff5e flagged. §11's table was written against the pre-07-31 milestone set,
+ * where Chicxulub had 1,474 px of clear page before it and 804 after. The
+ * shipped set has 49 and 251: Dustin put *T. rex* and the first primates back on
+ * 2026-07-31, and they bracket the asteroid. Rule 3 gives a portrait the WHOLE
+ * stage, so its dwell can only run from its own y to one pixel before the next
+ * arrival lands — and that interval is 251 px wide. **Chicxulub's 250 px is the
+ * arithmetic maximum**, not a shortfall this file could close; reaching 600
+ * would take moving a date (the scale contract forbids it) or deleting an
+ * arrival (the 07-31 ruling forbids it). So the number below stays 600 — it is
+ * the claim §11 makes about the state depicted — and rule 6's ladder cuts it,
+ * exactly as it cuts every card: density can cost an arrival screen-time, it can
+ * never cost it a collision. §11's table now records this.
  */
 const PORTRAIT_DWELL: Record<string, number> = {
   'earth-full-size': 615,
@@ -1533,6 +1547,22 @@ export const PLATE_LIT: readonly [number, number] = [milestoneY(1.8e9), mileston
  * costs the desktop the composition where the plate and a card sit side by side
  * — measured, that was clean at 1440 and 1920 — and it buys a class that cannot
  * come back through a corner nobody modelled.
+ *
+ * RE-AFFIRMED 2026-08-07, after measuring what the simple rule actually costs.
+ * The precise version was priced: a per-line text-ink model in this file (the
+ * way `fanRowWidth` already models a row), unioned with `subjectRect`, yielding
+ * on ink instead of on the box. What it would buy is smaller than it looks.
+ * Measured over the plate's whole 25,000 px lit span, all four gate viewports:
+ * the plate is dimmed for **6,932 px, 27.7 %** — but only **1,920 px of that
+ * falls inside the 14,700 px hole**, at its two ends, because the four yielders
+ * ARE the arrivals that bracket the hole. The hole's middle **12,770 px is
+ * untouched at every viewport**, and that middle is where the plate does its
+ * work: §6's "~30 s uninterrupted", the counter as the only thing that moves,
+ * the rehearsal for the payoff. So the precise model would buy back a
+ * composition at the edges of a stretch whose argument happens in a span the
+ * simple rule never touches — at the price of new modelling in the one quantity
+ * §13 says a Node model cannot be trusted on ("line wrapping is ultimately the
+ * browser's opinion"), guarding a class Dustin made a ship gate.
  */
 export function plateYielders(placed: Placed[], copy: Rect): Placed[] {
   return placed.filter((p) => {

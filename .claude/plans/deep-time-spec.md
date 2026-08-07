@@ -238,7 +238,9 @@ The background is the era's *actual* sky and ocean colour — a real scientific 
 Named, and left empty on purpose. It holds four real arrivals; the single hole runs 1.65 → 1.05 Ga, **15,000 px, ~30 s at the design speed**.
 
 - A **held plate**, centred in the stage box, with a live counter ticking down in both units ([§8](#8--the-copy-deck)).
-- Fades in over the last 4 Myr before 1.80 Ga and out over the first 16 Myr after 0.80 Ga. The four real arrivals still render on top of it.
+- Fades in over the last 4 Myr before 1.80 Ga and out over the first 16 Myr after 0.80 Ga. ~~The four real arrivals still render on top of it.~~ **Superseded 2026-08-06: an arrival is up, the plate is down.** That clause was written about the plate as a *backdrop*, and both gates read it as licence to sweep the plate against the reserved zones and nothing else — measured on the shipped build with a glyph-level sweep, **125 ink collisions at 390×844 and 111 at 390×780**. The plate now steps aside for any arrival whose box reaches its words: sequential, never a crossfade ([§9](#9--the-finale) staging rule 3 forbids one), with a 140 px lead so nothing is ever half-drawn over half-drawn.
+
+  **Yielding on the BOX, not the ink — re-affirmed 2026-08-07 after pricing the precise version.** The box rule costs the desktop the composition where the plate and a card sat side by side, which measured clean at 1440 and 1920. The precise alternative is a per-line text-ink model in `layout.ts` (the way `fanRowWidth` already models a row), unioned with `subjectRect`. **Measured, it buys less than it looks:** over the plate's whole 25,000 px lit span, at all four gate viewports, the plate is dimmed for **6,932 px — 27.7 %** — but only **1,920 px of that falls inside the 14,700 px hole**, at its two ends, because the four yielders *are* the arrivals that bracket the hole. **The hole's middle 12,770 px is untouched at every viewport** — and that middle is the whole argument: the ~30 s uninterrupted, the counter as the only thing that moves, the rehearsal for the payoff. So the simple rule stands. The precise one would model line wrapping, which [§13](#13--stack--data) says is ultimately the browser's opinion, to guard a class that is a ship gate.
 - **The field deliberately slows** — particle count and drift drop to 25%. Parallax is scroll-driven and still tracks, so the stillness reads as the planet's, not the page's.
 
 **Why this beats filling it:** the only true content available there is repetition of sameness, and four labels saying *still nothing* is the same dead air wearing a badge. The site's thesis is that emptiness is information — the Boring Billion is a **rehearsal for the payoff**, teaching the visitor to read emptiness as information ~20,000 px before the ending asks them to do exactly that.
@@ -354,6 +356,14 @@ min gap=622px  max gap=14700px
 sub-600px pairs: 0
 Precambrian px: 101530 of 115000 = 88.29%
 ```
+
+> **THE FLOOR WAS RETIRED, ON PURPOSE — 2026-07-31, Dustin's call; written down here 2026-08-07.** The paragraph above is the record of what the floor *did* to the page, and it is why the page is edited the way it is. It is no longer what ships. ***T. rex* and the first primates are back**, at 68 Ma and 56 Ma, and the epilogue was rewritten around them — from *"two things could not fit"* to **"two things came within a rule of being cut… and both stayed anyway"**. *Dickinsonia* and heavy bombardment stay cut; the second was never cut on space.
+>
+> The shipped set is therefore **57 arrivals: 30 M · 21 I · 6 F**, with **three pairs under the floor — 49 px, 251 px and 552.5 px**, every one of them traceable to the two additions. The gate moved with it: `check.py` is gone and `src/lib/timeline.test.ts` is the ship gate, and it **pins those three pairs by name and by value** — so the floor is *retired at three named places*, not softened. A fourth tight pair fails the build.
+>
+> **What retiring it costs, measured 2026-08-07 and accepted.** [§5](#5--the-no-collision-layout-contract)'s readability floor restated as a UI budget — 600 px of screen-time per arrival — is missed by exactly **two arrivals at every viewport: *T. rex* at 543 px and Chicxulub at 250 px**, plus **the first primates at 551 px on a phone**. Chicxulub's is arithmetic, not layout ([§11](#11--art)'s corrected dwell table). This is the same decision paying twice, not a second defect, and it is bounded by the same three pairs: `layout.test.ts` **derives its exemption from the data** rather than naming ids, so an arrival can only earn a short read by visibly breaking the floor in `timeline.json`. Every other arrival is asserted at 600 px, at all four gate viewports, at 100 % and 200 % text.
+>
+> **Still stale, flagged not fixed:** §7's verified-set table below and the "55 arrivals" figure repeated in [§3](#3--page-anatomy), [§10](#10--accessibility), [§11](#11--art) and [§13](#13--stack--data) predate the two additions. The data file and its gate are authoritative; correcting the prose is its own pass.
 
 ---
 
@@ -830,8 +840,14 @@ portrait                    px   before    after  true dur   dwell
 molten Hadean             3100      675      750      3400     615
 the Great Oxidation      55850     1750      750      5250     690
 Snowball Earth           98675     2075     1400      1400    1200
-Chicxulub               114949     1474      804         0     600
+Chicxulub               114949       49      251         0     600 → 250
 ```
+
+> **CORRECTED 2026-08-07 — Chicxulub's row was written against a milestone set that changed underneath it.** It recorded 1,474 px of clear page before the asteroid and 804 after, which was true of the original 55. It is not true of what ships: on **2026-07-31 Dustin put *T. rex* and the first primates back**, and they bracket the asteroid at 49 px and 251 px. [§11 rule 3](#11--art) gives a portrait the whole stage, so its dwell can run only from its own pixel to one before the next arrival lands — **250 px is the arithmetic maximum**, and reaching 600 would take moving a date (the scale contract forbids it) or deleting an arrival (the 07-31 ruling forbids it).
+>
+> **The band is a claim, and rule 6's ladder may cut it** — exactly as it cuts every card, and for the reason [§5](#5--the-no-collision-layout-contract) already gives: *density can cost an arrival screen-time; it can never cost it a collision.* `PORTRAIT_DWELL` still asks for 600, because 600 is what §11 claims about the state depicted; the page gives what the set leaves. The three other portraits are unaffected — their neighbours are unchanged and they draw their full band.
+>
+> **What the visitor gets instead is not nothing.** The disc still owns the whole stage and draws at 223.8 px (it drew at 74.6 px in a shared grid before 598ff5e), and the 250 px it holds for is the crowding the ending is about, arriving 1,650 px from the end.
 
 **The longest portrait is the one whose state really lasted longest, and the shortest is the one that was over in a second.** The most famous event on the page gets the biggest image and the shortest dwell — and it is earned, because **Chicxulub is the calibrator for the payoff**: it is the one date a general audience already has a feel for, landing 1,650 px from the end, and establishing "the dinosaurs died *this close* to the end" is what makes "everything human is in the last 175 px" land 1,650 px later.
 

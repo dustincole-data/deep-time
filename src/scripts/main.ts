@@ -49,20 +49,37 @@ import {
   hudBottomInset,
   hudLean,
   place,
+  plateCopyRect,
+  plateYieldAt,
+  plateYielders,
   textScaleOf,
   zones,
+  type ArtMetric,
   type Blip,
   type Fan,
   type Placed,
+  type Rect,
   type Zones,
 } from '../lib/layout.ts';
 import { fieldAt, toHex, type RGB } from '../lib/field.ts';
 import art from '../data/art.json' with { type: 'json' };
 
 const { INTRO, RUN, RUN_END, TOTAL, YEARS_PER_PX, EARTH_AGE } = CONSTANTS;
-/** Intrinsic aspect ratio per subject with baked art — frame() sizes the art box from it. */
-const ART_ASPECT: Record<string, number> = Object.fromEntries(
-  Object.entries(art).map(([id, a]) => [id, a.w / a.h]),
+/**
+ * What frame() needs per baked subject: the canvas aspect the `<img>` box must
+ * carry, and the subject's own opaque box inside it — because the apparent size
+ * the page aims at is the SUBJECT's, not the canvas's (see `frame`). Prints in
+ * the record register carry no `opaque` and are not drawn here; they fall back
+ * to full bleed rather than being special-cased.
+ */
+const ART_METRICS: Record<string, ArtMetric> = Object.fromEntries(
+  Object.entries(art).map(([id, a]) => [
+    id,
+    {
+      aspect: a.w / a.h,
+      fill: ('opaque' in a ? a.opaque : [0, 0, 1, 1]) as [number, number, number, number],
+    },
+  ]),
 );
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -115,6 +132,8 @@ interface Node {
   /** null for the ~90% of arrivals with no baked art yet (§14). */
   img: HTMLImageElement | null;
   vis: number;
+  /** Whether the picture is currently drawn at all — see `ART_MIN_DRAWN`. */
+  shown: boolean;
 }
 const nodes: Node[] = arrivals.map((a) => {
   const el = document.getElementById(`a-${a.id}`) as HTMLElement;
@@ -124,6 +143,7 @@ const nodes: Node[] = arrivals.map((a) => {
     tx: el.querySelector('.tx') as HTMLElement,
     img: el.querySelector('img.art'),
     vis: -1,
+    shown: true,
   };
 });
 
@@ -169,6 +189,10 @@ let placed: Placed[] = [];
 let mobile = false;
 let B = finaleBeats(0);
 let BL: Blip;
+/** The plate's words as a rect — what an arrival's art must not be drawn onto. */
+let plateCopy: Rect;
+/** The arrivals the plate steps aside for, solved here and never in the frame. */
+let plateYielders_: Placed[] = [];
 /**
  * The arrest pulse's peak scale, SOLVED against the room the viewport gives the
  * marker (`barHeadPulse`). At 390 px wide the head's centre sits 11 px from the
@@ -269,6 +293,8 @@ function relayout() {
   plateCopyEl.style.width = `${Z.plateCopy.w / Z.plateCopy.writeScale}px`;
   plateEl.style.setProperty('--plate-k', String(Z.plateCopy.writeScale));
   plateEl.classList.toggle('lean', Z.plateCopy.counterDropped);
+  plateCopy = plateCopyRect(Z);
+  plateYielders_ = plateYielders(placed, plateCopy);
 
   layoutFan();
   buildTicks();
@@ -624,7 +650,7 @@ function draw(now: number) {
   }
 
   // 4 — transform + opacity on the arrivals inside their fade window.
-  const vis = frame(placed, sy, ART_ASPECT);
+  const vis = frame(placed, sy, ART_METRICS);
   const seen = new Set<string>();
   for (const v of vis) {
     seen.add(v.id);
@@ -634,11 +660,22 @@ function draw(now: number) {
     // The art box, if this subject has baked art: frame() returns it in the
     // same page-absolute space as the figure's own rect, so it is written
     // relative to n.p.rect — the figure is its own containing block (§5 rule 3).
-    if (n.img && v.art) {
-      n.img.style.left = `${v.art.x - n.p.rect.x}px`;
-      n.img.style.top = `${v.art.y - n.p.rect.y}px`;
-      n.img.style.width = `${v.art.w}px`;
-      n.img.style.height = `${v.art.h}px`;
+    if (n.img) {
+      /* `frame()` returns no rect for a picture under `ART_MIN_DRAWN`, and the
+         `<img>` keeps whatever size it was last written — so the drop has to be
+         made real here or a smudge stays on the glass at its old size. Guarded on
+         inequality like every other write in this loop. */
+      const show = v.art !== null;
+      if (n.shown !== show) {
+        n.img.style.display = show ? 'block' : 'none';
+        n.shown = show;
+      }
+      if (v.art) {
+        n.img.style.left = `${v.art.x - n.p.rect.x}px`;
+        n.img.style.top = `${v.art.y - n.p.rect.y}px`;
+        n.img.style.width = `${v.art.w}px`;
+        n.img.style.height = `${v.art.h}px`;
+      }
     }
     if (n.vis !== v.opacity) {
       n.el.style.opacity = String(v.opacity);
@@ -703,7 +740,21 @@ function draw(now: number) {
   // The Boring Billion: named, and left empty on purpose.
   if (years <= BB_HI && years >= BB_LO) {
     const o = Math.min(smooth(BB_HI, BB_HI - 4e6, years), 1 - smooth(BB_LO + 16e6, BB_LO, years));
-    plateEl.style.opacity = String(o * 0.94);
+    /* THE PLATE YIELDS TO A PICTURE (Dustin's ruling, 2026-08-06).
+       §6 said "the four real arrivals still render on top of it", and that was
+       written about the plate as a BACKDROP. On a phone there is one column, the
+       copy is 288 px of a 320 px stage, and an arrival's art therefore cannot
+       miss it: measured on the shipped build, 125 ink collisions at 390×844 and
+       111 at 390×780 — the sponge, Rodinia and the first complex cells each sat
+       squarely on the plate's own sentences. Desktop had none, at 1440 or 1920.
+
+       So the plate gives way to the picture instead of being sat on, and it does
+       it on GEOMETRY rather than on a device class: the yield is driven by the
+       arrival's own opacity wherever its art actually reaches the copy, which is
+       zero at every desktop width because the rects never meet there. No new
+       timing, no branch on `mobile`, and the frame stays a pure function of
+       scrollY. §6's sentence needs updating to match. */
+    plateEl.style.opacity = String(o * 0.94 * (1 - plateYieldAt(plateYielders_, sy)));
     // Ruling G — where the counter was dropped there is nothing to count into.
     if (!Z.plateCopy.counterDropped) {
       const togo = Math.max(0, Math.round((years - BB_LO) / YEARS_PER_PX));

@@ -47,10 +47,24 @@ import {
   fan,
   intersects,
   place,
+  subjectRect,
   TEXT_PROBE_BASE,
   zones,
+  type ArtMetric,
   type Viewport,
 } from '../src/lib/layout.ts';
+import artManifest from '../src/data/art.json' with { type: 'json' };
+
+/** The subject's opaque box per baked asset — a canvas is 18–33 % clear margin. */
+const ART_METRICS: Record<string, ArtMetric> = Object.fromEntries(
+  Object.entries(artManifest).map(([id, a]) => [
+    id,
+    {
+      aspect: a.w / a.h,
+      fill: ('opaque' in a ? a.opaque : [0, 0, 1, 1]) as [number, number, number, number],
+    },
+  ]),
+);
 
 const VERBOSE = process.argv.includes('--verbose');
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -223,12 +237,22 @@ function finalePoints(vp: Viewport): number[] {
 
 interface DomRect { x: number; y: number; w: number; h: number }
 interface Snapshot {
-  arrivals: { id: string; box: DomRect; text: DomRect }[];
+  arrivals: {
+    id: string;
+    box: DomRect;
+    text: DomRect;
+    /** The `<img class="art">` rect, or null where the picture is dropped. */
+    art: DomRect | null;
+    /** The arrival's glyph boxes, per line — what actually lands on the glass. */
+    textInk: DomRect[];
+  }[];
   hud: DomRect | null;
   bar: DomRect | null;
   plate: DomRect | null;
   /** `#plate .in` — the plate's five paragraphs as the browser drew them. */
   plateCopy: DomRect | null;
+  /** The plate's own glyph boxes, per line. The words, not the block. */
+  plateInk: DomRect[];
   /** `#blip-plate` — the band the flood was solved around. Never `#plate`. */
   band: DomRect | null;
   /** The band's visible tenants, each measured as the browser actually set it. */
@@ -397,16 +421,52 @@ async function snapshot(page: Page): Promise<Snapshot> {
       return { x: r.x, y: r.y, w: r.width, h: r.height };
     };
     const visible = (el: Element) => parseFloat(getComputedStyle(el).opacity) > 0.02;
-    const arrivalsOut: { id: string; box: DomRect; text: DomRect }[] = [];
+    /* INK, PER LINE — the same Range trick the fan's rows have used since
+       2026-08-05, for the same reason and now applied to the arrivals too. A
+       `.tx` box is the full column (616 px at 1440×900) whatever the sentence
+       inside it is, so comparing BOXES to the plate's centred copy reports 205
+       hits at 1440×900 where the glyphs never touch. */
+    const inkOf = (el: Element): DomRect[] => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const out: DomRect[] = [];
+      for (const r of range.getClientRects()) {
+        if (r.width >= 1 && r.height >= 1) out.push({ x: r.x, y: r.y, w: r.width, h: r.height });
+      }
+      return out;
+    };
+    const arrivalsOut: Snapshot['arrivals'] = [];
     for (const el of document.querySelectorAll<HTMLElement>('.ar')) {
       if (!visible(el)) continue;
       const tx = el.querySelector<HTMLElement>('.tx');
       if (!tx) continue;
-      arrivalsOut.push({ id: el.id.replace(/^a-/, ''), box: rectOf(el), text: rectOf(tx) });
+      const im = el.querySelector<HTMLElement>('img.art');
+      const textInk: DomRect[] = [];
+      for (const t of tx.querySelectorAll<HTMLElement>('.d, .n, .s')) {
+        if (t.classList.contains('sr-only')) continue;
+        textInk.push(...inkOf(t));
+      }
+      arrivalsOut.push({
+        id: el.id.replace(/^a-/, ''),
+        box: rectOf(el),
+        text: rectOf(tx),
+        /* THE PICTURE — snapshotted for the first time 2026-08-06. Until then
+           this gate collected `{id, box, text}` and nothing else, so in a REAL
+           browser no image was ever compared to anything: every art assertion on
+           the site lived in the Node model, which was itself drawing squares. */
+        art: im && im.offsetWidth > 0 ? rectOf(im) : null,
+        textInk,
+      });
     }
     const hud = document.getElementById('hud');
     const bar = document.getElementById('bar');
     const plate = document.getElementById('plate');
+    const plateInk: DomRect[] = [];
+    if (plate && visible(plate)) {
+      for (const t of plate.querySelectorAll('.kicker, .t, .sub, .body, .cnt b, .cnt span')) {
+        plateInk.push(...inkOf(t));
+      }
+    }
 
     /* THE FINALE. A zero-area rect is not a thing on the glass: when `blip()`
        returns `shown: false` the runtime sets `#blip` to `display: none`, and a
@@ -454,6 +514,7 @@ async function snapshot(page: Page): Promise<Snapshot> {
       bar: bar && visible(bar) ? rectOf(bar) : null,
       plate: plate && visible(plate) ? rectOf(plate) : null,
       plateCopy: plate && visible(plate) ? rectOf(plate.querySelector('.in')!) : null,
+      plateInk,
       band: bandBox && real(bandBox) ? bandBox : null,
       bandParts,
       prints: printsOut,
@@ -520,6 +581,29 @@ async function runVariant(page: Page, url: string, vp: Viewport, points: number[
         fail(`y=${y} ${a.id} box [${r(a.box)}] enters the clock zone [${r(z.clock)}]`);
       if (intersects(a.box, z.scale, 1))
         fail(`y=${y} ${a.id} box [${r(a.box)}] enters the scale zone [${r(z.scale)}]`);
+      /* THE PICTURE, IN A REAL BROWSER — 2026-08-06. §5 rule 3 says the art and
+         the text are ONE box; nothing here had ever read the art element to
+         check it. */
+      if (a.art && !contains(a.box, a.art, 1))
+        fail(`y=${y} ${a.id} art [${r(a.art)}] leaves its box [${r(a.box)}]`);
+
+      /* THE PLATE'S WORDS, AGAINST REAL INK — the defect this gate existed to
+         catch and structurally could not. §6's "the four real arrivals still
+         render on top of it" was read as an exemption from every content check,
+         and on a phone the copy is 288 px of a 320 px stage, so an arrival's
+         picture could not miss it: measured on the shipped build, 125 ink
+         collisions at 390×844, 111 at 390×780, zero at either desktop width.
+         Both halves are asserted here, and the TEXT half only here — the Node
+         model has no glyph boxes, so it cannot tell a 616 px column from the
+         sentence inside it. */
+      for (const pi of snap.plateInk) {
+        if (a.art && intersects(subjectRect(a.art, ART_METRICS[a.id]), pi, 1))
+          fail(`y=${y} ${a.id} art [${r(subjectRect(a.art, ART_METRICS[a.id]))}] lands on the plate's words [${r(pi)}]`);
+        for (const ti of a.textInk) {
+          if (intersects(ti, pi, 1))
+            fail(`y=${y} ${a.id} text ink [${r(ti)}] lands on the plate's words [${r(pi)}]`);
+        }
+      }
     }
     for (let i = 0; i < snap.arrivals.length; i++) {
       for (let j = i + 1; j < snap.arrivals.length; j++) {

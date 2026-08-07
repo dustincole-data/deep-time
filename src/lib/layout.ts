@@ -81,6 +81,7 @@ import {
   FINALE_CFG,
   flood,
   INTRO,
+  milestoneY,
   plain,
   PLATE_CFG,
   RUN,
@@ -184,6 +185,12 @@ export interface Placed {
   slot: number;
   /** True when nothing shares this card's column inside its window (rule 5). */
   tall: boolean;
+  /**
+   * §5 / §11 rule 3 — a planet portrait, which owns the WHOLE slot grid for its
+   * dwell rather than one column. `rect` is the stage, and nothing else is on
+   * screen with it.
+   */
+  portrait: boolean;
   /** THE box. An arrival is this rect and nothing outside it. */
   rect: Rect;
   glide: number;
@@ -281,8 +288,57 @@ const GLIDE_FRAC = 0.07;
 const DWELL_OF_GAP = 0.9;
 const DWELL_MIN = 150;
 const DWELL_MAX = 660;
+/**
+ * §5 — "Planet portraits take their own band, 600–1,200 px, and own the whole
+ * slot grid for their dwell." §11 portrait rule 3 says the same thing from the
+ * art's side, and names `planet-check.py` as its gate.
+ *
+ * NEITHER WAS EVER BUILT (found 2026-08-06). `art: 'planet'` is in the data and
+ * in `ArtKind`, and until this date nothing in this file read it: the four
+ * portraits were placed as ordinary cards, drew at 16–36 % of the stage, and
+ * shared it with up to four other arrivals. Chicxulub — §11's named "calibrator
+ * for the payoff" — drew at **74.6 px on a 453 px stage with a 226 px dwell**
+ * against a specified floor of 600, next to a T. rex and a primate.
+ *
+ * The dwells are §11's own table, which is the spec's data and not a formula
+ * this file may re-derive: the longest portrait is the one whose state really
+ * lasted longest, and the shortest is the one that was over in a second.
+ */
+const PORTRAIT_DWELL: Record<string, number> = {
+  'earth-full-size': 615,
+  'great-oxidation-begins': 690,
+  'snowball-earth': 1200,
+  chicxulub: 600,
+};
+const PORTRAIT_DWELL_MIN = 600;
+const PORTRAIT_DWELL_MAX = 1200;
 /** §10: the art drops out below 46 px of available height. Enlarged text eats the picture. */
 export const ART_MIN_H = 46;
+/**
+ * THE FLOOR ON THE PICTURE, NOT ON THE BOX — added 2026-08-06.
+ *
+ * `ART_MIN_H` above is tested against `availH`, which is a property of the SLOT.
+ * Nothing was ever tested against the drawing: measured on the shipped build,
+ * *the first flowers* passed `ART_MIN_H` with 239 px of available height and then
+ * drew at **28.2 × 50.5 px** — 28 px of subject beside a 200 px headline — while
+ * *Archaeopteryx* drew at 179 px in the same frame. Both gates called that clean,
+ * because both gates are purely topological: to them a 28 px picture and a 300 px
+ * one are the same rect in the same box.
+ *
+ * The number is the drawn SUBJECT's apparent size — `sqrt(w × h)`, the same
+ * measure this whole contract sizes art by, so a genuinely wide or genuinely
+ * narrow organism is not punished for its shape. §9 staging rule 7 already ruled
+ * this situation for the finale's cells — "a ten-picture jam at 12 px a cell is
+ * not a smaller version of the argument; it is a smear" — and §10 rules the
+ * remedy: text costs art, never legibility. **So under the floor the art is
+ * dropped, not shrunk**, and `frame()` returns no rect at all.
+ *
+ * Measured after the three sizing fixes of 2026-08-06: nothing is under it at
+ * 100 % text at any gate viewport (min 46.4 desktop, 46.7 phone), and at
+ * 1440×900/200 % — where an honest clock zone leaves a card ~209 px — it drops
+ * most of the set, which is §10 working rather than §10 failing.
+ */
+export const ART_MIN_DRAWN = 44;
 /** Breathing room between the art's bottom edge and the top of the text block. */
 const ART_TEXT_CLEARANCE = 14;
 /** An inhabitant's art is quieter: two thirds of the height a milestone would take. */
@@ -1022,7 +1078,17 @@ export function zones(vp: Viewport): Zones {
     nCols: cols,
     nRows: rows,
     rowsCollapsed: rows < ROWS_MAX,
-    fade: h * FADE_FRAC,
+    /* RULING E, ON THE AXIS IT WAS MISSED — 2026-08-06. The stage was frozen at
+       `min(viewport, 1440×900)`; the FADE was not, and the fade is what decides
+       contention, which is what decides whether a card gets its column (rule 5)
+       or falls back to a band. Measured on the shipped build: `h × FADE_FRAC`
+       ran 495 → 594 → 792 px at 1440×900 / 1920×1080 / 2560×1440, and the
+       count of cards taking their full column ran 37 → 31 → 28 of 51 — so a
+       taller monitor drew a THIRD of the page's art at band size for a reason
+       no visitor can see, on a stage that ruling E had already frozen to be
+       identical. The two columns whose whole point is that they solve the same
+       were solving the same geometry with different crowding. */
+    fade: Math.min(h, SOLVE_H) * FADE_FRAC,
   };
 }
 
@@ -1044,7 +1110,14 @@ export function zones(vp: Viewport): Zones {
 function yieldTo(p: Placed, at: number): void {
   const releaseBy = at - 1;
   p.shortened = true;
-  p.fadeOut = Math.max(0, releaseBy - (p.y + p.dwell));
+  /* MONOTONE — `Math.min`, not an assignment (2026-08-06). Giving up screen time
+     is one-way: a second caller with a farther `at` must never hand back room the
+     first one took. Latent until a portrait started claiming every slot at once,
+     because before that an arrival could own only one slot and so could only ever
+     be yielded to once. Measured the day it fired: Chicxulub was cut to a 250 px
+     dwell by the first primates, then RE-GROWN a 552.5 px tail by Antarctica
+     freezing, which put the two of them back on the stage together. */
+  p.fadeOut = Math.min(p.fadeOut, Math.max(0, releaseBy - (p.y + p.dwell)));
   if (p.y + p.dwell > releaseBy) p.dwell = Math.max(0, releaseBy - p.y);
   p.onScreenPx = p.dwell + p.fadeIn + p.fadeOut;
 }
@@ -1056,17 +1129,24 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
     // The last arrival has no next: the finale follows, so its dwell is
     // unconstrained and clamps to the 660 px maximum §9 gives it.
     const gap = i < items.length - 1 ? items[i + 1]!.y - y : Number.POSITIVE_INFINITY;
+    // §5 — a portrait's dwell is the true duration of the state it depicts,
+    // inside its own 600–1,200 px band, not the gap-adaptive 150–660 a card gets.
+    const portrait = a.art === 'planet';
+    const dwell = portrait
+      ? clamp(PORTRAIT_DWELL[a.id] ?? gap * DWELL_OF_GAP, PORTRAIT_DWELL_MIN, PORTRAIT_DWELL_MAX)
+      : clamp(gap * DWELL_OF_GAP, DWELL_MIN, DWELL_MAX);
     return {
       id: a.id,
       tier: a.tier,
       y,
       gap,
-      dwell: clamp(gap * DWELL_OF_GAP, DWELL_MIN, DWELL_MAX),
+      dwell,
       fade: z.fade,
       fadeIn: z.fade,
       fadeOut: z.fade,
       slot: -1,
       tall: false,
+      portrait,
       rect: z.whisper,
       glide: 0,
       right: false,
@@ -1100,6 +1180,32 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
   const cards = out.filter((p) => p.tier !== 'F');
   let last = -1;
   for (const it of cards) {
+    /* A PORTRAIT CLAIMS EVERY SLOT (§5, §11 rule 3). This is rule 6's ladder
+       applied to a stage-wide claim instead of a one-slot claim — the same three
+       steps, run against all N slots at once, so a portrait can cost a
+       neighbour screen-time and still never cost it a collision. It is what
+       makes "nothing else may be on stage with it" true by construction rather
+       than by a separate check nobody wrote. */
+    if (it.portrait) {
+      let busiest = -1e9;
+      for (let s = 0; s < N; s++) busiest = Math.max(busiest, freeAt[s]!);
+      if (busiest > it.y - it.fadeIn) {
+        it.shortened = true;
+        it.fadeIn = Math.max(0, it.y - busiest);
+        for (let s = 0; s < N; s++) if (freeAt[s]! > it.y && owner[s]) yieldTo(owner[s]!, it.y);
+      }
+      it.slot = 0;
+      it.onScreenPx = it.dwell + it.fadeIn + it.fadeOut;
+      const until = it.y + it.dwell + it.fadeOut;
+      for (let s = 0; s < N; s++) {
+        freeAt[s] = until;
+        owner[s] = it;
+      }
+      // The next card starts the round-robin afresh, so a portrait never biases
+      // which column the arrival after it lands in.
+      last = N - 1;
+      continue;
+    }
     let chosen = -1;
     for (let k = 1; k <= N; k++) {
       const s = (last + k) % N;
@@ -1114,7 +1220,18 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
       chosen = best;
       it.shortened = true;
       it.fadeIn = Math.max(0, it.y - freeAt[best]!);
-      if (freeAt[best]! > it.y) yieldTo(owner[best]!, it.y);
+      if (freeAt[best]! > it.y) {
+        const gave = owner[best]!;
+        yieldTo(gave, it.y);
+        /* AND EVERY OTHER SLOT IT STILL HOLDS. `freeAt` is the bookkeeping, and
+           an arrival that has just given up screen time is not free until then
+           everywhere it is the owner. One slot was always enough before a
+           portrait existed; with a portrait holding all N, the stale entries
+           sent the next two arrivals back to yield from it a second time. */
+        for (let s = 0; s < N; s++) {
+          if (owner[s] === gave) freeAt[s] = gave.y + gave.dwell + gave.fadeOut;
+        }
+      }
     }
     it.slot = chosen;
     last = chosen;
@@ -1138,15 +1255,26 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
      that column inside its window. On mobile there is one column, so a lone
      arrival gets the whole stage, which is what keeps the art usable on a phone. */
   for (const it of cards) {
-    it.tall = !cards.some(
-      (o) => o !== it && z.slots[o.slot]!.col === z.slots[it.slot]!.col && windowsOverlap(o, it),
-    );
+    // A portrait already owns every column, so rule 5's question does not arise.
+    it.tall =
+      it.portrait ||
+      !cards.some(
+        (o) => o !== it && z.slots[o.slot]!.col === z.slots[it.slot]!.col && windowsOverlap(o, it),
+      );
   }
 
   for (const it of out) {
     const isF = it.tier === 'F';
-    it.rect = isF ? z.whisper : it.tall ? z.colFull[z.slots[it.slot]!.col]! : z.slots[it.slot]!;
-    it.right = !isF && z.nCols > 1 && z.slots[it.slot]!.col === 1;
+    it.rect = isF
+      ? z.whisper
+      : it.portrait
+        ? z.stage
+        : it.tall
+          ? z.colFull[z.slots[it.slot]!.col]!
+          : z.slots[it.slot]!;
+    // A portrait is centred, not anchored to a column edge — §11: "composed
+    // centred and square", and it has no column to sit against.
+    it.right = !isF && !it.portrait && z.nCols > 1 && z.slots[it.slot]!.col === 1;
     it.glide = isF ? 0 : Math.min(GLIDE_MAX, it.rect.h * GLIDE_FRAC);
   }
 
@@ -1199,7 +1327,12 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
        ART_TALL_MAX× the size the same card would have got inside one band. The
        art stays bottom-anchored above its text, so the cap spends its saving as
        air at the top of the box, not as a shifted picture. */
-    if (it.tall && it.tier !== 'F') {
+    /* A PORTRAIT IS EXEMPT. Ruling F caps a card that got its column by luck
+       against the same card drawn in a band — the point is that two draws of the
+       same KIND should not differ for a reason nobody can see. A portrait is a
+       different kind: §11 gives it the stage on purpose, and capping it at 2.2×
+       a band would put the whole Earth back at the size of a trilobite. */
+    if (it.tall && it.tier !== 'F' && !it.portrait) {
       const bandH = z.slots[it.slot]!.h;
       const bandGlide = Math.min(GLIDE_MAX, bandH * GLIDE_FRAC);
       const bandAvail = bandH - it.textH - bandGlide * 2 - ART_TEXT_CLEARANCE;
@@ -1217,10 +1350,43 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
    position are byte-identical.
    ========================================================================= */
 
+/**
+ * What `frame()` needs to know about a baked asset, straight out of `art.json`.
+ *
+ * `fill` is the subject's own opaque box as a fraction of the canvas — the same
+ * number §9 rule 8 already fills the finale's cells from, and the same reason:
+ * every keyed cut-out carries a transparent halo margin, measured 18–33 % of the
+ * canvas, so **sizing by the canvas sizes the padding.**
+ */
+export interface ArtMetric {
+  /** The canvas's w ÷ h. What the `<img>` box must be, or `object-fit` letterboxes. */
+  aspect: number;
+  /** The subject's own opaque box, `[x, y, w, h]` as fractions of the canvas. */
+  fill: [number, number, number, number];
+}
+
+const FULL_BLEED: ArtMetric = { aspect: 1, fill: [0, 0, 1, 1] };
+
+/**
+ * The pixels a visitor actually sees — the drawn box narrowed to the subject's
+ * opaque region.
+ *
+ * Every collision this file asserts about a picture is asserted on THIS, not on
+ * the `<img>`: a keyed cut-out's canvas is 18–33 % transparent margin, so a
+ * canvas that overlaps something by 6 px is very often a subject that misses it
+ * by 30. The same confusion sized the whole scroll wrong until 2026-08-06.
+ */
+export const subjectRect = (art: Rect, m: ArtMetric = FULL_BLEED): Rect => ({
+  x: art.x + art.w * m.fill[0],
+  y: art.y + art.h * m.fill[1],
+  w: art.w * m.fill[2],
+  h: art.h * m.fill[3],
+});
+
 export function frame(
   placed: Placed[],
   scrollY: number,
-  artAspect: Record<string, number> = {},
+  artMetrics: Record<string, ArtMetric> = {},
 ): Visible[] {
   const out: Visible[] = [];
   for (const p of placed) {
@@ -1250,7 +1416,7 @@ export function frame(
       // Aspect arrives with art.json. It cannot change containment — the art is
       // fitted into `availH` and clipped to the column either way — so the gate
       // is aspect-independent and 1 is a safe stand-in until the manifest exists.
-      const aspect = artAspect[p.id] ?? 1;
+      const m = artMetrics[p.id] ?? FULL_BLEED;
       // Target an APPARENT SIZE, not a height. Giving every subject the same
       // height makes its apparent size scale with sqrt(aspect), because the
       // width then follows the aspect unchecked: measured 2026-08-02, that put
@@ -1263,23 +1429,48 @@ export function frame(
       // an I stay in the same ratio to each other at every box size.
       const base = Math.min(p.availH, p.artCeil);
       const target = p.tier === 'M' ? base : base * ART_H_FRAC_I;
-      const k = Math.sqrt(aspect);
-      let h = target / k;
-      let w = target * k;
+
+      /* THE APPARENT SIZE IS THE SUBJECT'S, NOT THE CANVAS'S — 2026-08-06.
+         The line above aims a target at the drawn box, and until this date the
+         drawn box was the whole baked canvas, 18–33 % of which is the transparent
+         margin the servo halo's dilation needs (§11). So the page was sizing the
+         padding: measured across the 51, the subject covers 67–82 % of its
+         canvas edge, which is a silent 1.22× spread between two pictures this
+         function believed were identical — on top of every spread anyone had
+         counted. §9 rule 8 made exactly this argument for the finale's cells
+         ("sizing each picture by its canvas leaves the subject covering ~70 % of
+         its cell") and `bake-art.ts` has recorded the opaque box ever since. The
+         scroll simply never read it.
+
+         So: solve the SUBJECT to the target, then derive the canvas that
+         contains it. `fit` still clamps the canvas, so containment — and with it
+         every sweep §5 rests on — is untouched. */
+      const sa = (m.aspect * m.fill[2]) / m.fill[3];
+      const k = Math.sqrt(sa);
+      let h = target / k / m.fill[3];
+      let w = (target * k) / m.fill[2];
       // The box is the hard constraint and always wins — shrink uniformly, so
       // a subject too wide or too tall for its slot keeps its aspect and loses
       // size. Containment is unchanged, which is what keeps the sweep valid.
       const fit = Math.min(1, p.availH / h, r.w / w);
       h *= fit;
       w *= fit;
-      art = {
-        x: p.right ? r.x + r.w - w : r.x,
-        // The glide can never push the art out of the box: art and text carry
-        // the same `gl`, so their separation is fixed at ART_TEXT_CLEARANCE.
-        y: r.y + p.glide + (p.availH - h) + gl,
-        w,
-        h,
-      };
+      /* Under the floor the picture is DROPPED rather than drawn as a smudge
+         (`ART_MIN_DRAWN`) — `art` stays null and the arrival still renders. The
+         text is bottom-anchored either way, so nothing else about the box moves:
+         the art's air simply goes unspent. */
+      if (Math.sqrt(w * m.fill[2] * h * m.fill[3]) >= ART_MIN_DRAWN) {
+        art = {
+          // §11: a portrait is "composed centred and square" and owns the stage,
+          // so it has no column edge to anchor to.
+          x: p.portrait ? r.x + (r.w - w) / 2 : p.right ? r.x + r.w - w : r.x,
+          // The glide can never push the art out of the box: art and text carry
+          // the same `gl`, so their separation is fixed at ART_TEXT_CLEARANCE.
+          y: r.y + p.glide + (p.availH - h) + gl,
+          w,
+          h,
+        };
+      }
     }
 
     out.push({ id: p.id, tier: p.tier, opacity, box: r, text, art });
@@ -1290,6 +1481,78 @@ export function frame(
 /* ============================================================================
    RECT HELPERS — shared with the gate and the OG renderer
    ========================================================================= */
+
+/**
+ * The Boring Billion plate's WORDS, as a rect — `#plate .in`, centred in
+ * `z.plate` by the stylesheet, at the measure `plateBox` solved.
+ *
+ * Defined here so the runtime, the collision gate and the browser gate all read
+ * one definition. Until 2026-08-06 nobody had a rect for the copy at all: both
+ * gates knew only the plate's BOX, and `z.plate` spans the whole stage width, so
+ * every arrival overlaps it by construction and the exemption that follows from
+ * that ("arrivals render on top of it by design") switched off the one check
+ * that mattered. Verified against the browser: modelled [445,228.9 544×295.9]
+ * versus rendered [445,229.3 544×295.1] at 1440×900.
+ */
+export const plateCopyRect = (z: Zones): Rect => ({
+  x: z.plate.x + (z.plate.w - z.plateCopy.w) / 2,
+  y: z.plate.y + (z.plate.h - z.plateCopy.h) / 2,
+  w: z.plateCopy.w,
+  h: z.plateCopy.h,
+});
+
+/**
+ * How far ahead of an arrival's window the plate has finished clearing, in px.
+ *
+ * SEQUENTIAL, NOT A CROSSFADE. Fading the plate against the arrival's own
+ * opacity is the obvious version and it is the one §9 staging rule 3 already
+ * forbids: "two texts at 30 % opacity stacked on each other is precisely the
+ * overlap the layout contract bans." So the plate is fully gone before the
+ * arrival's first pixel and comes back only after its last — the lead is wider
+ * than any glide (≤28 px), so nothing is ever half-drawn over half-drawn.
+ */
+const PLATE_YIELD_LEAD = 140;
+
+/** Where the Boring Billion plate is on the glass, in page px (§6: 1.80 → 0.80 Ga). */
+export const PLATE_LIT: readonly [number, number] = [milestoneY(1.8e9), milestoneY(0.8e9)];
+
+/**
+ * The arrivals the plate steps aside for: those whose BOX reaches its words
+ * while it is lit. Solved once per layout, not per frame.
+ *
+ * THE BOX, NOT THE INK — and that is a decision, not laziness. The first version
+ * of this asked whether the arrival's PICTURE reached the copy, which is precise
+ * and left the desktop composition untouched, because at 1440×900 the columns
+ * and the centred copy never meet in ink. It also missed *Rodinia*, whose art is
+ * dropped on a phone by §5's abstract-milestone rule and whose TEXT then landed
+ * on four of the plate's lines — found by the browser gate's new ink pass on the
+ * day it was written. Telling a card's real ink extent apart from its 616 px
+ * column needs per-line glyph boxes, which a Node model does not have.
+ *
+ * So the rule is the one Dustin ruled: an arrival is up, the plate is down. It
+ * costs the desktop the composition where the plate and a card sit side by side
+ * — measured, that was clean at 1440 and 1920 — and it buys a class that cannot
+ * come back through a corner nobody modelled.
+ */
+export function plateYielders(placed: Placed[], copy: Rect): Placed[] {
+  return placed.filter((p) => {
+    const [w0, w1] = windowOf(p);
+    if (w1 < PLATE_LIT[0] || w0 > PLATE_LIT[1]) return false;
+    return intersects(p.rect, copy);
+  });
+}
+
+/** How far the plate has stepped aside at `scrollY`, 0 (fully lit) to 1 (fully gone). */
+export function plateYieldAt(yielders: Placed[], scrollY: number): number {
+  let out = 0;
+  for (const p of yielders) {
+    const [w0, w1] = windowOf(p);
+    const up = smooth(w0 - PLATE_YIELD_LEAD, w0, scrollY);
+    const down = smooth(w1, w1 + PLATE_YIELD_LEAD, scrollY);
+    out = Math.max(out, Math.min(up, 1 - down));
+  }
+  return out;
+}
 
 /** Touching edges is not an intersection: the slot grid is built edge-to-edge. */
 export const intersects = (a: Rect, b: Rect, eps = 1e-6): boolean =>

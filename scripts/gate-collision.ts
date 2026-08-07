@@ -21,22 +21,58 @@
  *             boundary, and every visible rect is compared with every other.
  *             This is the pass that catches a mistake in `frame()` itself.
  */
-import { arrivals, CONSTANTS, finaleBeats, flood } from '../src/lib/timeline.ts';
+import { arrivals, CONSTANTS, finaleBeats, flood, milestoneY } from '../src/lib/timeline.ts';
 import {
+  ART_MIN_DRAWN,
   blip,
   contains,
   fan,
   frame,
   intersects,
   place,
+  plateCopyRect,
+  plateYieldAt,
+  plateYielders,
+  sameRect,
+  subjectRect,
   windowsOverlap,
   zones,
+  type ArtMetric,
   type Rect,
   type Viewport,
   type Visible,
 } from '../src/lib/layout.ts';
+import art from '../src/data/art.json' with { type: 'json' };
 
 const VERBOSE = process.argv.includes('--verbose');
+
+/** Where the Boring Billion plate is on screen (§6) — BB_HI/BB_LO in main.ts. */
+const BB_HI_PX = milestoneY(1.8e9);
+const BB_LO_PX = milestoneY(0.8e9);
+/** Below this the plate is faded far enough that nothing of it is on the glass. */
+const PLATE_GONE = 0.995;
+
+/**
+ * THE ART RECTS ARE THE PAGE'S, NOT SQUARES — 2026-08-06.
+ *
+ * Until this date every `frame()` call in this file passed no metrics, so all 51
+ * subjects were modelled at aspect 1 and full bleed, while the page drew aspects
+ * 0.4–2.4 inside a canvas that is 18–33 % transparent margin. Containment happens
+ * to be aspect-invariant (`fit` clamps to `availH` and the column either way), so
+ * this hid no arrival × arrival collision — which is exactly why it survived. It
+ * still meant **the gate's pictures were not the page's pictures**, so no
+ * assertion about where a picture lands could ever have been trusted, and the two
+ * added below would have been measuring squares.
+ */
+const ART_METRICS: Record<string, ArtMetric> = Object.fromEntries(
+  Object.entries(art).map(([id, a]) => [
+    id,
+    {
+      aspect: a.w / a.h,
+      fill: ('opaque' in a ? a.opaque : [0, 0, 1, 1]) as [number, number, number, number],
+    },
+  ]),
+);
 
 /**
  * KNOWN OPEN GAP, surfaced 2026-07-31 by ruling D (src/lib/layout.ts) — the
@@ -127,6 +163,9 @@ function run(vp: Viewport): Result {
     'fan × scale bar': 0,
     'fan row overflows its column': 0,
     'finale beats': 0,
+    'anything × the plate’s words': 0,
+    'picture under the floor': 0,
+    'portrait does not own the stage': 0,
   };
   const failures: string[] = [];
   const fail = (key: string, msg: string) => {
@@ -211,7 +250,7 @@ function run(vp: Viewport): Result {
     // 0.9 of the fade, not 1.0: the opacity ramp is already zero at 0.98, so the
     // edge itself renders nothing and would make this check vacuous.
     for (const at of [p.y - p.fadeIn * 0.9, p.y, p.y + p.dwell, p.y + p.dwell + p.fadeOut * 0.9]) {
-      for (const v of frame([p], at)) {
+      for (const v of frame([p], at, ART_METRICS)) {
         if (!contains(p.rect, v.text) && !known)
           fail('text overflows its box', `${p.id} text ${fmtRect(v.text)} leaves ${fmtRect(p.rect)} at y=${r2(at)}`);
         if (v.art && !contains(p.rect, v.art))
@@ -247,13 +286,21 @@ function run(vp: Viewport): Result {
   }
   const samples = [...samplePoints].filter((y) => y >= 0 && y <= CONSTANTS.TOTAL).sort((a, b) => a - b);
 
+  const plateCopy = plateCopyRect(z);
+  const yielders = plateYielders(placed, plateCopy);
+
   const parts = (v: Visible): [string, Rect][] =>
     v.art ? [['text', v.text], ['art', v.art]] : [['text', v.text]];
 
   for (const y of samples) {
-    const vis = frame(placed, y);
+    const vis = frame(placed, y, ART_METRICS);
     if (vis.length > maxConcurrent) maxConcurrent = vis.length;
 
+    // The plate is on the glass here unless it has stepped fully aside for a
+    // picture that reaches its words — the runtime's own rule, read from the
+    // same two functions, so the gate cannot be measuring a different page.
+    const plateLit =
+      y >= BB_HI_PX && y <= BB_LO_PX && plateYieldAt(yielders, y) < PLATE_GONE;
     for (const v of vis) {
       for (const [pname, pr] of parts(v)) {
         if (!contains(v.box, pr) && !(known && pname === 'text'))
@@ -262,6 +309,62 @@ function run(vp: Viewport): Result {
           fail('anything × clock', `${v.id} ${pname} ${fmtRect(pr)} enters the clock zone at y=${r2(y)}`);
         if (intersects(pr, z.scale))
           fail('anything × scale bar', `${v.id} ${pname} ${fmtRect(pr)} enters the scale zone at y=${r2(y)}`);
+        /* THE PLATE'S WORDS — the hole this whole gate had, closed 2026-08-06.
+           `z.plate` was in `stageBoxes` and swept against the two reserved zones
+           and nothing else, on the reading that §6's "the four real arrivals
+           still render on top of it" licensed it. It licensed a BACKDROP; what it
+           switched off was text × image, which §15 keeps a ship gate everywhere
+           including the finale. And because `z.plate` spans the whole stage
+           width, the exemption could not have been narrowed by accident — every
+           arrival overlaps that box by construction, so the copy needed its own
+           rect before this could be asserted at all (`plateCopyRect`).
+
+           Only where the plate is actually lit. `pname === 'art'` is not
+           special-cased: an arrival's TEXT landing on the plate's text is the
+           same defect and has never been checked either. */
+        // Text AND art. The plate is down whenever an arrival's box reaches its
+        // words, so neither can be on them — and asserting both is what stops a
+        // future change to the yield rule leaking the class back in quietly.
+        const ink = pname === 'art' ? subjectRect(pr, ART_METRICS[v.id]) : pr;
+        if (plateLit && intersects(ink, plateCopy))
+          fail(
+            'anything × the plate’s words',
+            `${v.id} ${pname} ${fmtRect(ink)} lands on the Boring Billion copy ${fmtRect(plateCopy)} at y=${r2(y)}`,
+          );
+      }
+      /* THE PICTURE'S OWN SIZE. Not a collision, which is exactly why neither
+         gate could see it — but "art sizes wildly inconsistent" is the defect
+         Dustin reported twice, and a contract that is purely topological cannot
+         answer it. Measured on the SUBJECT, because the canvas carries 18–33 %
+         transparent margin and the visitor sees only what is opaque. */
+      if (v.art) {
+        const s = subjectRect(v.art, ART_METRICS[v.id]);
+        // Apparent size, the same measure `frame()` drops on — a wide organism
+        // and a narrow one are not punished for their shape.
+        if (Math.sqrt(s.w * s.h) < ART_MIN_DRAWN - 1e-6)
+          fail(
+            'picture under the floor',
+            `${v.id} draws a ${r2(s.w)}×${r2(s.h)}px subject at y=${r2(y)} — under the ${ART_MIN_DRAWN}px floor`,
+          );
+      }
+    }
+
+    /* §5 / §11 rule 3 — a portrait owns the whole slot grid, and nothing else is
+       on stage with it. Specified twice, gated nowhere (§11 names a
+       `planet-check.py` that was never written), and therefore never built:
+       measured before this line existed, all four portraits drew at 16–36 % of
+       the stage and Chicxulub shared it with four other arrivals. */
+    for (const v of vis) {
+      const p = placed.find((q) => q.id === v.id)!;
+      if (!p.portrait) continue;
+      if (!sameRect(v.box, z.stage))
+        fail(
+          'portrait does not own the stage',
+          `${v.id} box ${fmtRect(v.box)} is not the stage ${fmtRect(z.stage)} at y=${r2(y)}`,
+        );
+      for (const o of vis) {
+        if (o.id !== v.id)
+          fail('portrait does not own the stage', `${v.id} shares the stage with ${o.id} at y=${r2(y)}`);
       }
     }
 

@@ -60,22 +60,26 @@ const nf = (n: number) => n.toLocaleString('en-US');
         and no raster set. */}
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
-    {/* THE SHARE ARTIFACT (§9). The still is the fan, and the words under it are
-        the closing line — the site's punchline was always a number, so the card
-        can carry the whole argument without the reader having scrolled.
+    {/* THE SHARE ARTIFACT (§9), rebuilt 2026-08-07.
 
-        §9 specified rendering this at build via resvg from the layout module's
-        own SVG. It ships instead as a committed 1200×630 capture of this very
-        page's finale, taken with the Playwright the browser gate already runs:
-        same layout code, same geometry, and it moves the cost from every build
-        to zero. Re-capture it if the finale's geometry ever changes. It is
-        fetched by crawlers only, so it is outside §12's art budget. */}
+        It was a capture of the finale, which put ALL OF HUMAN HISTORY on every
+        link to this page — and people arrived expecting a page about human
+        history. It is the opposite: 114,825 of the 115,000 pixels pass before
+        humans exist, and that line is the last beat, not the subject. The line
+        stays at the end where it earns itself; the card is now composed by
+        `scripts/make-og.ts` (`npm run og`) from this page's own wordmark, scale
+        constants and arrival positions, and carries the dustincoledata mark.
+
+        Still committed rather than built per-request: it is fetched by crawlers
+        only, so it is outside §12's art budget. Re-run the script if the
+        wordmark, the scale contract or the strip's subjects change. */}
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Deep Time — the whole history of Earth, at true scale" />
     <meta property="og:description" content={plain(FINALE_CFG.copy.closing)} />
     <meta property="og:image" content="https://deeptime.dustincoledata.com/og.png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
+    <meta property="og:image:width" content="2400" />
+    <meta property="og:image:height" content="1260" />
+    <meta property="og:image:alt" content="Deep Time — the whole history of Earth, at true scale." />
     <meta property="og:url" content="https://deeptime.dustincoledata.com/" />
     <meta name="twitter:card" content="summary_large_image" />
   </head>
@@ -116,6 +120,14 @@ const nf = (n: number) => n.toLocaleString('en-US');
           <li>One pixel is {nf(YEARS_PER_PX)} years.</li>
           <li>The scale never changes.</li>
           <li>Humans appear in the last 175 of them.</li>
+          {/* THE LEGEND, and it rides IN the list on purpose. The clock is
+              already on the glass while this frame is held, reading "4.60 Ga"
+              at a visitor who has never met the notation, and every arrival
+              card downstream is dated in Ma — so the units get said once, here,
+              before the scroll starts. A separate paragraph cost 210 px at
+              1440×900/200%, where the intro has none to spare; as a list item
+              it costs 130. */}
+          <li class="key"><b>Ga</b> = billions of years ago. <b>Ma</b> = millions.</li>
         </ul>
         <p class="scroll">scroll</p>
       </div>
@@ -440,8 +452,15 @@ const nf = (n: number) => n.toLocaleString('en-US');
   .js .ar.no-line .s { display: none; }
 
   /* ---------- the intro: a held frame ---------- */
+  /* `safe` centring, not plain centring. At an enlarged text scale this block is
+     taller than the box that holds it, and the SPEC default for a centred
+     overflow is "unsafe" — spill off both ends, which loses the wordmark before
+     anyone has read it. Chromium already clamps the start edge here (measured
+     2026-08-07: identical geometry either way), so this changes nothing today;
+     it is written down so the guarantee does not depend on that being true of
+     every engine. No effect at any scale where the frame fits. */
   .js #intro {
-    position: fixed; inset: 0; z-index: 4; display: grid; place-items: center;
+    position: fixed; inset: 0; z-index: 4; display: grid; place-items: safe center;
     pointer-events: none; padding: 6vw;
   }
   #intro .in { max-width: 30rem; }
@@ -451,11 +470,15 @@ const nf = (n: number) => n.toLocaleString('en-US');
   }
   #intro .thesis { margin: 1.4em 0 0; font-size: clamp(14px, 1.6vw, 18px); opacity: 0.92; }
   #intro .facts {
-    list-style: none; margin: 2.6em 0 0; padding: 0; display: grid; gap: 0.5em;
+    list-style: none; margin: 2.1em 0 0; padding: 0; display: grid; gap: 0.45em;
     font-size: clamp(13px, 1.4vw, 16px); opacity: 0.82;
   }
+  /* The one item in the list that is a key, not a claim: same rhythm, half a
+     step back so it reads as the footnote it is. */
+  #intro .key { margin-top: 0.5em; opacity: 0.66; }
+  #intro .key b { font-weight: 650; opacity: 0.85; }
   #intro .scroll {
-    margin: 3.4em 0 0; font-size: 10px; letter-spacing: 0.34em;
+    margin: 2.4em 0 0; font-size: 10px; letter-spacing: 0.34em;
     text-transform: uppercase; opacity: 0.45;
   }
 

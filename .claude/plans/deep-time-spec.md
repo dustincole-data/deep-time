@@ -377,6 +377,21 @@ Precambrian px: 101530 of 115000 = 88.29%
 
 The principle, for anything added later: **where there is nothing real to paint, say the words instead of painting a fake.**
 
+### The gloss — the page defines every word it uses
+
+> **ADDED 2026-08-08, on Dustin's call: *"You are just throwing science words out there and nobody knows what they are."*** Named subjects were being stated and never defined — craton, cap carbonate, the Marinoan, the Ediacaran, *Charnia*, *Grypania*, Francevillian, *Bangiomorpha*, stromatolite, banded iron, Rodinia, *Anomalocaris*. **Define the word. Never dodge it by deleting the word.** A proper noun must be followed immediately by what kind of thing it is — *the Pongola glaciation* already passes, *the Marinoan* did not.
+
+**Two carriers, and which one applies is decided by the surface the term appears on.**
+
+- **A term inside the description line is defined inside that line** — no new element, and free where the line has room. Measured: a line carries a **median 32 spare characters** before its block gains a row, and **all twelve rewrites add nothing at 100 % text**. Five gain a row at 200 % (`oldest-rock` · `first-trace-of-life` · `photosynthesis` · `ice-breaks-for-good` · `first-primates`).
+- **A term inside the NAME gets a why-note, because [§5](#5--the-no-collision-layout-contract) drops the line on a phone and the name is then the whole card.** Fifteen: stromatolites · cyanobacteria · banded iron ×2 · Huronian · Francevillian · *Grypania* · Rodinia · *Charnia* · Burgess Shale · *Cooksonia* · *Tiktaalik* · *Dimetrodon* · *Archaeopteryx* · Chicxulub. `why` goes 8 → 23. Chicxulub is the case that names the rule: its line is the punchline (*"Everything larger than a badger dies."*) and never says what Chicxulub is, so on a phone that card was the single word.
+
+**The ruling that the note goes on the confusing subjects and not all 51 is KEPT, and its cost is now measured rather than estimated.** It was written against a ~12 % picture cost. A note actually costs **−24 % of the drawn subject at 1440×900/100 % and −17 % on a phone**, and putting one on all 51 takes `art dropped` from **8 → 28 of 51 at 1440×900/200 %** and **4 → 28 at 390×780/200 %**. Scoped to the fifteen: the other 36 cards are bit-identical to what shipped, **no viewport loses a picture at 100 % text**, and the whole cost is **+3 at each desktop 200 % variant and zero on either phone** (`art dropped` 8 → 11 · 8 → 11 · 4 → 4 · 4 → 4).
+
+**A note is 52 plain characters, and that is a budget, not a preference.** What costs is the rendered row, not the character. On the 616 px desktop column a note is a flat **36 px up to ~75 characters**; on the 321 px phone column — the viewport it exists for — it is **32 px to ~52 and 53 px past it**, and at 200 % it steps again at ~28. Write to 52: under ~40 the row is already paid for and the space is wasted, over 52 the phone pays twice for prose the desktop got free.
+
+**A note says what the thing IS. It does not restate the line.** The eight original notes explain a *picture* (*"There is no ocean yet, and no air to be blue"*); these fifteen explain a *word*. One field, two jobs, chosen per card. No card needs both today; the first that does is Dustin's call, not a default.
+
 ### The hedge — the field matches the kind of doubt
 
 Fourteen dates are contested. A hedging clause in all fourteen was rejected: it makes the page sound unsure, it cannot reach mobile, and it cannot reach the one ⚠ that has no line at all (*Fire, 800 ka*, one of the withheld ten).

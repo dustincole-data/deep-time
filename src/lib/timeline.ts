@@ -28,6 +28,21 @@ export interface Arrival {
   name: string | null;
   /** Desktop description line — enrichment, never load-bearing (§8). For an F, this is the whisper. */
   line: string;
+  /**
+   * WHY THE PICTURE LOOKS LIKE THAT — present only where it has to be (Dustin,
+   * 2026-08-08). A visitor expects Earth blue and green; it arrives orange. The
+   * six words that close that gap are not enrichment, they are what makes the
+   * image legible at all, so this outranks `line` on the drop ladder and it is
+   * the one piece of prose that reaches a phone (§5 drops `line` there).
+   *
+   * Absent on most arrivals ON PURPOSE — his constraint is "VERY brief, and that
+   * applies to how many subjects get one". A note on a picture nobody misreads
+   * is noise, and it costs that card ~12 % of its picture.
+   *
+   * It states the FACT, never the picture: "The whole surface is molten rock",
+   * not "it looks orange because…".
+   */
+  why?: string;
   art: ArtKind | null;
   /** Set when this subject has already arrived earlier; the id it recurs from (§7). */
   recurrence: string | null;
@@ -98,6 +113,7 @@ export const arrivals: Arrival[] = raw.arrivals.map((a) => ({
   date: a.date,
   name: a.name,
   line: a.line,
+  why: 'why' in a ? (a.why as string) : undefined,
   art: (a.art ?? null) as ArtKind | null,
   recurrence: 'recurrence' in a ? (a.recurrence as string) : null,
   source: a.source,

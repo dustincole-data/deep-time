@@ -255,6 +255,7 @@ function relayout() {
     el.style.height = `${r2.h}px`;
     el.classList.toggle('R', p.right);
     el.classList.toggle('no-line', p.tier !== 'F' && !p.hasLine);
+    el.classList.toggle('no-why', p.tier !== 'F' && !p.hasWhy);
     nodes[i]!.tx.style.marginBottom = `${p.glide}px`;
     nodes[i]!.vis = -1;
   }

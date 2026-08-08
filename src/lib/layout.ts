@@ -210,6 +210,10 @@ export interface Placed {
   hasLine: boolean;
   /** True when ruling A fired: the line would have shown, but the box was too short. */
   lineDroppedToFit: boolean;
+  /** Whether the why-note is rendered here, after ruling A. Always false where there is no `why`. */
+  hasWhy: boolean;
+  /** True when ruling A took the note as well — the second and last rung. */
+  whyDroppedToFit: boolean;
   /** dwell + 2×fade — how long the arrival is on screen at all. */
   onScreenPx: number;
   /** True when contention shortened the fade window (rule 6). */
@@ -632,6 +636,14 @@ function typeScale(vp: Required<Viewport>, mobile: boolean, tier: Tier) {
     } satisfies TypeSpec,
     /** `.s { margin-top: .55em }` */
     lineGap: 0.55 * lineSize * k,
+    /**
+     * `.w { margin-top: .75em }` — the why-note is set in the SAME metrics as
+     * the description line and separated from it by a wider gap and less
+     * opacity, not by a smaller size. §11's 2026-08-04 prominence fix is the
+     * reason: the one thing already rejected on this page is prose that reads
+     * "small and subtle", and the note is the half a visitor most has to read.
+     */
+    whyGap: 0.75 * lineSize * k,
     /** `.rule { height: 1px; margin-bottom: 11px }` — px, and decorative: it does not take text zoom. */
     ruleH: isM ? 12 : 0,
     whisper: {
@@ -662,6 +674,17 @@ export const showsArt = (a: Pick<Arrival, 'art'>, z: Zones): boolean =>
   a.art !== null && !(z.mobile && a.art === 'abstract');
 
 /**
+ * Does this arrival carry a why-note, before ruling A?
+ *
+ * EVERY VIEWPORT, unlike `showsLine` — Dustin's call, 2026-08-08. §5 drops the
+ * description on a phone because a band cannot hold art + name + a line; the
+ * note survives that trade because the phone is the viewport with NO prose at
+ * all, the smallest picture, and therefore the most room to misread it. Most
+ * arrivals have no `why` and this is false for them.
+ */
+export const showsWhy = (a: Pick<Arrival, 'why'>): boolean => !!a.why;
+
+/**
  * The Zones-free core, so `zones()` can size its own grid against the copy deck
  * without needing the grid it is in the middle of computing.
  */
@@ -671,6 +694,7 @@ function textBlockH(
   mobile: boolean,
   availW: number,
   withLine: boolean,
+  withWhy: boolean,
 ): number {
   const f = typeScale(vp, mobile, a.tier);
   if (a.tier === 'F') return blockH(plainText(a.line), f.whisper, availW);
@@ -678,12 +702,19 @@ function textBlockH(
   h += blockH(a.date!, f.date, availW) + f.dateGap;
   h += blockH(plainText(a.name!), f.name, availW);
   if (withLine) h += f.lineGap + blockH(plainText(a.line), f.line, availW);
+  if (withWhy && a.why) h += f.whyGap + blockH(plainText(a.why), f.line, availW);
   return h;
 }
 
 /** Modelled height of one arrival's text block inside a column `availW` wide. */
-export function textHeight(a: Arrival, z: Zones, availW: number, withLine = showsLine(a, z)): number {
-  return textBlockH(a, z.viewport, z.mobile, availW, withLine);
+export function textHeight(
+  a: Arrival,
+  z: Zones,
+  availW: number,
+  withLine = showsLine(a, z),
+  withWhy = showsWhy(a),
+): number {
+  return textBlockH(a, z.viewport, z.mobile, availW, withLine, withWhy);
 }
 
 /* ============================================================================
@@ -1091,9 +1122,11 @@ export function zones(vp: Viewport): Zones {
   const colW = (stageW - gutX * (cols - 1)) / cols;
 
   /* Ruling C — the shortest a card's text can be made is date + name, after the
-     line has already gone (ruling A). If a row of the grid cannot hold even that,
-     the grid loses the row rather than the card losing its box. */
-  const worstCard = Math.max(...CARD_ARRIVALS.map((a) => textBlockH(a, viewport, mobile, colW, false)));
+     line AND the why-note have both gone (ruling A). If a row of the grid cannot
+     hold even that, the grid loses the row rather than the card losing its box. */
+  const worstCard = Math.max(
+    ...CARD_ARRIVALS.map((a) => textBlockH(a, viewport, mobile, colW, false, false)),
+  );
   const bandFor = (stageH: number, rows: number) => (stageH - t.gutY * (rows - 1)) / rows;
   const holds = (stageH: number, rows: number) => {
     const bh = bandFor(stageH, rows);
@@ -1242,6 +1275,8 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
       hasArt: false,
       hasLine: false,
       lineDroppedToFit: false,
+      hasWhy: false,
+      whyDroppedToFit: false,
       onScreenPx: 0,
       shortened: false,
     } satisfies Placed;
@@ -1368,7 +1403,8 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
   for (const it of out) {
     const a = byId.get(it.id)!;
     it.hasLine = it.tier !== 'F' && showsLine(a, z);
-    it.textH = textHeight(a, z, it.rect.w, it.hasLine);
+    it.hasWhy = it.tier !== 'F' && showsWhy(a);
+    it.textH = textHeight(a, z, it.rect.w, it.hasLine, it.hasWhy);
 
     /* Ruling A — the line is enrichment, so it is what goes when the box is too
        short for it. Everything a visitor must receive lives in the date or the
@@ -1376,12 +1412,30 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
 
        The budget is the box minus TWICE the glide, not the box: the text is
        bottom-anchored `glide` px off the floor and then travels ±glide, so a
-       block that merely equals the box height still rides out through its top. */
-    if (it.hasLine && it.textH + it.glide * 2 > it.rect.h) {
-      const without = textHeight(a, z, it.rect.w, false);
+       block that merely equals the box height still rides out through its top.
+
+       TWO RUNGS SINCE 2026-08-08, AND THE NOTE OUTRANKS THE LINE. The why-note
+       exists because the picture is unreadable without it — an orange planet
+       where a visitor expects a blue one — so dropping it first would leave the
+       card carrying prose about the milestone beside an image nobody can place.
+       §8 already calls the description "enrichment, never load-bearing" and
+       drops it wholesale on a phone; the note is what §5's mobile trade left the
+       phone without. So: the line goes first, the note only if that is not
+       enough, and date + name still survive both. */
+    const fits = () => it.textH + it.glide * 2 <= it.rect.h;
+    if (!fits() && it.hasLine) {
+      const without = textHeight(a, z, it.rect.w, false, it.hasWhy);
       if (without < it.textH) {
         it.hasLine = false;
         it.lineDroppedToFit = true;
+        it.textH = without;
+      }
+    }
+    if (!fits() && it.hasWhy) {
+      const without = textHeight(a, z, it.rect.w, it.hasLine, false);
+      if (without < it.textH) {
+        it.hasWhy = false;
+        it.whyDroppedToFit = true;
         it.textH = without;
       }
     }

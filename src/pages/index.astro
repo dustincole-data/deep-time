@@ -178,6 +178,7 @@ const nf = (n: number) => n.toLocaleString('en-US');
                 <span class="n" aria-hidden="true" set:html={emphasise(a.name!)} />
                 <span class="sr-only">{spokenName(a.name!)}</span>
                 <span class="s" set:html={emphasise(a.line)} />
+                {a.why && <span class="w" set:html={emphasise(a.why)} />}
               </figcaption>
             </figure>
           ),
@@ -359,6 +360,7 @@ const nf = (n: number) => n.toLocaleString('en-US');
   .ar .d { display: block; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.6; }
   .ar .n { display: block; font-size: 1.35rem; font-weight: 650; letter-spacing: -0.02em; margin: 0.35rem 0; }
   .ar .s { display: block; opacity: 0.75; line-height: 1.55; }
+  .ar .w { display: block; opacity: 0.62; line-height: 1.55; margin-top: 0.5rem; }
   .ar img.art { display: block; max-width: 100%; height: auto; margin-bottom: 0.75rem; border-radius: 3px; }
   #finale { max-width: 34rem; margin: 0 auto; padding: 0 1.25rem 6rem; }
   #leaders { display: none; }
@@ -426,6 +428,18 @@ const nf = (n: number) => n.toLocaleString('en-US');
     opacity: 0.92; margin: 0.55em 0 0;
     text-shadow: 0 1px 9px rgba(0, 0, 0, 0.55);
   }
+  /* WHY THE PICTURE LOOKS LIKE THAT (Dustin, 2026-08-08). Set in the SAME
+     metrics as the description line — `layout.ts`'s `typeScale` reuses the
+     `line` spec for it, so there is no fourth number to keep in sync — and
+     separated from it by a wider gap and less opacity instead. Making it
+     smaller is the mistake §11's 2026-08-04 prominence fix already undid once,
+     and this is the half a visitor most needs to read. It survives on a phone
+     where `.s` does not: the phone has no other prose. */
+  .js .ar .w {
+    display: block; font-size: clamp(14px, 1.15vw, 16px); line-height: 1.5;
+    opacity: 0.78; margin: 0.75em 0 0;
+    text-shadow: 0 1px 9px rgba(0, 0, 0, 0.55);
+  }
   /* An inhabitant is quieter — an arrival, not a milestone. No tick, either.
      Quieter is a RATIO to the milestone, not a licence to go under the band:
      the line was 12px/0.62, which is below §11 outright. */
@@ -433,6 +447,7 @@ const nf = (n: number) => n.toLocaleString('en-US');
   .js .ar.I .n { font-size: clamp(14px, 1.3vw, 18px); font-weight: 600; letter-spacing: -0.008em; }
   .js .ar.I .d { font-size: 9.5px; opacity: 0.72; margin-bottom: 0.3em; }
   .js .ar.I .s { font-size: 13.5px; opacity: 0.82; }
+  .js .ar.I .w { font-size: 13.5px; opacity: 0.7; }
   /* A field whisper: one line in its own band. No art, no card, no tick. */
   .js .ar.F { align-items: center; justify-content: center; }
   .js .ar.F .tx { text-align: center; }
@@ -444,6 +459,7 @@ const nf = (n: number) => n.toLocaleString('en-US');
   /* layout.ts decides this, not a media query — so the gate and the DOM agree by
      construction. The line is enrichment, and it is what goes when a box is short. */
   .js .ar.no-line .s { display: none; }
+  .js .ar.no-why .w { display: none; }
 
   /* ---------- the intro: a held frame ---------- */
   /* `safe` centring, not plain centring. At an enlarged text scale this block is

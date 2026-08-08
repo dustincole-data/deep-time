@@ -1361,11 +1361,30 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
     owner[chosen] = it;
   }
 
-  // Whispers share one band, so they queue against each other and nothing else.
+  /* Whispers share one band, so they queue against each other — AND against a
+     portrait, which is the only other thing that can be inside their band.
+
+     A PORTRAIT OWNS THE WHISPER BAND TOO (§11 rule 3, "nothing else may be on
+     stage with it"). The band runs across the top of the stage and the stage IS
+     a portrait's rect, so a whisper still lit under a portrait is a box drawn
+     inside a box. The card ladder above cannot see it: a whisper never enters
+     `freeAt`, because until now it queued against nothing but its own kind.
+
+     Latent, and found the day it fired — 2026-08-08, when `liquid-water` was
+     promoted to a portrait 1,150 px after the Moon whisper: 19 overlaps at both
+     desktop viewports, none at either phone (a phone's fade is shorter, so the
+     two windows never met). The other nine portraits are untouched by this loop;
+     no whisper is near enough to any of them to be reached.
+
+     Same ladder and the same direction as everywhere else — the later arrival
+     keeps its window, the earlier one gives up screen time. Every write here is
+     monotone (`Math.min`, `yieldTo`), so a window can only shrink: the card
+     loop's `freeAt` bookkeeping above stays true, and a portrait yielding a tail
+     here cannot put it back on the stage with a card. */
   let wFree = -1e9;
   let wOwner: Placed | null = null;
-  for (const it of out.filter((p) => p.tier === 'F')) {
-    it.fadeIn = Math.min(z.fade, Math.max(0, it.y - wFree));
+  for (const it of out.filter((p) => p.tier === 'F' || p.portrait)) {
+    it.fadeIn = Math.min(it.fadeIn, Math.max(0, it.y - wFree));
     if (wFree > it.y && wOwner) yieldTo(wOwner, it.y);
     it.onScreenPx = it.dwell + it.fadeIn + it.fadeOut;
     wFree = it.y + it.dwell + it.fadeOut;

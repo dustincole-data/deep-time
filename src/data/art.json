@@ -1,61 +1,61 @@
 {
   "earth-full-size": {
     "file": "/art/earth-full-size.webp",
-    "w": 634,
-    "h": 634,
+    "w": 577,
+    "h": 577,
     "opaque": [
-      0.1546,
-      0.1546,
-      0.7208,
-      0.7256
+      0.1023,
+      0.104,
+      0.7903,
+      0.7972
     ],
     "alt": "a ball of liquid rock, glowing orange-red, brighter yellow-white cracks, a few darker cooling crusts floating on it",
     "halo": {
       "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 3.9,
+    "contrast": 3.91,
     "contrastFullSize": 3.89,
     "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "great-oxidation-begins": {
     "file": "/art/great-oxidation-begins.webp",
-    "w": 634,
-    "h": 634,
+    "w": 557,
+    "h": 557,
     "opaque": [
-      0.142,
-      0.1562,
-      0.7066,
-      0.7129
+      0.1059,
+      0.0969,
+      0.8007,
+      0.8079
     ],
     "alt": "smooth and featureless like Titan, thick orange-tan haze, faint soft banding, no continents or oceans visible",
     "halo": {
       "strength": 0.62,
       "polarity": "light"
     },
-    "contrast": 3.56,
-    "contrastFullSize": 3.56,
+    "contrast": 3.46,
+    "contrastFullSize": 3.46,
     "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
   "snowball-earth": {
     "file": "/art/snowball-earth.webp",
-    "w": 634,
-    "h": 634,
+    "w": 565,
+    "h": 565,
     "opaque": [
-      0.1625,
-      0.1183,
-      0.7082,
-      0.7256
+      0.0991,
+      0.0973,
+      0.7929,
+      0.8106
     ],
     "alt": "ice pole to pole, pale blue-grey fracture lines like cracked porcelain, a few small bare rock patches near the middle",
     "halo": {
       "strength": 0.62,
       "polarity": "dark"
     },
-    "contrast": 5.11,
-    "contrastFullSize": 5.1,
+    "contrast": 5,
+    "contrastFullSize": 4.99,
     "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
@@ -199,46 +199,6 @@
     "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
   },
-  "whiffs-of-oxygen": {
-    "file": "/art/whiffs-of-oxygen.webp",
-    "w": 683,
-    "h": 548,
-    "opaque": [
-      0.0952,
-      0.1131,
-      0.8155,
-      0.7755
-    ],
-    "alt": "a cluster of small bubbles rising off a mat of green scum, like carbonation",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "dark"
-    },
-    "contrast": 4.38,
-    "contrastFullSize": 4.38,
-    "gatedOn": "shipped",
-    "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
-  },
-  "great-oxidation-ends": {
-    "file": "/art/great-oxidation-ends.webp",
-    "w": 680,
-    "h": 596,
-    "opaque": [
-      0.0912,
-      0.104,
-      0.8191,
-      0.7919
-    ],
-    "alt": "a rust-red rock slab seen close, with a crack of open blue sky at the top",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "light"
-    },
-    "contrast": 6.16,
-    "contrastFullSize": 6.16,
-    "gatedOn": "shipped",
-    "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
-  },
   "rodinia": {
     "file": "/art/rodinia.webp",
     "w": 700,
@@ -278,66 +238,6 @@
     "contrastFullSize": 5.51,
     "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
-  },
-  "solar-system": {
-    "file": "/art/solar-system.webp",
-    "w": 621,
-    "h": 572,
-    "opaque": [
-      0.0902,
-      0.0962,
-      0.8213,
-      0.8094
-    ],
-    "alt": "a fist-sized slice of stony meteorite, cut and polished flat: a dark grey matrix studded with a scatter of pale chalky-white, irregular rounded blobs a centimetre or two across",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "light"
-    },
-    "contrast": 6.49,
-    "contrastFullSize": 6.51,
-    "gatedOn": "shipped",
-    "referenceCheckedAgainst": "Allende meteorite CAI specimen photographs — AMNH 4880 (amnh.org); Connelly et al. 2012, *Science*"
-  },
-  "moon-torn-out": {
-    "file": "/art/moon-torn-out.webp",
-    "w": 536,
-    "h": 539,
-    "opaque": [
-      0.0951,
-      0.0909,
-      0.8022,
-      0.8071
-    ],
-    "alt": "a small sphere of molten rock hanging alone against black, dull orange-red overall with brighter cracks of yellow-white light breaking through its surface",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "light"
-    },
-    "contrast": 5.57,
-    "contrastFullSize": 5.58,
-    "gatedOn": "shipped",
-    "referenceCheckedAgainst": "giant-impact hypothesis reconstructions (NASA/SwRI simulation renders); styled to match the molten-Hadean Earth portrait already baked, §11"
-  },
-  "liquid-water": {
-    "file": "/art/liquid-water.webp",
-    "w": 298,
-    "h": 578,
-    "opaque": [
-      0.1745,
-      0.0882,
-      0.6577,
-      0.8253
-    ],
-    "alt": "one tiny gem-like crystal shown much larger than life, reddish-brown and translucent, a slender six-sided prism with pointed pyramidal ends, alone against black",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "light"
-    },
-    "contrast": 5.27,
-    "contrastFullSize": 5.27,
-    "gatedOn": "shipped",
-    "referenceCheckedAgainst": "Jack Hills zircon grain photomicrographs — Cavosie et al. 2018 review figures; Wilde et al. 2001, *Nature*"
   },
   "oldest-surviving-crust": {
     "file": "/art/oldest-surviving-crust.webp",
@@ -459,46 +359,6 @@
     "gatedOn": "shipped",
     "referenceCheckedAgainst": "pāhoehoe basalt crust photographs; Siberian Traps flood basalt specimens; Burgess et al. 2014, *PNAS*"
   },
-  "first-trace-of-life": {
-    "file": "/art/first-trace-of-life.webp",
-    "w": 700,
-    "h": 414,
-    "opaque": [
-      0.09,
-      0.1522,
-      0.8214,
-      0.6981
-    ],
-    "alt": "the same pale grey-green layered rock as the Isua sediment beside it on this page — a cool sage grey-green overall, with no warm buff or brown in it — scattered with dull mid-grey graphite flecks — short angular slivers and smears lying along the layering, like pencil lead rubbed into stone, never round bubbles or holes",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "light"
-    },
-    "contrast": 3.23,
-    "contrastFullSize": 3.73,
-    "gatedOn": "shipped",
-    "referenceCheckedAgainst": "Isua metasediment graphite-inclusion specimen photographs (same locality as the oldest sedimentary rocks); Rosing 1999, *Science*; Ohtomo et al. 2014"
-  },
-  "microbial-mats": {
-    "file": "/art/microbial-mats.webp",
-    "w": 700,
-    "h": 483,
-    "opaque": [
-      0.09,
-      0.1304,
-      0.8214,
-      0.7412
-    ],
-    "alt": "a broad, low, wrinkled sheet lying flat on sediment, like the crumpled skin on cooled paint — a deep olive-green overall, its margins flushed dull pink-purple where the sulfur-bacteria layer beneath shows through, puckered into ridges and shallow domes a few centimetres across",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "light"
-    },
-    "contrast": 6.66,
-    "contrastFullSize": 7.31,
-    "gatedOn": "shipped",
-    "referenceCheckedAgainst": "modern Shark Bay and Sippewissett microbial mat photographs; Noffke et al. 2013, *Astrobiology*"
-  },
   "sulfur-microbes": {
     "file": "/art/sulfur-microbes.webp",
     "w": 695,
@@ -519,46 +379,6 @@
     "gatedOn": "shipped",
     "referenceCheckedAgainst": "Wacey et al. 2011, *Nature Geoscience* — Strelley Pool microfossils; modern sulfur-oxidising bacteria light micrographs"
   },
-  "s2-impact": {
-    "file": "/art/s2-impact.webp",
-    "w": 700,
-    "h": 665,
-    "opaque": [
-      0.09,
-      0.0947,
-      0.8214,
-      0.812
-    ],
-    "alt": "one irregular rock tumbling alone, clearly longer than it is wide like a potato or a peanut rather than a ball, pitted all over with shallow overlapping craters like Phobos, a cool neutral blue-grey throughout with no warm brown or tan in it",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "light"
-    },
-    "contrast": 4.92,
-    "contrastFullSize": 5.53,
-    "gatedOn": "shipped",
-    "referenceCheckedAgainst": "Phobos and Bennu spacecraft imagery; Drabon et al. 2024, *PNAS* — S2 impactor, 37–58 km"
-  },
-  "first-continents": {
-    "file": "/art/first-continents.webp",
-    "w": 700,
-    "h": 678,
-    "opaque": [
-      0.0886,
-      0.0929,
-      0.8229,
-      0.8171
-    ],
-    "alt": "a hand-sized block of coarse granite, dominantly a warm salmon-pink from its large blocky feldspar crystals — angular interlocking grains of clearly different sizes, jammed against one another rather than evenly-spaced round dots — set with glassy grey quartz and small pale mica flecks; the light, buoyant rock continents are made of",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "dark"
-    },
-    "contrast": 4.36,
-    "contrastFullSize": 4.24,
-    "gatedOn": "shipped",
-    "referenceCheckedAgainst": "coarse-grained granite hand-specimen photographs; Hawkesworth et al. 2020"
-  },
   "photosynthesis": {
     "file": "/art/photosynthesis.webp",
     "w": 418,
@@ -578,26 +398,6 @@
     "contrastFullSize": 7.46,
     "gatedOn": "shipped",
     "referenceCheckedAgainst": "modern *Oscillatoria* and *Nostoc* light micrographs; Sánchez-Baracaldo et al. 2021, *Proc. R. Soc. B*"
-  },
-  "first-ice-age": {
-    "file": "/art/first-ice-age.webp",
-    "w": 700,
-    "h": 650,
-    "opaque": [
-      0.0914,
-      0.0969,
-      0.8186,
-      0.8062
-    ],
-    "alt": "a broken block of diamictite the colour of wet slate — sharp-cornered pebbles of many different sizes jammed at all angles into a fine stony matrix, like fruitcake turned to stone — with one flat face bearing straight parallel scratches where ice dragged it across bedrock; the whole rock a cold blue-grey with no warm brown in it",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "light"
-    },
-    "contrast": 4.02,
-    "contrastFullSize": 4.29,
-    "gatedOn": "shipped",
-    "referenceCheckedAgainst": "glacial diamictite and striated pavement specimen photographs; Young et al. 1998; Ojakangas et al. 2014"
   },
   "cyanobacteria-everywhere": {
     "file": "/art/cyanobacteria-everywhere.webp",
@@ -738,46 +538,6 @@
     "contrastFullSize": 6.21,
     "gatedOn": "shipped",
     "referenceCheckedAgainst": "Turner 2021, *Nature* — Little Dal reef vermiform microstructure"
-  },
-  "ice-retreats": {
-    "file": "/art/ice-retreats.webp",
-    "w": 700,
-    "h": 557,
-    "opaque": [
-      0.09,
-      0.1131,
-      0.8214,
-      0.7756
-    ],
-    "alt": "a slab of cool pale grey-cream limestone with a faint blue cast, in fine even layers, its top surface crossed by low rounded parallel ripples like ripples in wet sand, never a zigzag or chevron pattern, sitting sharply on a rougher darker rock beneath — the boundary between the two flat and abrupt; the dominant colour is a cool pale grey-cream, never a warm buff or honey",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "dark"
-    },
-    "contrast": 5.9,
-    "contrastFullSize": 5.56,
-    "gatedOn": "shipped",
-    "referenceCheckedAgainst": "Marinoan and Sturtian cap carbonate outcrop and hand-specimen photographs; Rooney et al. 2015, *Geology*"
-  },
-  "ice-breaks-for-good": {
-    "file": "/art/ice-breaks-for-good.webp",
-    "w": 674,
-    "h": 700,
-    "opaque": [
-      0.0935,
-      0.09,
-      0.8131,
-      0.82
-    ],
-    "alt": "a broken block of dark slate blue-grey glacial diamictite whose top half gives way to smooth even meltwater-laid bedding in pale ice-blue — jumbled sharp-cornered pebbles of all sizes jammed in at every angle below, quiet flat layers above, with a clean line between them",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "dark"
-    },
-    "contrast": 4.55,
-    "contrastFullSize": 4.23,
-    "gatedOn": "shipped",
-    "referenceCheckedAgainst": "Marinoan diamictite–cap carbonate contact specimens; ICS base Ediacaran 635.0 Ma; Wang et al. 2025, *PNAS*"
   },
   "late-ordovician-extinction": {
     "file": "/art/late-ordovician-extinction.webp",
@@ -959,26 +719,6 @@
     "gatedOn": "shipped",
     "referenceCheckedAgainst": "*Archaeopteryx lithographica* Berlin specimen HMN MB.Av.101 and the Thermopolis specimen; Carney et al. 2012, *Nat. Commun.* — melanosome evidence for dark plumage"
   },
-  "plants-reach-land": {
-    "file": "/art/plants-reach-land.webp",
-    "w": 680,
-    "h": 700,
-    "opaque": [
-      0.0926,
-      0.09,
-      0.8162,
-      0.82
-    ],
-    "alt": "a flat microscope slide view of a cryptospore tetrad in transmitted light: four thin-walled circles overlapping in a clover, drawn flat with no volume and no roundness at all, their walls a fine darker amber line that thickens where the four press together, their interiors a pale washed translucent amber you can see straight through, the whole group finely stippled like frosted glass",
-    "halo": {
-      "strength": 0.62,
-      "polarity": "light"
-    },
-    "contrast": 6.11,
-    "contrastFullSize": 6.31,
-    "gatedOn": "shipped",
-    "referenceCheckedAgainst": "Rubinstein et al. 2010, *New Phytol.* — Ordovician cryptospore tetrads"
-  },
   "triassic-jurassic-extinction": {
     "file": "/art/triassic-jurassic-extinction.webp",
     "w": 700,
@@ -1018,6 +758,266 @@
     "contrastFullSize": 5.1,
     "gatedOn": "shipped",
     "referenceCheckedAgainst": "PhyloPic / published reconstructions, §11"
+  },
+  "first-continents": {
+    "file": "/art/first-continents.webp",
+    "w": 700,
+    "h": 700,
+    "opaque": [
+      0.0929,
+      0.0971,
+      0.8143,
+      0.8043
+    ],
+    "alt": "the whole Earth as a complete circular disc seen from space, face-on and lit evenly to its rim, under a thin warm haze: a flat mid-green ocean over almost all of it, with a dozen small patches of bare grey and salmon-pink rock lying flush in it — ragged, irregular coastlines, flat against the surface like countries on a globe",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "light"
+    },
+    "contrast": 6.58,
+    "contrastFullSize": 6.55,
+    "gatedOn": "shipped",
+    "referenceCheckedAgainst": "Archean craton palaeogeographic reconstructions; Hawkesworth et al. 2020"
+  },
+  "liquid-water": {
+    "file": "/art/liquid-water.webp",
+    "w": 700,
+    "h": 700,
+    "opaque": [
+      0.09,
+      0.0914,
+      0.82,
+      0.8157
+    ],
+    "alt": "the whole Earth as a complete circular disc seen from space, face-on and lit evenly to its rim: a cooling crust of mid grey and warm brown broken by a web of glowing orange-yellow cracks, torn sheets of white steam cloud drifting across it, and a scatter of small pools of standing water catching the light between the cracks",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "light"
+    },
+    "contrast": 5.63,
+    "contrastFullSize": 6.25,
+    "gatedOn": "shipped",
+    "referenceCheckedAgainst": "Hadean 'cool early Earth' reconstructions — Valley et al. 2002, *Geology*; Wilde et al. 2001, *Nature*"
+  },
+  "great-oxidation-ends": {
+    "file": "/art/great-oxidation-ends.webp",
+    "w": 700,
+    "h": 700,
+    "opaque": [
+      0.0943,
+      0.0914,
+      0.8129,
+      0.8171
+    ],
+    "alt": "the whole Earth as a complete circular disc seen from space, face-on and lit evenly to its rim, and sharp for the first time with no haze over it: an unbroken mid-green ocean across the whole disc, thin white cloud drawn out in streaks over it, and a bright thin rim of blue atmosphere around the edge",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "light"
+    },
+    "contrast": 10.16,
+    "contrastFullSize": 10.52,
+    "gatedOn": "shipped",
+    "referenceCheckedAgainst": "post-GOE palaeogeographic and atmospheric reconstructions — Poulton et al. 2021, *Nature*; Luo et al. 2016, *Sci. Adv.*"
+  },
+  "ice-retreats": {
+    "file": "/art/ice-retreats.webp",
+    "w": 700,
+    "h": 700,
+    "opaque": [
+      0.0914,
+      0.09,
+      0.8157,
+      0.8186
+    ],
+    "alt": "the whole Earth as a complete circular disc seen from space, face-on and lit evenly to its rim: still almost entirely white ice, but broken open across the middle — a widening band of blue-green meltwater at the equator with pale floes drifting in it, and fracture lines running out of that band into the ice on either side",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "dark"
+    },
+    "contrast": 6.63,
+    "contrastFullSize": 6.15,
+    "gatedOn": "shipped",
+    "referenceCheckedAgainst": "Sturtian deglaciation reconstructions; Rooney et al. 2015, *Geology*"
+  },
+  "ice-breaks-for-good": {
+    "file": "/art/ice-breaks-for-good.webp",
+    "w": 700,
+    "h": 700,
+    "opaque": [
+      0.09,
+      0.0957,
+      0.82,
+      0.8086
+    ],
+    "alt": "the whole Earth as a complete circular disc seen from space, face-on and lit evenly to its rim: open blue ocean across the whole disc, two bright white caps of ice left at the top and the bottom of it, and thin white cloud drawn out across the water",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "light"
+    },
+    "contrast": 4.86,
+    "contrastFullSize": 5.36,
+    "gatedOn": "shipped",
+    "referenceCheckedAgainst": "Marinoan deglaciation and Ediacaran palaeogeographic reconstructions; ICS base Ediacaran 635.0 Ma; Wang et al. 2025, *PNAS*"
+  },
+  "first-ice-age": {
+    "file": "/art/first-ice-age.webp",
+    "w": 700,
+    "h": 700,
+    "opaque": [
+      0.1171,
+      0.1114,
+      0.7643,
+      0.7771
+    ],
+    "alt": "the whole Earth as a complete circular disc seen from space, face-on and lit evenly to its rim, veiled in a thin orange-tan haze that lies over everything: white ice capping the TOP and the BOTTOM of the disc and reaching down and up from them in ragged lobes and tongues, further on one side than the other, and between them a wide open sea of deep green running across the middle with an irregular, uneven edge",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "dark"
+    },
+    "contrast": 5.07,
+    "contrastFullSize": 4.67,
+    "gatedOn": "shipped",
+    "referenceCheckedAgainst": "Pongola glaciation reconstructions — Young et al. 1998; Ojakangas et al. 2014; Archean haze after Zerkle et al. 2012"
+  },
+  "solar-system": {
+    "file": "/art/solar-system.webp",
+    "w": 700,
+    "h": 465,
+    "opaque": [
+      0.0943,
+      0.1355,
+      0.8157,
+      0.729
+    ],
+    "alt": "a young star in a flat ring of dust and ice, seen at a shallow angle so the ring reads as a wide ellipse: a small brilliant white-gold point at the centre, the ring warm cream and pale amber close in, cooling to soft blue-grey at its outer edge, grainy and translucent, with a few faint concentric gaps ploughed through it",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "light"
+    },
+    "contrast": 7.79,
+    "contrastFullSize": 8.9,
+    "gatedOn": "shipped",
+    "referenceCheckedAgainst": "ALMA protoplanetary disc images — HL Tauri (ALMA Partnership 2015, *ApJL*) and TW Hydrae; Connelly et al. 2012, *Science*"
+  },
+  "first-trace-of-life": {
+    "file": "/art/first-trace-of-life.webp",
+    "w": 700,
+    "h": 610,
+    "opaque": [
+      0.0914,
+      0.1049,
+      0.8171,
+      0.7918
+    ],
+    "alt": "the same pale grey-green layered rock as the Isua sediment beside it on this page — a cool sage grey-green overall, with no warm buff or brown in it — holding one clear lens of sooty carbon: a single flattened mid-grey smear, wider than it is tall, lying along the layering near the middle of the slab, its edges feathering out into the stone",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "light"
+    },
+    "contrast": 4.31,
+    "contrastFullSize": 4.63,
+    "gatedOn": "shipped",
+    "referenceCheckedAgainst": "Isua metasediment graphite-inclusion specimen photographs (same locality as the oldest sedimentary rocks); Rosing 1999, *Science*; Ohtomo et al. 2014"
+  },
+  "microbial-mats": {
+    "file": "/art/microbial-mats.webp",
+    "w": 700,
+    "h": 534,
+    "opaque": [
+      0.09,
+      0.118,
+      0.8214,
+      0.7659
+    ],
+    "alt": "a block of microbial mat seen from the side at its cut edge, so the layers show: a wrinkled olive-green skin on top, a band of dull rose-pink under it, and pale grey sediment below that — three flat bands stacked in order, the top one puckered into low ridges",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "light"
+    },
+    "contrast": 3.42,
+    "contrastFullSize": 3.77,
+    "gatedOn": "shipped",
+    "referenceCheckedAgainst": "Sippewissett and Shark Bay microbial mat cross-section photographs; Noffke et al. 2013, *Astrobiology*"
+  },
+  "whiffs-of-oxygen": {
+    "file": "/art/whiffs-of-oxygen.webp",
+    "w": 568,
+    "h": 700,
+    "opaque": [
+      0.1127,
+      0.0914,
+      0.7764,
+      0.8186
+    ],
+    "alt": "a cluster of small round bubbles rising off a mat of green scum — the bubbles silver-white and colourless, each a bright thin rim around a pale near-white centre, like bubbles in a glass of sparkling water, largest at the mat and smaller as they rise",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "dark"
+    },
+    "contrast": 5.98,
+    "contrastFullSize": 5.19,
+    "gatedOn": "shipped",
+    "referenceCheckedAgainst": "photographs of oxygen bubbles on modern cyanobacterial mats; Anbar et al. 2007, *Science*"
+  },
+  "plants-reach-land": {
+    "file": "/art/plants-reach-land.webp",
+    "w": 700,
+    "h": 680,
+    "opaque": [
+      0.0929,
+      0.0941,
+      0.8171,
+      0.8132
+    ],
+    "alt": "a flat microscope slide view of a cryptospore tetrad in transmitted light: FOUR thin-walled circles fused into a two-by-two clover, two above and two below, each touching both of its neighbours — drawn flat with no volume and no roundness at all, their shared walls a fine darker amber line, their interiors a pale washed translucent amber you can see straight through, and the whole outer wall carrying a fine even ornament of tiny bumps and pits like hammered or frosted glass",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "light"
+    },
+    "contrast": 5.39,
+    "contrastFullSize": 5.52,
+    "gatedOn": "shipped",
+    "referenceCheckedAgainst": "Rubinstein et al. 2010, *New Phytol.* — Ordovician cryptospore tetrads"
+  },
+  "moon-torn-out": {
+    "file": "/art/moon-torn-out.webp",
+    "w": 683,
+    "h": 700,
+    "opaque": [
+      0.0922,
+      0.0929,
+      0.8155,
+      0.8143
+    ],
+    "alt": "a small newly-made Moon, lumpy and rough rather than a clean sphere, its crust a mottled dull red-brown split by bright yellow-orange molten seams, with a partial arc of hot debris — separate glowing fragments and dust in orange and pale gold — curving around it and stopping well short of the edges of the picture",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "light"
+    },
+    "contrast": 4.65,
+    "contrastFullSize": 5.17,
+    "gatedOn": "shipped",
+    "referenceCheckedAgainst": "giant-impact simulation renders (Canup 2012, *Science*; NASA/SwRI); Barboni et al. 2017, *Sci. Adv.*"
+  },
+  "s2-impact": {
+    "file": "/art/s2-impact.webp",
+    "w": 700,
+    "h": 619,
+    "opaque": [
+      0.0914,
+      0.1179,
+      0.81,
+      0.7803
+    ],
+    "alt": "the same cratered asteroid in flight — cool neutral blue-grey, clearly longer than it is wide like a potato, pitted all over with shallow overlapping craters — with its leading edge alight: that whole front face glowing white-hot, softening back through yellow and pale apricot into the grey along its flanks, like an iron bar heated at one end",
+    "halo": {
+      "strength": 0.62,
+      "polarity": "light"
+    },
+    "contrast": 6.74,
+    "contrastFullSize": 7.64,
+    "gatedOn": "shipped",
+    "referenceCheckedAgainst": "Phobos and Bennu spacecraft imagery; Drabon et al. 2024, *PNAS* — S2 impactor, 37–58 km"
   },
   "record/gobekli-tepe": {
     "file": "/art/record/gobekli-tepe.webp",
@@ -1387,6 +1387,14 @@
     "licence": "PD",
     "credit": "Library of Congress (photographer not credited; PD-US expired)"
   },
+  "record/march-on-washington": {
+    "file": "/art/record/march-on-washington.webp",
+    "w": 160,
+    "h": 108,
+    "alt": "March on Washington",
+    "licence": "PD",
+    "credit": "Rowland Scherman, U.S. Information Agency / National Archives"
+  },
   "record/trinity-test-fireball": {
     "file": "/art/record/trinity-test-fireball.webp",
     "w": 160,
@@ -1403,30 +1411,6 @@
     "licence": "PD",
     "credit": "U.S. Army (photographer unknown)"
   },
-  "record/sputnik-1-replica": {
-    "file": "/art/record/sputnik-1-replica.webp",
-    "w": 160,
-    "h": 131,
-    "alt": "Sputnik",
-    "licence": "PD",
-    "credit": "NSSDC, NASA"
-  },
-  "record/apollo-11-bootprint": {
-    "file": "/art/record/apollo-11-bootprint.webp",
-    "w": 159,
-    "h": 160,
-    "alt": "Apollo 11",
-    "licence": "PD",
-    "credit": "NASA / Buzz Aldrin"
-  },
-  "record/march-on-washington": {
-    "file": "/art/record/march-on-washington.webp",
-    "w": 160,
-    "h": 108,
-    "alt": "March on Washington",
-    "licence": "PD",
-    "credit": "Rowland Scherman, U.S. Information Agency / National Archives"
-  },
   "record/apollo-soyuz-handshake": {
     "file": "/art/record/apollo-soyuz-handshake.webp",
     "w": 160,
@@ -1435,6 +1419,14 @@
     "licence": "PD",
     "credit": "NASA"
   },
+  "record/sputnik-1-replica": {
+    "file": "/art/record/sputnik-1-replica.webp",
+    "w": 160,
+    "h": 131,
+    "alt": "Sputnik",
+    "licence": "PD",
+    "credit": "NSSDC, NASA"
+  },
   "record/pale-blue-dot": {
     "file": "/art/record/pale-blue-dot.webp",
     "w": 118,
@@ -1442,6 +1434,14 @@
     "alt": "Pale Blue Dot",
     "licence": "PD",
     "credit": "NASA/JPL-Caltech"
+  },
+  "record/apollo-11-bootprint": {
+    "file": "/art/record/apollo-11-bootprint.webp",
+    "w": 159,
+    "h": 160,
+    "alt": "Apollo 11",
+    "licence": "PD",
+    "credit": "NASA / Buzz Aldrin"
   },
   "record/pillars-of-creation": {
     "file": "/art/record/pillars-of-creation.webp",

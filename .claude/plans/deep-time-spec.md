@@ -811,6 +811,14 @@ Required per subject, all three:
 
 ### The four planets
 
+> **TEN SINCE 2026-08-08, on Dustin's call after reviewing all 51 baked subjects.** Six milestones that are *states of the whole planet* were being carried by a specimen of the evidence for them, and a slab of cap carbonate does not say *the ice retreated*. Promoted to `art: 'planet'`: **`liquid-water` · `first-continents` · `first-ice-age` · `great-oxidation-ends` · `ice-retreats` · `ice-breaks-for-good`**. The recipe below is unchanged and now governs ten; the table's four rows are the original four, and the six new ones carry their own `analogy` / `negative` in `timeline.json` like every other subject.
+>
+> **Three things the promotion cost, all measured.**
+>
+> - **Portrait rule 3 reaches the whisper band.** A portrait's rect is the *stage*, and the whisper band sits inside the stage — but whispers queued only against each other, never against a portrait, so `liquid-water` landing 1,150 px after the Moon whisper put a lit whisper inside a portrait's box: **19 collisions at both desktop viewports, none on either phone.** `place()` now queues whispers and portraits on one ladder. Latent since rule 3 was built; the promotion is what fired it.
+> - **The model draws the modern world, and naming the continents does not stop it.** Two consecutive rounds gave `great-oxidation-ends` and `ice-breaks-for-good` recognisable Africa and the Americas — §11's own Chicxulub failure, and a negative listing those continents by name failed the second time. The fix is [the Chicxulub ruling](#the-four-planets) applied earlier: **where land is not the fact, the portrait has no land**, so there is nothing to be wrong about. Only `first-continents`, where the land *is* the fact, still draws any.
+> - **`bake-art.ts` does not trim a planet, so a glow painted outside the disc shrinks the disc.** Two portraits baked with the disc filling 0.54–0.56 of their canvas and drew at 165 and 177 px — *under* the 206 px of the biggest ordinary card, against rule 3's claim that a portrait is the largest thing the page draws. Fixed in the prompt (no aura outside the outline), not in the pipeline; the other eight sit at 0.64–0.78.
+
 Same recipe, one addition and one prohibition:
 
 - **Addition — the subject is the whole Earth as a complete circular disc, seen from space, face-on**, composed centred and square.

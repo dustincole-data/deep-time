@@ -25,6 +25,43 @@ import {
   READABILITY_FLOOR_PX,
   YEARS_PER_PX,
 } from './timeline.ts';
+import artManifest from '../data/art.json' with { type: 'json' };
+
+describe('every arrival that claims art actually has some (§11)', () => {
+  /* THE ONE FAILURE NEITHER GATE COULD SEE — added 2026-08-08, the day it fired.
+     `bake-art.ts` EXCLUDES a subject from art.json when it misses §11's 3:1
+     legibility gate, which is the right outcome: §11 says the art is revised
+     rather than shipped below gate. But nothing downstream noticed the absence.
+     `showsArt` reads `a.art` out of timeline.json, never the manifest, so
+     `layout.ts` goes on reserving the picture's box, `gate:collision` and
+     `gate:browser` go on sweeping that box, and all eight variants stay green
+     while the page ships a card with no picture in it.
+
+     It happened to `ice-retreats` — a PLANET portrait, which §11 rule 3 gives
+     the whole stage — so the failure mode was 600 px of empty stage, reported
+     by nothing. The bake prints a ❌ and moves on; a human reading 61 lines of
+     log is the only thing that was standing between that and a deploy.
+
+     This is the assertion that makes the drop loud. It is deliberately in the
+     DATA gate rather than in the bake: the bake is where the exclusion is
+     decided, and a guard there could only repeat the decision it just made. */
+  const claimsArt = arrivals.filter((a) => a.art !== null);
+
+  it('has a baked entry for all of them', () => {
+    const missing = claimsArt.filter((a) => !(a.id in artManifest)).map((a) => a.id);
+    expect(missing).toEqual([]);
+  });
+
+  it('gives every one of them a real drawing, not an empty record', () => {
+    for (const a of claimsArt) {
+      const e = (artManifest as Record<string, { w: number; h: number; opaque: number[] }>)[a.id];
+      if (!e) continue; // named by the assertion above; not doubled here
+      expect([a.id, e.w > 0 && e.h > 0]).toEqual([a.id, true]);
+      // The subject's own opaque box — a zero-area one is a blank asset.
+      expect([a.id, e.opaque[2]! > 0 && e.opaque[3]! > 0]).toEqual([a.id, true]);
+    }
+  });
+});
 
 describe('the scale mechanic (§2)', () => {
   it('holds 4.60 Ga before INTRO and 0 after the run', () => {
@@ -200,9 +237,15 @@ describe('the verified set (§7)', () => {
     expect(arrivals.filter((a) => a.art === 'abstract').map((a) => a.ma)).toEqual([]);
   });
 
-  it('has exactly the four planet portraits (§11)', () => {
+  it('has exactly the ten planet portraits (§11)', () => {
+    /* FOUR UNTIL 2026-08-08, when Dustin reviewed all 51 baked subjects and
+       ruled six of them promoted: where the milestone IS a state of the whole
+       planet, a specimen of the evidence for it is the wrong picture — a slab of
+       cap carbonate does not say "the ice retreated". The six are `liquid-water`,
+       `first-continents`, `first-ice-age`, `great-oxidation-ends`, `ice-retreats`
+       and `ice-breaks-for-good`; each now shows the Earth in that state. */
     expect(arrivals.filter((a) => a.art === 'planet').map((a) => a.ma)).toEqual([
-      4540, 2430, 717, 66.04,
+      4540, 4404, 3220, 2900, 2430, 2220, 717, 661, 635, 66.04,
     ]);
   });
 

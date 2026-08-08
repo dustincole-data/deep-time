@@ -985,9 +985,21 @@ describe('a planet portrait owns the stage (§5, §11 rule 3)', () => {
      and in `ArtKind`, and `layout.ts` never read it: measured on the shipped
      build, all four drew at 16–36 % of the stage, and Chicxulub — §11's named
      "calibrator for the payoff" — drew at 74.6 px beside a T. rex and a primate. */
-  const PORTRAITS = ['earth-full-size', 'great-oxidation-begins', 'snowball-earth', 'chicxulub'];
+  /* Six more added 2026-08-08 on Dustin's art review — see timeline.test.ts. */
+  const PORTRAITS = [
+    'earth-full-size',
+    'liquid-water',
+    'first-continents',
+    'first-ice-age',
+    'great-oxidation-begins',
+    'great-oxidation-ends',
+    'snowball-earth',
+    'ice-retreats',
+    'ice-breaks-for-good',
+    'chicxulub',
+  ];
 
-  it('marks exactly the four planets, from the data and not from a list', () => {
+  it('marks exactly the planets, from the data and not from a list', () => {
     const z = zones(DESKTOP);
     const seen = place(arrivals, z).filter((p) => p.portrait).map((p) => p.id);
     expect(seen.sort()).toEqual([...PORTRAITS].sort());

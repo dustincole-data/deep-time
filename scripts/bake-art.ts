@@ -184,14 +184,11 @@ const MANIFEST: ManifestEntry[] = [
     quadrants: ['', 'burgess-shale', '', 'antarctica-freezes'],
     isPlanet: false,
   },
-  {
-    // Sheet 5, 2026-07-31, approved batch. 3 of 4 verified; the phytosaur drew
-    // as a modern crocodile — short broad snout, nostrils at the snout tip —
-    // which is the one thing its negative named.
-    file: 'art/source/sheet-05-acid-rain-whiffs-goe-phytosaur.png',
-    quadrants: ['', 'whiffs-of-oxygen', 'great-oxidation-ends', ''],
-    isPlanet: false,
-  },
+  // Sheet 6 is not listed, and sheet 5 stopped being listed on 2026-08-08 for
+  // the same reason: every quadrant either sheet still owned is superseded.
+  // Sheet 5's two were `whiffs-of-oxygen` (redrawn on sheet 43 with clear,
+  // colourless bubbles) and `great-oxidation-ends` (promoted to a planet
+  // portrait on sheet 40). Both are in the history, neither is in the build.
   {
     // Sheet 7, 2026-07-31, approved batch — the second redo of these four.
     // (Sheet 6 is not listed: every one of its quadrants was superseded here,
@@ -214,8 +211,12 @@ const MANIFEST: ManifestEntry[] = [
     // specimen photographs: an Allende-type CAI slice, a freshly-formed
     // molten Moon (styled to match the Earth-full-size portrait), a Jack
     // Hills zircon, and Nuvvuagittuq faux-amphibolite.
+    // Three of its four are superseded 2026-08-08 by Dustin's art review:
+    // `solar-system` and `moon-torn-out` redrawn on sheet 42/44, `liquid-water`
+    // promoted to a planet portrait on sheet 40. Only the crust is still baked
+    // from here.
     file: 'art/source/sheet-08-solarsystem-moon-water-crust.png',
-    quadrants: ['solar-system', 'moon-torn-out', 'liquid-water', 'oldest-surviving-crust'],
+    quadrants: ['', '', '', 'oldest-surviving-crust'],
     isPlanet: false,
   },
   {
@@ -260,13 +261,17 @@ const MANIFEST: ManifestEntry[] = [
     isPlanet: false,
   },
   {
+    // `first-trace-of-life`, `microbial-mats` and `s2-impact` are all superseded
+    // 2026-08-08 (sheets 42 and 46). Only the sulfur microbes are still baked here.
     file: 'art/source/sheet-11-first-trace-of-life-microbial-mats-sulfur-microbes-s2-impact.png',
-    quadrants: ['first-trace-of-life', 'microbial-mats', 'sulfur-microbes', 's2-impact'],
+    quadrants: ['', '', 'sulfur-microbes', ''],
     isPlanet: false,
   },
   {
+    // `first-continents` and `first-ice-age` are superseded 2026-08-08 — both
+    // promoted to planet portraits (sheets 40 and 45).
     file: 'art/source/sheet-12-first-continents-photosynthesis-first-ice-age-cyanobacteria-everywhere.png',
-    quadrants: ['first-continents', 'photosynthesis', 'first-ice-age', 'cyanobacteria-everywhere'],
+    quadrants: ['', 'photosynthesis', '', 'cyanobacteria-everywhere'],
     isPlanet: false,
   },
   {
@@ -276,8 +281,10 @@ const MANIFEST: ManifestEntry[] = [
     isPlanet: false,
   },
   {
+    // `ice-retreats` is superseded 2026-08-08 — promoted to a planet portrait
+    // on sheet 41.
     file: 'art/source/sheet-14-first-complex-cells-sex-first-sponges-ice-retreats.png',
-    quadrants: ['first-complex-cells', 'sex', 'first-sponges', 'ice-retreats'],
+    quadrants: ['first-complex-cells', 'sex', 'first-sponges', ''],
     isPlanet: false,
   },
   {
@@ -286,8 +293,10 @@ const MANIFEST: ManifestEntry[] = [
     // forced by the viewpoint rather than asked for. See NOT_VERIFIED above.
     // plants-reach-land is dropped here and redone on sheet 19 — this round
     // read as fruit, which is what a shaded sphere always reads as.
+    // `ice-breaks-for-good` is superseded 2026-08-08 — promoted to a planet
+    // portrait on sheet 41.
     file: 'art/source/sheet-15-ice-breaks-for-good-plants-reach-land-late-ordovician-extinction-tiktaalik.png',
-    quadrants: ['ice-breaks-for-good', '', 'late-ordovician-extinction', 'tiktaalik'],
+    quadrants: ['', '', 'late-ordovician-extinction', 'tiktaalik'],
     isPlanet: false,
   },
   {
@@ -329,8 +338,11 @@ const MANIFEST: ManifestEntry[] = [
   {
     // Archaeopteryx is now iridescent blue-green rather than a second orange;
     // the phytosaur's quadrant here is dropped for sheet 20 (see below).
+    // `plants-reach-land` is superseded 2026-08-08 — it still read as four egg
+    // yolks, and sheet 43 is the round that fixed it (four, not three; pale
+    // washed amber; ornamented wall; no volume shading at all).
     file: 'art/source/sheet-19-archaeopteryx-triassic-jurassic-extinction-plants-reach-land.png',
-    quadrants: ['archaeopteryx', '', 'plants-reach-land', ''],
+    quadrants: ['archaeopteryx', '', '', ''],
     isPlanet: false,
   },
   {
@@ -355,6 +367,102 @@ const MANIFEST: ManifestEntry[] = [
     file: 'art/source/planet-chicxulub.png',
     quadrants: ['chicxulub'],
     isPlanet: true,
+  },
+  // ---------------------------------------------------------------------
+  // Sheets 40-46, 2026-08-08 — the thirteen regenerations from Dustin's review
+  // of all 51 baked subjects. Six milestones that are STATES OF THE PLANET were
+  // promoted to planet portraits (`art: 'planet'` in timeline.json, so §5's
+  // stage-owning rule and the 600-1,200 px band now apply to them); seven more
+  // were redrawn as subjects because the picture named the wrong thing — the
+  // Solar System as a meteorite slice, the S2 impactor at rest, a spore tetrad
+  // that read as egg yolks.
+  //
+  // Proofed at --quality low first, every prompt corrected against the proof,
+  // and only then run at medium — and the proof round paid for itself three
+  // times over. It caught land drawn as boulders casting shadows on a green
+  // saucer; recognisable Africa, South America and North America on TWO
+  // consecutive planet portraits (§11's named failure, and naming the
+  // continents in the negative did not stop it — the fix was §11's own
+  // Chicxulub ruling, remove the land so there is nothing to be wrong about);
+  // an ice-age portrait with no ice; oxygen bubbles painted the same green as
+  // the mat they rise from; and a spore tetrad with three lobes.
+  //
+  // It also caught what the 3:1 gate structurally cannot see (§11 point 4). A
+  // hole sweep on every proof and every medium round measured the enclosed
+  // transparent area the luminance key would punch out: `s2-impact` ran 1.25 %
+  // → 0.11 % → 0.52 % → 0.70 % across four rounds, because a fibrous flame
+  // plume drawn against black has dark gaps BETWEEN its tongues and no wording
+  // removes them. Deleting the plume did: the glow now sits on the leading face
+  // only — which is what Dustin asked for in the first place — at 0.059 %.
+  {
+    file: 'art/source/sheet-40-liquid-water-first-continents-first-ice-age-great-oxidation-ends.png',
+    /* Only `first-continents` survives from this sheet. `first-ice-age` is
+       redone on sheet 45 — this round put the ice on the left and right of the
+       disc rather than at the poles, so "ice reached the mid-latitudes" stopped
+       being legible. `liquid-water` and `great-oxidation-ends` are redone on
+       sheet 47, for a reason that only shows up after the bake: this file does
+       not trim a planet, so a soft glow painted OUTSIDE the disc inflates the
+       asset and shrinks the disc within it. Both baked with the disc filling
+       0.56 and 0.54 of their canvas and drew at 165 px and 177 px, under the
+       206 px of the biggest ordinary card — and §11 rule 3 makes a portrait the
+       largest thing the page draws. The other four cleared it at 0.64-0.71. */
+    quadrants: ['', 'first-continents', '', ''],
+    isPlanet: true,
+  },
+  {
+    /* Sheet 47 is superseded by 48, which added "the disc is as large as the
+       frame allows" to both prompts. It moved `liquid-water`'s disc from 0.57
+       to 0.64 of its source cell and left `great-oxidation-ends` where it was —
+       which is the finding: that one is not disc-limited, its longer card text
+       eats `availH` before the picture ever gets it. */
+    file: 'art/source/sheet-48-liquid-water-great-oxidation-ends.png',
+    quadrants: ['liquid-water', 'great-oxidation-ends'],
+    isPlanet: true,
+  },
+  {
+    file: 'art/source/sheet-41-ice-retreats-ice-breaks-for-good.png',
+    quadrants: ['ice-retreats', 'ice-breaks-for-good'],
+    isPlanet: true,
+  },
+  {
+    file: 'art/source/sheet-45-first-ice-age.png',
+    /* FOUR ENTRIES, NOT ONE, EVEN THOUGH ONLY ONE IS DRAWN. A one-id entry sets
+       `single` below, which reads the WHOLE file as the subject — correct for
+       `planet-chicxulub.png`, a genuine 1024² single-subject image, and wrong
+       for anything `gen-art.ts` wrote, because that always composites into a
+       2048² 2×2 sheet with the subject in quadrant 0. On the planet path, which
+       deliberately does not trim, `single` would ship the disc at a quarter of
+       its intrinsic size inside a 2048-wide canvas, with a halo solved as a
+       fraction of a subject four times too big. */
+    quadrants: ['first-ice-age', '', '', ''],
+    isPlanet: true,
+  },
+  {
+    file: 'art/source/sheet-42-solar-system-moon-torn-out-first-trace-of-life-microbial-mats.png',
+    // moon-torn-out is dropped here and redone on sheet 44 — this round mottled
+    // the molten crust with dark grey-brown blotches (0.160 % interior holes).
+    quadrants: ['solar-system', '', 'first-trace-of-life', 'microbial-mats'],
+    isPlanet: false,
+  },
+  {
+    file: 'art/source/sheet-43-s2-impact-whiffs-of-oxygen-plants-reach-land.png',
+    // s2-impact is dropped here and redone on sheet 46 — see the plume note above.
+    quadrants: ['', 'whiffs-of-oxygen', 'plants-reach-land'],
+    isPlanet: false,
+  },
+  {
+    file: 'art/source/sheet-44-s2-impact-moon-torn-out.png',
+    // Its s2-impact quadrant is dropped too: this is the 0.70 % round, the worst
+    // of the four. Only the Moon is baked from here.
+    quadrants: ['', 'moon-torn-out'],
+    isPlanet: false,
+  },
+  {
+    file: 'art/source/sheet-46-s2-impact.png',
+    // Four entries for the reason given on sheet 45 — this is a gen-art sheet,
+    // not a single-subject image, so it must take the quadrant path.
+    quadrants: ['s2-impact', '', '', ''],
+    isPlanet: false,
   },
   /* THE WITHHELD TEN's painted art (sheets 29-32, generated 2026-08-02 for
      §7's since-cut finale stamp) is deliberately NOT in this MANIFEST — the
@@ -517,6 +625,50 @@ async function bakeSheetInPage(
     const oy = Math.max(0, minY - pad);
     const w = Math.min(src.width, maxX + pad) - ox;
     const h = Math.min(src.height, maxY + pad) - oy;
+    const out = document.createElement('canvas');
+    out.width = w;
+    out.height = h;
+    out.getContext('2d')!.drawImage(src, ox, oy, w, h, 0, 0, w, h);
+    return out;
+  }
+
+  /**
+   * `trim` for a planet portrait: the same alpha box, squared about its own
+   * centre before the pad, so the asset stays square and the disc stays centred
+   * in it (§11 — "a circle has no aspect ratio", which is why one asset composes
+   * identically at 1440×900 and 390×844). See the call site for why a planet is
+   * trimmed at all now.
+   *
+   * The square is grown, never cropped — taking `max` of the two sides — so no
+   * pixel of the disc is ever cut to make the box square. Where the source has
+   * no room left to grow into, the result is clamped to the source and the disc
+   * keeps every pixel it had, only fractionally off-centre.
+   */
+  function squareTrim(src: HTMLCanvasElement, padFrac: number): HTMLCanvasElement {
+    const x = src.getContext('2d', { willReadFrequently: true })!;
+    const d = x.getImageData(0, 0, src.width, src.height).data;
+    let minX = src.width, minY = src.height, maxX = -1, maxY = -1;
+    for (let y = 0; y < src.height; y++) {
+      for (let px = 0; px < src.width; px++) {
+        if (d[(y * src.width + px) * 4 + 3]! > 8) {
+          if (px < minX) minX = px;
+          if (px > maxX) maxX = px;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+        }
+      }
+    }
+    if (maxX < 0) return src; // fully transparent — nothing keyed
+    const side = Math.max(maxX - minX, maxY - minY) + 1;
+    const pad = Math.round(side * padFrac);
+    const want = side + pad * 2;
+    const cx = (minX + maxX + 1) / 2;
+    const cy = (minY + maxY + 1) / 2;
+    // Centre the square on the disc, then slide it back inside the source.
+    const w = Math.min(want, src.width);
+    const h = Math.min(want, src.height);
+    const ox = Math.round(clamp(cx - w / 2, 0, src.width - w));
+    const oy = Math.round(clamp(cy - h / 2, 0, src.height - h));
     const out = document.createElement('canvas');
     out.width = w;
     out.height = h;
@@ -774,7 +926,31 @@ async function bakeSheetInPage(
       q.getContext('2d')!.drawImage(img, boxes[i]![0], boxes[i]![1], cw, ch, 0, 0, cw, ch);
       const keyed = keyToAlpha(q);
       const isPlanet = args.isPlanetBySubject[id];
-      const subject = isPlanet ? keyed : trim(keyed, 0.02);
+      /* A PLANET IS TRIMMED TOO, TO A SQUARE — changed 2026-08-08.
+         It used to ship the whole keyed cell untrimmed, and that was right when
+         a planet source was a hand-made image whose disc filled its frame
+         (`planet-sheet-01.png`, 512 px cells). It stopped being right the day
+         `gen-art.ts` started producing them: that file asks the model for "at
+         least 12% of the frame empty on every side" and then composites the
+         subject at `FIT = 0.84` of a 1024 cell, so a gen-art planet arrives with
+         a third of its canvas guaranteed empty.
+         That padding is not free. `frame()` solves the SUBJECT to its target and
+         derives the canvas around it (the 2026-08-06 fix), then clamps the
+         CANVAS to the box — so the emptier the canvas, the more the clamp bites
+         and the smaller the disc actually draws. Measured across the ten
+         portraits: discs filled 0.54-0.78 of their asset, and at 1440×900 two of
+         them drew UNDER the biggest ordinary card, against §11 rule 3. On a
+         phone — which that assertion never checked — NINE of the ten did,
+         including three that predate this session. It also made two of Dustin's
+         own rulings incompatible: a portrait carrying a why-note spends a text
+         line on it, and under this padding it could not then reach the size rule
+         3 claims for it.
+         Square, because §11 rests on it: "a circle has no aspect ratio, so the
+         same asset composes identically at 1440×900 and 390×844". The alpha box
+         of a disc is already square within a pixel or two; squaring it about its
+         own centre makes that exact rather than incidental, so a stray speck
+         cannot quietly turn a portrait into a rectangle. */
+      const subject = isPlanet ? squareTrim(keyed, 0.02) : trim(keyed, 0.02);
       const rim = rimLum(subject);
       const fields = args.fieldSamplesBySubject[id] ?? [[20, 20, 25]];
       const solved = solveHalo(subject, fields, args.strength);

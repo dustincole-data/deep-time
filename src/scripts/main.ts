@@ -19,8 +19,8 @@
  *     has already happened once.
  *   - THE BAR FILLS WITH transform: scaleY(), NOT height. Height is layout.
  *   - HUD WRITES ARE GUARDED ON STRING INEQUALITY. The clock changes once every
- *     250 px; the px counter every frame. Guarding removes ~3 of 4 text
- *     relayouts per frame at no cost.
+ *     250 px; the years count every pixel (it steps by YEARS_PER_PX). Guarding
+ *     removes ~3 of 4 text relayouts per frame at no cost.
  *
  * And one rule above all of them (§10): EVERY PIXEL OF MOTION IS BOUGHT WITH A
  * PIXEL OF THE VISITOR'S OWN SCROLL. No layer integrates against `dt`. That
@@ -110,7 +110,7 @@ const textProbe = $('text-probe');
 const hudNum = $('hud-num');
 const hudUnit = $('hud-unit');
 const hudEra = $('hud-era');
-const hudCount = $('hud-count');
+const hudYears = $('hud-years');
 const hudEl = $('hud');
 const barFill = $('bar-fill');
 const barHead = $('bar-head');
@@ -720,9 +720,20 @@ function draw(now: number) {
     hudEra.textContent = era;
     lastEra = era;
   }
-  const count = `${Math.round(clamp(sy - INTRO, 0, RUN)).toLocaleString('en-US')} / ${RUN.toLocaleString('en-US')} px`;
+  /* THE COUNT, WITH EVERY ZERO — 2026-08-09. `#hud-num` says "4.60" and the
+     unit under it says "billion years ago"; this is the same quantity written
+     out, which is the only place on the page a visitor sees the zeros.
+
+     It steps by exactly YEARS_PER_PX, so the last four digits are always 0 —
+     that is the page's true resolution showing, and "1 px = 40,000 years" is
+     the very next line for exactly that reason. `yearsAgo` clamps at 0, so the
+     last pixel of the run reads a flat `0 years` and the arrest lands on it.
+
+     `Math.round` because `yearsAgo` is continuous in a fractional scrollY and
+     a trackpad would otherwise put a stray digit under the zeros. */
+  const count = `${Math.round(years).toLocaleString('en-US')} years`;
   if (count !== lastCount) {
-    hudCount.textContent = count;
+    hudYears.textContent = count;
     lastCount = count;
   }
 

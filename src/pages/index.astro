@@ -35,7 +35,7 @@ import {
 } from '../lib/timeline.ts';
 import art from '../data/art.json' with { type: 'json' };
 
-const { RUN, YEARS_PER_PX, TOTAL } = CONSTANTS;
+const { RUN, YEARS_PER_PX, TOTAL, EARTH_AGE } = CONSTANTS;
 type ArtEntry = (typeof art)[keyof typeof art];
 const artFor = (id: string): ArtEntry | undefined => (art as Record<string, ArtEntry>)[id];
 /** The record register (§11) — baked under its own `record/` key so it can never
@@ -138,8 +138,16 @@ const nf = (n: number) => n.toLocaleString('en-US');
           a label that was always going to be small. */}
       <p id="hud-clock"><b id="hud-num">4.60</b><span id="hud-unit">billion years ago</span></p>
       <p id="hud-era">HADEAN</p>
+      {/* THE COUNT, WITH EVERY ZERO (2026-08-09, Dustin: "somewhere I would
+          like to have a little number that shows the number of years with all
+          of the zeros. It counts down all the way to today"). It replaces the
+          `0 / 115,000 px` readout rather than adding a row, because the HUD's
+          footprint IS the reserved clock rect (§8) and the px counter is the
+          one line the scale bar already says graphically. It sits ABOVE the
+          rate line on purpose: "1 px = 40,000 years" directly beneath is what
+          explains why the last four digits never move. */}
+      <p id="hud-years">{nf(EARTH_AGE)} years</p>
       <p class="rate">1 px = {nf(YEARS_PER_PX)} years</p>
-      <p id="hud-count">0 / {nf(RUN)} px</p>
     </div>
 
     {/* The bar IS the scroll position — that identity is the point, and it is
@@ -529,19 +537,21 @@ const nf = (n: number) => n.toLocaleString('en-US');
   /* The `Modelled` block (moon · day) and its rule were cut 2026-08-07. The
      phone never showed them, and the Moon fact still reaches every visitor as
      the 4,450 Ma whisper. */
-  #hud .rate, #hud-count {
+  #hud .rate, #hud-years {
     font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase;
     opacity: 0.5; line-height: 1.8;
   }
-  /* The rule used to open this gap. `hudHeight` prices it as .rate's own
-     margin, so it is expressed in that element's em and nowhere else. */
-  #hud .rate { margin-top: 1.3em; }
+  /* The rule used to open this gap. `hudHeight` prices it as ONE readout's own
+     margin, so it is expressed in that element's em and nowhere else — and it
+     belongs to whichever of the two comes first, which since 2026-08-09 is the
+     years count rather than the rate. */
+  #hud #hud-years { margin-top: 1.3em; }
   /* RULING F, 2026-08-05 — the lean HUD: clock · era, and nothing under them.
      A phone at 200% wraps all four lines into 343.7px against a 240px zone, and
      these two are what the stage can afford to lose. NOT a media query: a
      text-only zoom moves none of them (§10), so main.ts writes the class from
      layout.ts's `hudLean()` and this rule stays unconditional. */
-  #hud.lean .rate, #hud.lean #hud-count { display: none; }
+  #hud.lean .rate, #hud.lean #hud-years { display: none; }
 
   /* ---------- the true-scale bar: one object, 4.60 Ga to the last frame ---------- */
   .js #bar { position: fixed; z-index: 3; pointer-events: none; }

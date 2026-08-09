@@ -76,6 +76,7 @@
 import {
   arrivals as ALL_ARRIVALS,
   arrivalY,
+  EARTH_AGE,
   eras,
   fanRows,
   FINALE_CFG,
@@ -865,8 +866,16 @@ const HUD_NUM_WIDEST = '4,567';
 const HUD_UNIT_WIDEST = 'million years ago';
 /** index.astro:133, verbatim. */
 const HUD_RATE = `1 px = ${YEARS_PER_PX.toLocaleString('en-US')} years`;
-/** main.ts:641 at the end of the run, which is where both numbers are longest. */
-const HUD_COUNT_WIDEST = `${RUN.toLocaleString('en-US')} / ${RUN.toLocaleString('en-US')} px`;
+/**
+ * The years count, at its widest — which is the FIRST pixel, not the last.
+ *
+ * Replaced `0 / 115,000 px` on 2026-08-09 (Dustin: "a little number that shows
+ * the number of years with all of the zeros"). Same row, so the clock zone and
+ * every rect downstream of it are unmoved — measured identical at all six
+ * gate columns, which is why this was the placement chosen over a new row: one
+ * more readout takes `art dropped` from 11 to 18 of 51 at 1440x900/200 % text.
+ */
+const HUD_YEARS_WIDEST = `${EARTH_AGE.toLocaleString('en-US')} years`;
 
 /** Modelled height of the HUD's own content stack — see index.astro's `#hud` rules. */
 export function hudHeight(vp: Required<Viewport>, mobile: boolean): number {
@@ -918,7 +927,7 @@ export function hudHeight(vp: Required<Viewport>, mobile: boolean): number {
      did not already do without: the phone has never shown either, and the Moon
      fact reaches every visitor as the 4,450 Ma whisper. */
 
-  // .rate, #hud-count { font-weight: 500; letter-spacing: .16em; line-height: 1.8 }
+  // #hud-years, .rate { font-weight: 500; letter-spacing: .16em; line-height: 1.8 }
   // — both dropped by ruling F on a phone at an enlarged scale.
   if (!hudLean(vp, mobile)) {
     const readout: TypeSpec = {
@@ -928,10 +937,10 @@ export function hudHeight(vp: Required<Viewport>, mobile: boolean): number {
       upper: true,
       weight: 1,
     };
-    // .rate { margin-top: 1.3em } — the gap the deleted rule used to hold open,
-    // now expressed in the readout's own em.
+    // #hud-years { margin-top: 1.3em } — the gap the deleted rule used to hold
+    // open, now expressed in the first readout's own em.
     h += 11 * k * 1.3;
-    h += blockH(HUD_RATE, readout, availW) + blockH(HUD_COUNT_WIDEST, readout, availW);
+    h += blockH(HUD_YEARS_WIDEST, readout, availW) + blockH(HUD_RATE, readout, availW);
   }
 
   return h;

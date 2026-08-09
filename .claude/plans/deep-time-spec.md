@@ -511,9 +511,11 @@ The HUD's footprint **is** the clock's reserved rect — every row grows it and 
   moon    2.5× wide
   day     6 hours
   ─────────────────────
+  4,503,000,000 years
   1 px = 40,000 years
-  2,425 / 115,000 px
 ```
+
+**The count carries every zero, and it replaced `2,425 / 115,000 px` rather than adding a row** *(2026-08-09, Dustin: "somewhere I would like to have a little number that shows the number of years with all of the zeros. It counts down all the way to today")*. `yearsAgo()` already ran to exactly **0 at the last pixel of the run**; nothing on the page showed it spelled out. It steps by `YEARS_PER_PX`, so **the last four digits are always zeros** — the page's true resolution showing, which is why the rate line sits directly beneath it. The px counter was the line to spend: the scale bar says position graphically, and the HUD's footprint IS the reserved clock rect, so a new row would have taken `art dropped` from **11 to 18 of 51** at 1440×900/200 % text. Measured, this placement moves no rect at any of the six gate columns.
 
 - **`MODELLED` is a group header, said once.** One row instead of two repetitions of `(modelled)` held for four minutes — and it is *less* ambiguous, scoping exactly the two numbers under it.
 - **Mobile drops the modelled block**, leaving clock · era · scale reminder. Nothing is lost: the Moon fact reaches the phone as the 4,450 Ma whisper.

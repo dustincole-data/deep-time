@@ -24,6 +24,8 @@
 import { arrivals, CONSTANTS, finaleBeats, flood, milestoneY } from '../src/lib/timeline.ts';
 import {
   ART_MIN_DRAWN,
+  ART_SIZE_SHORTFALL_MAX,
+  ART_SIZE_SHORTFALL_MIN,
   blip,
   contains,
   fan,
@@ -439,29 +441,51 @@ function run(vp: Viewport): Result {
      size and §10 rules that text costs art. Rule 2's constants are a cap, so
      enlarged text degrades exactly as it did before they existed. */
   if ((vp.textScale ?? 1) === 1) {
-    const byTier: Record<string, number[]> = { M: [], I: [] };
+    const subjects: { id: string; tier: string; s: number; target: number }[] = [];
     const portraits: number[] = [];
     for (const [id, s] of drawn) {
       const p = placed.find((q) => q.id === id)!;
       if (p.portrait) portraits.push(s);
-      else byTier[p.tier]?.push(s);
+      else subjects.push({ id, tier: p.tier, s, target: p.artTarget });
     }
+    /* THE SHORTFALL CAP, 2026-08-09. Rule 2 used to demand that every subject
+       draw at its tier's size, which handed the page's size to its single
+       worst-shaped asset — `sex`, a 0.4 aspect, capping 1440×900 at 138.9 px
+       while its card had 330 px of height going spare. At most
+       ART_SIZE_SHORTFALL_MAX may now fall short, and each of those is held to
+       ART_SIZE_SHORTFALL_MIN of its tier so the licence cannot widen. */
+    const short = subjects.filter((d) => Number.isFinite(d.target) && d.s < d.target - 1e-6);
+    for (const d of short) {
+      if (d.s / d.target < ART_SIZE_SHORTFALL_MIN)
+        fail(
+          'rule 2 — a tier draws at more than one size',
+          `${d.id} draws ${r2(d.s)}px, only ${r2((d.s / d.target) * 100)}% of its tier's ${r2(d.target)}px`,
+        );
+    }
+    if (short.length > ART_SIZE_SHORTFALL_MAX)
+      fail(
+        'rule 2 — a tier draws at more than one size',
+        `${short.length} subjects fall short of their tier size, cap is ${ART_SIZE_SHORTFALL_MAX} — ` +
+          short.map((d) => `${d.id} ${r2((d.s / d.target) * 100)}%`).join(', '),
+      );
     for (const t of ['M', 'I'] as const) {
-      const a = byTier[t]!;
+      // Only the ones that REACH the size have to agree with each other.
+      const a = subjects.filter((d) => d.tier === t && d.s >= d.target - 1e-6).map((d) => d.s);
       if (a.length < 2) continue;
       const [lo, hi] = [Math.min(...a), Math.max(...a)];
       if (hi - lo > 1e-6)
         fail(
           'rule 2 — a tier draws at more than one size',
-          `tier ${t}: ${a.length} subjects spanning ${r2(lo)}–${r2(hi)}px (${r2(hi - lo)}px apart)`,
+          `tier ${t}: ${a.length} subjects at full size spanning ${r2(lo)}–${r2(hi)}px (${r2(hi - lo)}px apart)`,
         );
     }
-    const subjects = [...byTier.M!, ...byTier.I!];
     if (subjects.length && portraits.length) {
-      const [biggest, smallestPortrait] = [Math.max(...subjects), Math.min(...portraits)];
-      // §11 rule 1 — and by a margin that READS. It was 1.07× before rule 2, which
-      // is true and invisible; one size for the subjects puts it at 1.59×.
-      if (smallestPortrait / biggest < 1.4)
+      const [biggest, smallestPortrait] = [Math.max(...subjects.map((d) => d.s)), Math.min(...portraits)];
+      /* §11 rule 1 — and by a margin that READS. It was 1.07× before rule 2 and
+         1.59× after; letting the subjects grow 37 % on 2026-08-09 spends part of
+         that back, measured at 1.4 / 1.4 / 1.3 across the gate viewports. 1.25 is
+         the floor Dustin's ruling leaves, not a number chosen for comfort. */
+      if (smallestPortrait / biggest < 1.25)
         fail(
           'rule 1 — a subject outdraws a portrait',
           `the smallest portrait draws ${r2(smallestPortrait)}px against a ${r2(biggest)}px subject — a ${r2(smallestPortrait / biggest)}× lead`,

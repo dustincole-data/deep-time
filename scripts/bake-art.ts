@@ -124,8 +124,25 @@ interface ManifestEntry {
  * asks for a 481 px intrinsic at worst and 288 px at the median. 700 leaves
  * every subject ≥ 1.46× that, and leaves the tightest-contrast subject in the
  * set (Cooksonia, 3.44:1 at 590 px) untouched.
+ *
+ * **700 → 620, 2026-08-09, and it is a consequence of `padOf` rather than a new
+ * opinion.** The cap is on the CANVAS, and the canvas used to be 24 % empty
+ * margin: at 700 a subject's own long edge came out at 700/1.24 ≈ **565 px**. At
+ * a 0.05 pad the same 700 would carry 700/1.10 ≈ 636 px of artwork — so holding
+ * the cap would have quietly bought 13 % more resolution on every one of the 51
+ * and pushed transfer to **4.00 MB, over §12's 3.50 gate**. That is measured,
+ * not projected: it is what the first re-bake printed, and 640 then printed
+ * 3.60. 620 puts the subject back at 620/1.10 ≈ **564 px — within a pixel of the
+ * 565 that is live today**, so this is the same artwork at the same detail with
+ * the empty pixels removed, not a quality cut.
+ *
+ * The draw rule still clears. Boxes grew with the pictures, so demand grew too:
+ * swept over the four gate viewports at their real DPR, the largest canvas any
+ * subject is drawn into is now **976 device px** (`sex`, 390×844 at DPR 3)
+ * against a 678 px median. At 620 that worst case is **1.57×** the intrinsic,
+ * inside §12's 2× draw cap, and the median is 1.09×.
  */
-const SCROLL_MAX_EDGE = 700;
+const SCROLL_MAX_EDGE = 620;
 
 /**
  * The record register's cap (§11). These are prints, not cut-outs — no
@@ -711,9 +728,37 @@ async function bakeSheetInPage(
     return n ? s / n : 0.5;
   }
 
-  /** The pad the halo is composited into, both when measured and when baked. */
+  /**
+   * The pad the halo is composited into, both when measured and when baked.
+   *
+   * **0.12 → 0.05, 2026-08-09, and it is the whole of "make the smaller ones
+   * bigger" (Dustin).** Nothing about the layout was capping the pictures: at
+   * 1440×900 a card has 270–330 px of available height and the tightest subject
+   * still drew at 138.9. The cap was here.
+   *
+   * The pad is a fraction of the **long** edge and is added on all four sides,
+   * so a subject that is not square pays for its long axis on its short one.
+   * `sex` is the extreme: a 0.4 aspect, so 12 % of its height is ~30 % of its
+   * width on each side, and its opaque box fell to 0.4 of its canvas. `frame()`
+   * solves the SUBJECT to a target and derives the canvas around it, then clamps
+   * the CANVAS to the box — so every px of empty margin is a px the subject does
+   * not get. It bound every viewport.
+   *
+   * **What the ring actually reaches**, from `haloRings` below: the outer ring
+   * offsets by `S × 0.016` and is then blurred at `S × 0.008`, so ~3σ of falloff
+   * puts the last visible pixel near **`S × 0.04`**. 0.12 was three times that.
+   * 0.05 keeps a 25 % margin over the reach and is still measured, not assumed —
+   * the 3:1 boundary gate re-runs on every baked asset and fails the build if a
+   * clipped ring costs any subject its contrast.
+   *
+   * Measured after: the subjects' size constant goes **138.9 → 156.6** at
+   * 1440×900, 137.0 → 154.4 at 390×844, 122.6 → 138.2 at 390×780 (+12.7 %
+   * everywhere, portraits included), and mean canvas area falls to **76 %** of
+   * what it was — this makes the pictures bigger and the download smaller at the
+   * same time, because both were paying for the same empty pixels.
+   */
   function padOf(src: HTMLCanvasElement): number {
-    return Math.round(Math.max(src.width, src.height) * 0.12);
+    return Math.round(Math.max(src.width, src.height) * 0.05);
   }
 
   /**

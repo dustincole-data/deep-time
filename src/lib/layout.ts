@@ -457,6 +457,37 @@ const ART_TEXT_CLEARANCE = 14;
 const ART_SIZE_FRAC_I = 0.85;
 /** §5 rule 3's lanes, in the order Dustin named them: "left, right, and center". */
 const LANE_CYCLE = [0, 2, 1] as const;
+/**
+ * How many subjects rule 2 may leave BELOW their tier's size — Dustin, 2026-08-09,
+ * on *"need to make all the smaller ones bigger on web and mobile."*
+ *
+ * Rule 2 shipped as "the largest size EVERY subject can hold", which hands the
+ * whole page's size to its single worst-shaped asset. That is `sex` at every
+ * viewport: a 0.4 aspect, and **apparent size is `√(w × h)`**, so a sliver simply
+ * cannot be large in a bounded box however much room it is given — at 1440×900 it
+ * had 330 px of available height and still capped the page at 138.9.
+ *
+ * Letting the two tightest fall short lifts everyone else **138.9 → 191.1** at
+ * 1440×900, 137.0 → 182.0 at 390×844, 122.6 → 167.8 at 390×780. The two that
+ * fall short are still **larger than the uniform size was** (nothing on the page
+ * gets smaller), and the shortfall is gated: `layout.test.ts` holds a short
+ * subject at ≥0.78 of its tier's size, so "a couple are slightly smaller" can
+ * never quietly become "the spread is back".
+ *
+ * 2, not 1: at 1440×900 the second-tightest is within 1.1 px of the third, so a
+ * cap of 1 buys 190.0 where 2 buys 191.1 and calls one of a matched pair short
+ * for a difference nobody can see. The phones genuinely need both.
+ */
+export const ART_SIZE_SHORTFALL_MAX = 2;
+/**
+ * The least a short subject may draw, as a fraction of its tier's size.
+ *
+ * The companion to the cap above and the reason "a couple are slightly smaller"
+ * cannot quietly decay into "the spread is back". Measured at 100 % text across
+ * the four gate viewports, the worst is `sex` at **0.82**; 0.78 leaves that a
+ * margin without leaving room for a genuinely tiny picture to hide.
+ */
+export const ART_SIZE_SHORTFALL_MIN = 0.78;
 
 const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v);
 const smooth = (e0: number, e1: number, x: number) => {
@@ -1635,16 +1666,23 @@ export function place(
  * one that is not drawn.
  */
 function uniformTarget(placed: Placed[], artMetrics: Record<string, ArtMetric>): number {
-  let u = Infinity;
+  const permitted: number[] = [];
   for (const p of placed) {
     if (p.tier === 'F' || p.portrait || !p.hasArt) continue;
     const m = artMetrics[p.id] ?? FULL_BLEED;
     const k = Math.sqrt((m.aspect * m.fill[2]) / m.fill[3]);
     const holds = Math.min(p.availH * k * m.fill[3], (p.rect.w * m.fill[2]) / k);
     if (holds < ART_MIN_DRAWN) continue;
-    u = Math.min(u, holds / (p.tier === 'M' ? 1 : ART_SIZE_FRAC_I));
+    permitted.push(holds / (p.tier === 'M' ? 1 : ART_SIZE_FRAC_I));
   }
-  return u;
+  if (!permitted.length) return Infinity;
+  /* THE (K+1)TH TIGHTEST, NOT THE TIGHTEST — 2026-08-09. Taking the minimum
+     hands the whole page's size to its single worst-shaped asset; see
+     ART_SIZE_SHORTFALL_MAX. The K it skips are not dropped, they are CLAMPED:
+     `frame()`'s `fit` still holds each of them to what its own box allows, so a
+     short subject draws as large as it can rather than not at all. */
+  permitted.sort((a, b) => a - b);
+  return permitted[Math.min(ART_SIZE_SHORTFALL_MAX, permitted.length - 1)]!;
 }
 
 /* ============================================================================

@@ -201,6 +201,8 @@ Instrumented, not eyeballed. Before the contract, a sweep of 688 scroll position
 
 The page's smallest picture goes **67.5 → 138.9 px, +106 %**, and the spread within a tier goes **3.1× → 1.0×**. `sex` binds every viewport — a 276×700 canvas at a 0.45 opaque fill, against a second-tightest of 168.5 — so **one asset costs the page 21 %**; the remedy is a tighter trim and it sits inside the open square-trim ruling.
 
+> **These three numbers held for one day. [Ruling I](#ruling-i--the-cap-was-in-the-bake-not-the-layout) supersedes them 2026-08-09; the mechanism is unchanged.**
+
 **The tier split was rendering backwards, and that is why ruling F's version of it is gone.** Measured at 1440×900, 100 % text: milestones 67.5 / **127.1** / 206.3 against inhabitants 80.8 / **143.0** / 187.1 — a median M/I ratio of **0.9**, with 13 of 22 milestones below the inhabitant median and 16 of 19 inhabitants above the milestone median. `ART_H_FRAC_I`'s 1.5× of signal was riding on a `base` that varied 3.1×. Both tiers now solve to a constant, so 0.85 is the whole of the difference and the whole of it is visible. Prominence's other half — the `16 px` vs `13.5 px` line and the `0.84` vs `0.72` date in §11 — was never broken and is untouched.
 
 **Rule 3 — subjects cycle left / right / centre, inside their own column.** `frame()` offered a subject its column's left or right EDGE and nothing else: measured, every ink centre sat at 117–311 px or 1198–1320 px with the whole **380–1054 px middle empty** — ruling E's *"the middle is dead"* one level down. Desktop now has six ink positions where it had two. **A subject's centre is its COLUMN's centre, never the stage's**: a card's box is one column (rule 3 of this section), so stage centre stays a portrait's alone and *"all the global images … always pop up in the middle"* keeps its meaning.
@@ -220,6 +222,33 @@ Nothing crosses the 600 px readability floor that was not already under it. Max 
 **200 % text is unchanged**, and deliberately so. The constants solve at 100 % metrics always — solving from the live layout would let the 200 % squeeze set the size of the 100 % page. At 1440×900/200 % the boxes top out at 147.2 px, so the cap touches one subject and **`art dropped` stays at 11 of 51**. Uniformity is a claim at 100 % text only, the same scoping the picture-floor check already carries.
 
 **Gated.** `gate-collision.ts` gains three assertions, each verified to go red under perturbation: a tier drawing at more than one size, a subject outdrawing a portrait, and the three lanes (including a subject taking stage centre where there is more than one column).
+
+### Ruling I — the cap was in the bake, not the layout
+
+**Added 2026-08-09, on Dustin's call:** *"The planets are a good size on mobile. need to make all the smaller ones bigger on web and mobile."*
+
+**Nothing in the layout was holding the pictures down.** At 1440×900 a card has 270–330 px of available height and the tightest subject still drew at 138.9. The cap was `padOf` in `bake-art.ts`: **12 % of each asset's long edge, added on all four sides**, against a halo ring that reaches ~4 % (`RINGS` offsets by `S × 0.016` and blurs at `S × 0.008`). Three times the margin the thing it exists for needs.
+
+**A subject that is not square pays for its long axis on its short one.** `sex` is the extreme — a 0.4 aspect, so 12 % of its height is ~30 % of its width per side, and its opaque box fell to 0.4 of its canvas. `frame()` derives the canvas from the subject then clamps the *canvas* to the box, so every empty pixel is a pixel the subject does not get.
+
+Two changes, one ruled and one forced by it:
+
+- **`padOf` 0.12 → 0.05.** Still 25 % clear of the ring's reach, and the 3:1 boundary gate re-runs on every asset — all 51 pass, tightest `human-chimp-split` at **3.09:1** (was 3.44 at `cooksonia`; **the thinnest margin in the set and worth watching**).
+- **`SCROLL_MAX_EDGE` 700 → 620**, because the cap is on the canvas. At a 0.05 pad a 700 px canvas carries 636 px of artwork instead of 565, which is 13 % more resolution nobody asked for: measured, that put transfer at **4.00 MB against §12's 3.50 gate**, and 640 at 3.60. 620 puts the subject at **564 px — within a pixel of the 565 that shipped** — so the artwork is unchanged and only the empty pixels are gone.
+
+**And rule 2 stops handing the page's size to its worst-shaped asset.** Apparent size is `√(w × h)`, so a sliver cannot be large in a bounded box however much room it gets — no padding change fixes that, and `sex` would still have capped everyone. `ART_SIZE_SHORTFALL_MAX = 2` subjects may now fall short of their tier's size, each held to `ART_SIZE_SHORTFALL_MIN = 0.78` of it so the licence cannot widen into the spread this rule removed.
+
+| | events | creatures | change | short of it |
+|---|---:|---:|---:|---|
+| 1440×900 · 1920×1080 | **190.7** | **162.1** | +37.3 % | `sex` 156.2 (82 %), `charnia` 190.1 (99.7 %) |
+| 390×844 | **181.5** | **154.3** | +32.5 % | `sex` 154.0 (85 %), `first-complex-cells` 155.9 (86 %) |
+| 390×780 | **167.9** | **142.8** | +36.9 % | `sex` 137.9 (82 %), `first-complex-cells` 155.9 (93 %) |
+
+**Nothing on the page got smaller** — the two that fall short still draw above the uniform size they replaced. **Zero pictures are dropped at 100 % text**, and 200 % is unchanged at 11 / 4 / 4.
+
+**What it spends.** The pad change grows the portraits 12.7 % too (Dustin's call, so a planet still visibly outranks everything), and the subjects' 37 % spends part of ruling H's margin: the portrait lead goes **1.59× → 1.4 / 1.4 / 1.3×**. The gate moves 1.4 → **1.25**, which is the floor this ruling leaves rather than a number chosen for comfort.
+
+**Both budgets improved.** Transfer **3.404 → 3.44 MB** (gate 3.5) and decoded **74.2 → 60.9 MB** (gate 80) — bigger pictures and less memory, because both were paying for the same empty pixels.
 
 ---
 
@@ -989,7 +1018,7 @@ The halo is `0 1px 9px rgba(0,0,0,.55)` — tighter and darker than the name's `
 | Planet singles | **4**, at 1024×1024 |
 | Proofs already spent | 4 generations (3 style sheets + 1 planet sheet) |
 | **Total generations** | **~13**, plus re-rounds for the obscure class and Chicxulub |
-| **Transfer budget** | ≤3.5 MB · **3.27 MB measured 2026-08-04**, with every scroll subject capped at a 700 px long edge ([§12](#12--stack-budget-degradation)) |
+| **Transfer budget** | ≤3.5 MB · **3.44 MB measured 2026-08-09**, with every scroll subject capped at a 620 px long edge ([§12](#12--stack-budget-degradation), [ruling I](#ruling-i--the-cap-was-in-the-bake-not-the-layout)) |
 
 **Added 2026-08-02 — the withheld ten.** [§7](#7-the-verified-set--the-single-source-of-truth)'s revision gives the ten pictures, so the order grows by **ten cut-out subjects**, generated one per call like everything since 2026-08-01. They ship at stamp size (a two-row grid of small cells, [§9](#9--the-finale)), so the 2× draw cap is nowhere near binding and no bigger sheet is needed. Proof at `--quality low` first, fix the prompt against the proof, then `medium` — **Dustin approves the batch before any call is made**, which is [§1](#1--the-thesis-and-the-constraints-that-are-not-negotiable)'s standing rule and not a formality.
 
@@ -1048,7 +1077,7 @@ One honest caveat: absolute fps drifts with whatever else the host machine is do
 
 The decoded figure is the one that matters — a phone dies on resident bitmaps, not on transfer — and at 74.17 MB **the entire art set can simply stay in memory.**
 
-**Both numbers are a consequence of one cap, and they were re-measured 2026-08-04 because they had drifted.** Every scroll subject's baked long edge is capped at **700 px** (`SCROLL_MAX_EDGE`), the withheld ten at 256. The first figures here were **1.45 MB / 36.5 MB**, computed for the 1536×1024 sheet [§14](#14-open-only-at-the-art-gate) decided — which puts a subject at ~700 px. `gen-art.ts` then moved to one subject per call composited at `CELL = 1024`, i.e. a 2048×2048 sheet, which is the right call for style control and yields a **~1,100 px** subject; nothing recomputed this section for it. Uncapped, the finished set measured **5.23 MB transfer and 129.7 MB decoded** — 1.5× and 1.6× over gate.
+**Both numbers are a consequence of one cap, and they were re-measured 2026-08-04 because they had drifted.** Every scroll subject's baked long edge is capped at **620 px** (`SCROLL_MAX_EDGE` — 700 until [ruling I](#ruling-i--the-cap-was-in-the-bake-not-the-layout) cut the halo pad that the cap was mostly paying for), the withheld ten at 256. The first figures here were **1.45 MB / 36.5 MB**, computed for the 1536×1024 sheet [§14](#14-open-only-at-the-art-gate) decided — which puts a subject at ~700 px. `gen-art.ts` then moved to one subject per call composited at `CELL = 1024`, i.e. a 2048×2048 sheet, which is the right call for style control and yields a **~1,100 px** subject; nothing recomputed this section for it. Uncapped, the finished set measured **5.23 MB transfer and 129.7 MB decoded** — 1.5× and 1.6× over gate.
 
 **Two consequences worth stating, because the obvious fix is the wrong one:**
 
@@ -1085,7 +1114,7 @@ The decoded figure is the one that matters — a phone dies on resident bitmaps,
 | 390×780 | 3 | 4.30× | 2.37× | 44 of 50 |
 | 390×844 | 2 | 3.58× | 1.82× | 16 of 50 |
 
-**It is not a wide-monitor problem — it is a register problem.** A phone is over the cap by more than 1440×900 is, because the rule is written in device pixels and a DPR-3 screen triples a CSS box that is itself under 2×. The painted register has no such exposure at any of these: its largest art box is 481 device px against a 700 px intrinsic (`bake-art.ts`), i.e. **0.69×**, never even reaching 1:1.
+**It is not a wide-monitor problem — it is a register problem.** A phone is over the cap by more than 1440×900 is, because the rule is written in device pixels and a DPR-3 screen triples a CSS box that is itself under 2×. The painted register has no such exposure at any of these: its largest art box was 481 device px against a 700 px intrinsic (`bake-art.ts`), i.e. **0.69×**, never even reaching 1:1. **Re-measured 2026-08-09 after ruling I** — the pictures grew ~37 % and the intrinsic fell to 620, so the worst case is now **976 device px** (`sex`, 390×844 at DPR 3) = **1.57×**, still inside the 2× cap, median 1.09×.
 
 **Conformance is affordable at the frozen solve viewport and nowhere else, inside the gate this section calls decisive.** Draw factor scales as `160 / edge` and decoded memory as `edge²`, so the two constraints pull against each other directly:
 
@@ -1107,7 +1136,7 @@ The decoded figure is the one that matters — a phone dies on resident bitmaps,
 |---|---|---|
 | **Frame, phone** | p50 ≤ 16.7 ms · p95 ≤ 20 ms · **zero frames > 50 ms**, full autoscroll at 390×844 / 4× CPU throttle | 16.7 / 16.8 / 0 ✅ |
 | **Frame, desktop** | p95 ≤ 16.7 ms at 1440×900, unthrottled | — |
-| **Art transfer** | ≤ 3.5 MB — **asserted by `bake-art.ts`, which exits non-zero over it** | 3.27 MB ✅ |
+| **Art transfer** | ≤ 3.5 MB — **asserted by `bake-art.ts`, which exits non-zero over it** | **3.44 MB ✅** (2026-08-09; 3.27 before ruling I) |
 | **Art transfer, after the flood** | **≤ 3.5 MB holds** if the withheld ten's now-unreferenced painted art is dropped (projected 3.37); **≤ 3.6 MB** if it is kept (projected 3.52). One open decision, [redesign §9](deep-time-finale-redesign-design.md) | — |
 | **Peak decoded, after the flood** | **≤ 80 MB, unchanged.** ~50 record images at a 160 px long edge cost ~4.2 MB → projected **75.8 MB** with the ten's art dropped, 78.4 kept. The flood does not move the gate that matters | — |
 | **Everything else** | HTML + CSS + JS + fonts ≤ 180 KB gzipped, of which JS ≤ 30 KB | — |

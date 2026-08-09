@@ -25,6 +25,8 @@ import {
   plateCopyRect,
   plateYieldAt,
   plateYielders,
+  ART_SIZE_SHORTFALL_MAX,
+  ART_SIZE_SHORTFALL_MIN,
   sameRect,
   subjectRect,
   showsArt,
@@ -1184,22 +1186,41 @@ describe('every subject draws at one of two sizes (rule 2)', () => {
      ratio left to bound and no band to bound it against. What replaces it is the
      stronger claim, asserted directly. */
 
-  it('draws every subject of a tier at exactly one size, at 100% text', () => {
+  it('draws every subject of a tier at one size, bar the shortfall cap', () => {
     /* The defect in one line: min 67.5 / median 143 / max 206.3 px at 1440×900, a
        3.1× spread, because the size was the box's spare height. After: one number
-       per tier per viewport, 138.9 / 118.1 desktop, 137.0 / 116.4 at 390×844,
-       122.6 / 104.2 at 390×780. Tolerance is a float epsilon, not a band — the
-       point of rule 2 is that these are equal, not close. */
+       per tier per viewport — 190.7 / 162.1 desktop, 181.5 / 154.3 at 390×844,
+       167.9 / 142.8 at 390×780 — with at most ART_SIZE_SHORTFALL_MAX subjects
+       held under it by their own shape (2026-08-09). Tolerance on the ones that
+       DO reach it is a float epsilon, not a band: the point of rule 2 is that
+       they are equal, not close. */
     for (const vp of GATE_VIEWPORTS) {
       const z = zones(vp);
       const P = place(arrivals, z, ART_METRICS);
+      const subs = P.filter((p) => p.hasArt && !p.portrait).map((p) => ({
+        id: p.id, tier: p.tier, s: apparent(P, p.id, p.y), t: p.artTarget,
+      }));
+      const short = subs.filter((d) => d.s < d.t - 1e-6);
+      expect([vp.w, short.length <= ART_SIZE_SHORTFALL_MAX]).toEqual([vp.w, true]);
       for (const tier of ['M', 'I'] as const) {
-        const drawn = P.filter((p) => p.hasArt && !p.portrait && p.tier === tier).map((p) =>
-          apparent(P, p.id, p.y),
-        );
-        if (drawn.length < 2) continue;
-        const spread = Math.max(...drawn) - Math.min(...drawn);
-        expect([vp.w, tier, spread < 1e-6]).toEqual([vp.w, tier, true]);
+        const full = subs.filter((d) => d.tier === tier && d.s >= d.t - 1e-6).map((d) => d.s);
+        if (full.length < 2) continue;
+        expect([vp.w, tier, Math.max(...full) - Math.min(...full) < 1e-6]).toEqual([vp.w, tier, true]);
+      }
+    }
+  });
+
+  it('bounds how far a short subject may fall behind its tier', () => {
+    /* Without this, "let the two worst-shaped ones clamp" is an open door: a
+       future asset with a wilder aspect would sail through the cap above while
+       drawing at a third the size of everything else — which is the original
+       complaint wearing a licence. Worst measured is `sex` at 0.82. */
+    for (const vp of GATE_VIEWPORTS) {
+      const z = zones(vp);
+      const P = place(arrivals, z, ART_METRICS);
+      for (const p of P.filter((x) => x.hasArt && !x.portrait)) {
+        const ratio = apparent(P, p.id, p.y) / p.artTarget;
+        expect([vp.w, p.id, ratio >= ART_SIZE_SHORTFALL_MIN]).toEqual([vp.w, p.id, true]);
       }
     }
   });
@@ -1227,7 +1248,7 @@ describe('every subject draws at one of two sizes (rule 2)', () => {
       const z = zones(vp);
       const P = place(arrivals, z, ART_METRICS);
       const drawn = P.filter((p) => p.hasArt && !p.portrait).map((p) => apparent(P, p.id, p.y));
-      expect([vp.w, Math.min(...drawn) > 100]).toEqual([vp.w, true]);
+      expect([vp.w, Math.min(...drawn) > 130]).toEqual([vp.w, true]);
     }
   });
 
@@ -1240,7 +1261,7 @@ describe('every subject draws at one of two sizes (rule 2)', () => {
       const P = place(arrivals, z, ART_METRICS);
       const subs = P.filter((p) => p.hasArt && !p.portrait).map((p) => apparent(P, p.id, p.y));
       const ports = P.filter((p) => p.portrait).map((p) => apparent(P, p.id, p.y));
-      expect([vp.w, Math.min(...ports) / Math.max(...subs) > 1.4]).toEqual([vp.w, true]);
+      expect([vp.w, Math.min(...ports) / Math.max(...subs) > 1.25]).toEqual([vp.w, true]);
     }
   });
 

@@ -177,13 +177,25 @@ export interface Placed {
   dwell: number;
   /** The nominal half-window, before contention. */
   fade: number;
-  /** The lead-in, after rule 6. Shortened when the slot is still occupied. */
+  /** The lead-in, after rule 6. Shortened when the column is still occupied. */
   fadeIn: number;
-  /** The tail, after rule 6. Shortened when the next arrival needs the slot. */
+  /** The tail, after rule 6. Shortened when the next arrival needs the column. */
   fadeOut: number;
-  /** -1 for a field whisper, which lives in the whisper band and owns no slot. */
+  /**
+   * -1 for a field whisper, which lives in the whisper band and owns no column.
+   *
+   * Since 2026-08-08 this is the index of the card's COLUMN's row-0 slot, which
+   * is the column number itself (`zones` pushes slots row-major, so slot `c` is
+   * `{ col: c, row: 0 }`). Rule 6's ladder queues on columns, so a card never
+   * occupies a row and `z.slots[p.slot].col` is the only thing read off it.
+   */
   slot: number;
-  /** True when nothing shares this card's column inside its window (rule 5). */
+  /**
+   * Rule 5 — a card takes its column's full height. **Always true for a card**
+   * since 2026-08-08: the ladder below guarantees nothing shares the column, so
+   * the condition this used to carry can no longer be false. Kept as a field
+   * because the gate asserts it rather than assuming it.
+   */
   tall: boolean;
   /**
    * §5 / §11 rule 3 — a planet portrait, which owns the WHOLE slot grid for its
@@ -194,17 +206,35 @@ export interface Placed {
   /** THE box. An arrival is this rect and nothing outside it. */
   rect: Rect;
   glide: number;
-  /** True when the card sits in the right-hand column: art anchors right. */
-  right: boolean;
+  /**
+   * RULE 3 — which of the three lanes this arrival's picture and words sit in,
+   * inside its own box: `0` left, `1` centre, `2` right.
+   *
+   * **Dustin, 2026-08-08: "They should alternate left, right, and center."**
+   * Until then a subject was offered its column's left or right EDGE and nothing
+   * else, keyed to which column it landed in — measured, that put every ink
+   * centre at 117–311 px or 1198–1320 px and left the whole 380–1054 px middle
+   * empty. Ruling E's "the middle is dead" one level down.
+   *
+   * A portrait is always `1`, and that is the whole of the fix for "the first
+   * image isnt near the text": a portrait's box is the STAGE, so its disc sits at
+   * x=717 while its left-aligned words start at x=72, **640 px away**. The rect
+   * does not move, so the collision contract is untouched.
+   */
+  lane: 0 | 1 | 2;
   /** Modelled height of the text block as finally rendered. See TEXT. */
   textH: number;
   /** Height left for the art once the text and the glide have taken theirs. */
   availH: number;
   /**
-   * Ruling F's ceiling on the art's apparent size — `Infinity` for a card that
-   * is already in a single band and has nothing to give up.
+   * RULE 2 — the apparent size this arrival's picture is asked to draw at, one
+   * of exactly two values for the whole page (`artTargets`). `Infinity` for a
+   * portrait, which is sized by its box the way §11 rule 3 intends.
+   *
+   * It is a CAP, not a floor: `frame()` still clamps it to what the box holds,
+   * which is what keeps §10 intact at enlarged text.
    */
-  artCeil: number;
+  artTarget: number;
   hasArt: boolean;
   /** Whether the description line is rendered here, after ruling A. */
   hasLine: boolean;
@@ -310,19 +340,11 @@ const MOBILE_FADE_FRAC = 0.2;
 /** §5: the card glides ≤28 px inside its slot. */
 const GLIDE_MAX = 28;
 const GLIDE_FRAC = 0.07;
-/**
- * A BAND CARD'S GLIDE IS THE ONE THING SPENDABLE ON ITS OWN FLOOR — 2026-08-07.
- * `sex` is the fragile case: 276×700 canvas, a 0.45 opaque fill, still `hasArt`
- * at 390×780 but drawing under `ART_MIN_DRAWN` and dropping to nothing (§10's
- * "drop, don't shrink" rule doing exactly its job, on an asset thin enough to
- * hit it). A tall card already has its whole column and 28 px of travel is
- * cheap there; a band card is paying every one of those same px against a
- * availH already halved by its neighbour, so the same fraction costs it more.
- * Shrinking travel ONLY where a card shares its band buys `sex` back over the
- * floor (390×780: 89 → 111 px of availH, the same room 390×844 already gives
- * it) without moving a single tall card's glide, on mobile or desktop.
- */
-const GLIDE_FRAC_BAND = 0.02;
+/* `GLIDE_FRAC_BAND` (0.02) lived here until 2026-08-08 and is gone with the band
+   itself. It existed to buy `sex` back over `ART_MIN_DRAWN` at 390×780 by
+   shrinking travel ONLY where a card shared its band; rule 2's column ladder
+   means no card ever shares a band, so every card now travels at GLIDE_FRAC and
+   the case it was written for cannot arise. */
 /** §5: dwell is gap-adaptive, clamped 150–660 px. */
 const DWELL_OF_GAP = 0.9;
 /**
@@ -413,14 +435,28 @@ export const ART_MIN_H = 46;
 export const ART_MIN_DRAWN = 44;
 /** Breathing room between the art's bottom edge and the top of the text block. */
 const ART_TEXT_CLEARANCE = 14;
-/** An inhabitant's art is quieter: two thirds of the height a milestone would take. */
-const ART_H_FRAC_I = 0.66;
 /**
- * Ruling F — the most a lone card's picture may outgrow the same card drawn
- * inside a single band. The uncapped jump measured 2.9× at the median and 6.9×
- * end to end, which reads as an inconsistency rather than as prominence.
+ * RULE 2 — an inhabitant's picture is quieter than a milestone's, by 0.85.
+ *
+ * **Dustin, 2026-08-08, after this was measured rather than assumed.** The old
+ * number was 0.66 and it multiplied `base` — the box's own spare height — so the
+ * tier's 1.5× of signal rode on a quantity that varied **3.1×**. Measured at
+ * 1440×900, 100 % text, on the shipped build: milestones 67.5 / **127.1** / 206.3
+ * against inhabitants 80.8 / **143.0** / 187.1 — a median M/I ratio of **0.9**,
+ * the difference rendering BACKWARDS, with 13 of 22 milestones below the
+ * inhabitant median and 16 of 19 inhabitants above the milestone median. Ruling F
+ * set the split so tier would read as prominence; box noise twice the size of the
+ * signal is why it never did.
+ *
+ * The fix is not a bigger multiplier, it is a multiplier on something that does
+ * not move: both tiers now solve to a page-wide constant (`artTargets`), so 0.85
+ * is the whole of the difference and the whole of the difference is visible.
+ * Prominence's other half — §11's `16 px` vs `13.5 px` line and `0.84` vs `0.72`
+ * date — was never broken and is untouched.
  */
-const ART_TALL_MAX = 2.2;
+const ART_SIZE_FRAC_I = 0.85;
+/** §5 rule 3's lanes, in the order Dustin named them: "left, right, and center". */
+const LANE_CYCLE = [0, 2, 1] as const;
 
 const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v);
 const smooth = (e0: number, e1: number, x: number) => {
@@ -1241,7 +1277,18 @@ function yieldTo(p: Placed, at: number): void {
   p.onScreenPx = p.dwell + p.fadeIn + p.fadeOut;
 }
 
-export function place(arrivals: Arrival[], z: Zones): Placed[] {
+/**
+ * `artMetrics` arrives for rule 2 and for rule 2 only: the two size constants are
+ * solved from what each subject's box can hold, and what a box can hold depends on
+ * the subject's aspect and its opaque fill. A caller that wants geometry alone —
+ * `bake-art.ts` reads dwell windows — may omit it; every subject then models as a
+ * full-bleed square, which changes the two constants and nothing else.
+ */
+export function place(
+  arrivals: Arrival[],
+  z: Zones,
+  artMetrics: Record<string, ArtMetric> = {},
+): Placed[] {
   const items = arrivals.map((a) => ({ a, y: arrivalY(a) })).sort((p, q) => p.y - q.y);
 
   const out: Placed[] = items.map(({ a, y }, i) => {
@@ -1268,10 +1315,10 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
       portrait,
       rect: z.whisper,
       glide: 0,
-      right: false,
+      lane: 1,
       textH: 0,
       availH: 0,
-      artCeil: Infinity,
+      artTarget: Infinity,
       hasArt: false,
       hasLine: false,
       lineDroppedToFit: false,
@@ -1283,19 +1330,52 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
   });
 
   /* Round-robin with a correctness fallback (rule 6). Where density would put
-     two arrivals in one slot at once, screen-time is given up until they fit.
+     two arrivals in one box at once, screen-time is given up until they fit.
      There is no floor on that shortening.
 
      The ladder, cheapest thing first:
        1. shorten the INCOMING arrival's lead-in;
-       2. if that reaches zero and the slot is still busy, shorten the OUTGOING
+       2. if that reaches zero and the box is still busy, shorten the OUTGOING
           arrival's tail;
        3. if that reaches zero too, cut the outgoing arrival's dwell.
 
      The prototype had step 1 alone, which is sufficient while the grid always has
      a second row to round-robin over. Ruling C can leave a phone with a single
-     slot, and there step 1 by itself lets two cards share one box. */
-  const N = z.slots.length;
+     box, and there step 1 by itself lets two cards share one.
+
+     THE LADDER QUEUES ON COLUMNS, NOT SLOTS — Dustin, 2026-08-08, and it is what
+     buys rule 2. A fixed picture size means a crowded card's box must HOLD that
+     size, and a band is half a column: measured on the shipped build, the largest
+     size every box could hold as placed was **67.5 px — exactly the page's
+     smallest picture**, so uniformity at today's placement means uniformly tiny.
+     Give every card its column instead and the ceiling is 138.9 px desktop,
+     137.0 at 390×844, 122.6 at 390×780.
+
+     This is rule 6 one level up, not a new mechanism: the same three steps in the
+     same direction (the later arrival keeps its window, the earlier gives up
+     screen-time), run against N COLUMNS rather than N slots. Rule 5 — "a card
+     takes its column's full height whenever nothing else shares that column" —
+     therefore becomes unconditional, because nothing ever shares one.
+
+     Priced before it was built, at 100 % text:
+
+       1440×900   4 of 51 cards touched · 928 px given up · worst cooksonia 1650→1348
+       390×844    8 of 51 cards touched · 207 px given up · worst antarctica-freezes 674→612
+       390×780    2 of 51 cards touched ·  37 px given up · worst antarctica-freezes 648→613
+
+     No card crosses the 600 px readability floor that was not already under it,
+     `brief (<600px)` is unchanged at 2 / 3 / 3, and no arrival's dwell reaches
+     zero. The alternative was priced too: holding the placement and dropping the
+     pictures that will not fit costs **9 of 41 at 1440×900 and 13 of 41 at
+     390×844**, against zero dropped today at 100 % text.
+
+     What it costs the composition: max concurrent CARDS falls 4 → 2 on desktop
+     and 2 → 1 on a phone. §5 measured max concurrent arrivals at 4 with ≥2 only
+     6 % of the time, so this is a change to the rare case by construction. The
+     slot grid itself is untouched — `zones()` still tiles it, the whisper band
+     still sits above it, and `p.slot` is now the column's row-0 slot (`zones`
+     pushes row-major, so slot `c` IS column `c`). */
+  const N = z.nCols;
   const freeAt = new Array<number>(N).fill(-1e9);
   const owner = new Array<Placed | null>(N).fill(null);
   const cards = out.filter((p) => p.tier !== 'F');
@@ -1391,11 +1471,13 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
     wOwner = it;
   }
 
-  /* Rule 5 — a card takes its column's full height whenever nothing else shares
-     that column inside its window. On mobile there is one column, so a lone
-     arrival gets the whole stage, which is what keeps the art usable on a phone. */
+  /* Rule 5 — a card takes its column's full height. UNCONDITIONAL since
+     2026-08-08: the ladder above queues on columns, so "whenever nothing else
+     shares that column inside its window" is now always. Asserted rather than
+     assumed — the loop still reads the same question the rule asks, so a future
+     change that puts two cards back in one column fails here instead of silently
+     halving somebody's picture. */
   for (const it of cards) {
-    // A portrait already owns every column, so rule 5's question does not arise.
     it.tall =
       it.portrait ||
       !cards.some(
@@ -1403,19 +1485,31 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
       );
   }
 
+  /* RULE 3 — the lane cycle. Left, right, centre, in the order Dustin named them,
+     advancing once per CARD so consecutive arrivals never repeat a lane. Whispers
+     are excluded: the band is one row of centred text with no picture in it, so a
+     lane means nothing there.
+
+     Combined with the column round-robin this gives desktop six distinct ink
+     positions where it had two — col0 L/C/R and col1 L/C/R. Two of the six can
+     point at each other across the 57.6 px gutter (col0 right beside col1 left);
+     that is 4× the clearance art and text already keep inside a box, both stay
+     inside their own rects, and the sweep proves it.
+
+     STAGE CENTRE STAYS A PORTRAIT'S ALONE. A subject's lane is measured inside
+     its own COLUMN, never the stage — a card's box is one column (§5 rule 3), and
+     a subject reaching x=717 would have to leave it, which is the one thing this
+     contract does not allow. So "all the global images that show the whole world
+     should always pop up in the middle" keeps its meaning: nothing else is ever
+     there. */
+  let laneN = 0;
   for (const it of out) {
     const isF = it.tier === 'F';
-    it.rect = isF
-      ? z.whisper
-      : it.portrait
-        ? z.stage
-        : it.tall
-          ? z.colFull[z.slots[it.slot]!.col]!
-          : z.slots[it.slot]!;
-    // A portrait is centred, not anchored to a column edge — §11: "composed
-    // centred and square", and it has no column to sit against.
-    it.right = !isF && !it.portrait && z.nCols > 1 && z.slots[it.slot]!.col === 1;
-    it.glide = isF ? 0 : Math.min(GLIDE_MAX, it.rect.h * (it.tall ? GLIDE_FRAC : GLIDE_FRAC_BAND));
+    it.rect = isF ? z.whisper : it.portrait ? z.stage : z.colFull[z.slots[it.slot]!.col]!;
+    // A portrait is centred — §11: "composed centred and square" — and its WORDS
+    // centre with it, which is the whole of the "image isn't near the text" fix.
+    it.lane = isF || it.portrait ? 1 : (LANE_CYCLE[laneN++ % LANE_CYCLE.length] as 0 | 1 | 2);
+    it.glide = isF ? 0 : Math.min(GLIDE_MAX, it.rect.h * GLIDE_FRAC);
   }
 
   const byId = new Map(arrivals.map((a) => [a.id, a]));
@@ -1469,39 +1563,88 @@ export function place(arrivals: Arrival[], z: Zones): Placed[] {
        and at the bottom of it the art's top sits exactly on the box edge. */
     it.availH = it.rect.h - it.textH - it.glide * 2 - ART_TEXT_CLEARANCE;
 
-    /* RULING F — CAP THE JUMP BETWEEN A FULL COLUMN AND A BAND (Dustin,
-       2026-08-04). Rule 5 gives a lone card its column's whole height, and the
-       art takes whatever the text leaves — so the same subject is drawn at
-       wildly different sizes depending on whether some neighbour's window
-       happened to overlap it. Measured at 1440×900 before this cap: 37 cards
-       tall at a 214 px median, 14 in a band at 74 px, a 2.9× median jump and a
-       6.9× spread end to end (42 px for the first flowers, 288 px at the top).
-       Worse, the band cases are not scattered — contention rises through the
-       Phanerozoic, so the whole last third of the page drew its art at a third
-       the size of the first two thirds, for a reason no visitor can see.
-
-       Rule 5 is kept: the card still TAKES the full column, so its text has all
-       the room it had and mobile still gets the lone-card box §5 calls the only
-       thing keeping art usable there. Only the picture is capped, at
-       ART_TALL_MAX× the size the same card would have got inside one band. The
-       art stays bottom-anchored above its text, so the cap spends its saving as
-       air at the top of the box, not as a shifted picture. */
-    /* A PORTRAIT IS EXEMPT. Ruling F caps a card that got its column by luck
-       against the same card drawn in a band — the point is that two draws of the
-       same KIND should not differ for a reason nobody can see. A portrait is a
-       different kind: §11 gives it the stage on purpose, and capping it at 2.2×
-       a band would put the whole Earth back at the size of a trilobite. */
-    if (it.tall && it.tier !== 'F' && !it.portrait) {
-      const bandH = z.slots[it.slot]!.h;
-      const bandGlide = Math.min(GLIDE_MAX, bandH * GLIDE_FRAC);
-      const bandAvail = bandH - it.textH - bandGlide * 2 - ART_TEXT_CLEARANCE;
-      it.artCeil = bandAvail > 0 ? bandAvail * ART_TALL_MAX : Infinity;
-    }
+    /* RULING F IS RETIRED HERE (2026-08-08). It capped a lone card's picture at
+       ART_TALL_MAX (2.2) × the size the same card would have got inside one band,
+       to stop the same subject drawing at wildly different sizes depending on
+       whether a neighbour's window happened to overlap it. Rule 2 below solves
+       that exactly rather than at a ratio — every subject draws at one of two
+       page-wide constants — so `artCeil` and ART_TALL_MAX have nothing left to
+       do. The measurement ruling F was built on is in the design doc; the ratio
+       it also carried (ART_H_FRAC_I 0.66) is the half that measured backwards. */
 
     it.hasArt = it.tier !== 'F' && showsArt(a, z) && it.availH > ART_MIN_H;
   }
 
+  /* RULE 2 — ONE SIZE PER TIER, SOLVED ONCE FOR THE WHOLE PAGE.
+
+     Dustin, 2026-08-08: "the tiny images should match and be bigger and match all
+     the other image sizes." Until now the size was `min(availH, artCeil)` — the
+     box's own spare height — so a subject in a crowded card drew small for a
+     reason no visitor can see: measured on the shipped build at 1440×900,
+     **min 67.5 / median 143 / max 206.3 px, a 3.1× spread.**
+
+     SOLVED AT 100 % METRICS, ALWAYS, and that is what keeps §10 whole. The
+     constants are a CAP: `frame()` still clamps them to what the box holds, so at
+     100 % text — where the column ladder guarantees every box clears them — every
+     subject draws at exactly its tier's number, and at enlarged text the boxes
+     that cannot hold it draw smaller or drop, exactly as they do today. Solving
+     from the LIVE layout instead would let the 200 % squeeze set the size of the
+     100 % page: at 1440×900/200 % an honest clock zone leaves a card ~209 px, the
+     tightest box then holds nothing at all, and one degraded viewport would drag
+     every picture on every screen down with it. So a non-100 % layout asks a
+     100 % sibling for its numbers. The recursion is one level deep by
+     construction — the sibling IS at 100 % — and only runs when it must.
+
+     Measured after: 138.9 / 118.1 px at 1440×900 and 1920×1080, 137.0 / 116.4 at
+     390×844, 122.6 / 104.2 at 390×780. The smallest picture on the page goes
+     67.5 → 138.9, **+106 %**, and the spread within a tier goes 3.1× → 1.0×. The
+     smallest portrait draws 220.9, so §11 rule 1's "a portrait is the biggest
+     thing the page draws" widens from 1.07× to **1.59×** — it barely read before.
+
+     WHAT BINDS IT IS ONE ASSET. `sex` is the tightest box at every viewport: a
+     276×700 canvas at a 0.45 opaque fill, the tallest and thinnest thing in the
+     set, so the height term bites first. The second-tightest is `charnia` at
+     168.5, so `sex` alone costs the page 21 %. The remedy is a tighter trim on
+     one asset and it sits inside the unresolved square-trim ruling — flagged,
+     not taken. */
+  const ref =
+    z.viewport.textScale === 1
+      ? out
+      : place(arrivals, zones({ w: z.viewport.w, h: z.viewport.h, textScale: 1 }), artMetrics);
+  const uM = uniformTarget(ref, artMetrics);
+  for (const it of out) {
+    it.artTarget = it.portrait ? Infinity : it.tier === 'M' ? uM : uM * ART_SIZE_FRAC_I;
+  }
+
   return out;
+}
+
+/**
+ * The largest apparent size EVERY subject's box can hold at its own tier factor —
+ * rule 2's `U_M`, from which `U_I` is `ART_SIZE_FRAC_I × U_M`.
+ *
+ * The inversion is exact rather than a search. `frame()` solves the SUBJECT to a
+ * target and derives the canvas around it, so the drawn subject's apparent size
+ * IS the target: with `k = √(aspect · fillW / fillH)` the canvas is `target/k/fillH`
+ * tall and `target·k/fillW` wide, and clamping those to the box gives a closed
+ * form for the biggest target the box will take.
+ *
+ * A subject with no picture cannot bind the page's size, and neither can one whose
+ * box cannot reach `ART_MIN_DRAWN` — `frame()` is going to drop that picture
+ * anyway, so letting it set the constant would shrink 40 drawn pictures to protect
+ * one that is not drawn.
+ */
+function uniformTarget(placed: Placed[], artMetrics: Record<string, ArtMetric>): number {
+  let u = Infinity;
+  for (const p of placed) {
+    if (p.tier === 'F' || p.portrait || !p.hasArt) continue;
+    const m = artMetrics[p.id] ?? FULL_BLEED;
+    const k = Math.sqrt((m.aspect * m.fill[2]) / m.fill[3]);
+    const holds = Math.min(p.availH * k * m.fill[3], (p.rect.w * m.fill[2]) / k);
+    if (holds < ART_MIN_DRAWN) continue;
+    u = Math.min(u, holds / (p.tier === 'M' ? 1 : ART_SIZE_FRAC_I));
+  }
+  return u;
 }
 
 /* ============================================================================
@@ -1584,10 +1727,13 @@ export function frame(
       // reason anyone looking at the page could name. The tier still sets how
       // prominent an arrival is; it just sets it in area now, so an M and an I
       // are reliably different and two Ms are reliably the same.
-      // Ruling F caps the apparent size BEFORE the tier splits it, so an M and
-      // an I stay in the same ratio to each other at every box size.
-      const base = Math.min(p.availH, p.artCeil);
-      const target = p.tier === 'M' ? base : base * ART_H_FRAC_I;
+      /* RULE 2 — the target is a PAGE constant for a subject and the BOX for a
+         portrait. `place()` solved the two constants at 100 % metrics; `fit`
+         below still clamps them to the box, which is what makes the constant a
+         cap rather than a floor and leaves §10's degradation exactly as it was.
+         A portrait keeps taking its box — §11 rule 3 gives it the stage on
+         purpose, and it is the one picture that is supposed to be biggest. */
+      const target = p.portrait ? p.availH : p.artTarget;
 
       /* THE APPARENT SIZE IS THE SUBJECT'S, NOT THE CANVAS'S — 2026-08-06.
          The line above aims a target at the drawn box, and until this date the
@@ -1620,9 +1766,11 @@ export function frame(
          the art's air simply goes unspent. */
       if (Math.sqrt(w * m.fill[2] * h * m.fill[3]) >= ART_MIN_DRAWN) {
         art = {
-          // §11: a portrait is "composed centred and square" and owns the stage,
-          // so it has no column edge to anchor to.
-          x: p.portrait ? r.x + (r.w - w) / 2 : p.right ? r.x + r.w - w : r.x,
+          /* RULE 3 — one of three lanes inside the card's own box. A portrait is
+             lane 1 by construction (§11: "composed centred and square"), which is
+             the same expression as a subject's centre lane — it just happens to be
+             the stage's centre because a portrait's box IS the stage. */
+          x: p.lane === 2 ? r.x + r.w - w : p.lane === 1 ? r.x + (r.w - w) / 2 : r.x,
           // The glide can never push the art out of the box: art and text carry
           // the same `gl`, so their separation is fixed at ART_TEXT_CLEARANCE.
           y: r.y + p.glide + (p.availH - h) + gl,

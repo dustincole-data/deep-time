@@ -242,7 +242,10 @@ function relayout() {
 
   Z = zones({ w: W, h: H, textScale });
   F = fan(Z);
-  placed = place(arrivals, Z);
+  // The metrics are rule 2's input, not a frame concern: the two size constants
+  // are solved from what each subject's box can hold, and that depends on its
+  // aspect and opaque fill. Same object `frame()` is handed below.
+  placed = place(arrivals, Z, ART_METRICS);
 
   for (let i = 0; i < nodes.length; i++) {
     const p = placed[i]!;
@@ -253,7 +256,11 @@ function relayout() {
     el.style.top = `${r2.y}px`;
     el.style.width = `${r2.w}px`;
     el.style.height = `${r2.h}px`;
-    el.classList.toggle('R', p.right);
+    // §5 rule 3's lane, on the TEXT as well as the picture — a card's words and
+    // its picture share a lane, which is what stops a centred disc sitting 640px
+    // from its own left-aligned headline.
+    el.classList.toggle('R', p.lane === 2);
+    el.classList.toggle('C', p.lane === 1 && p.tier !== 'F');
     el.classList.toggle('no-line', p.tier !== 'F' && !p.hasLine);
     el.classList.toggle('no-why', p.tier !== 'F' && !p.hasWhy);
     nodes[i]!.tx.style.marginBottom = `${p.glide}px`;

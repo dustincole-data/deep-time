@@ -388,6 +388,12 @@ const nf = (n: number) => n.toLocaleString('en-US');
   }
   .js .ar .tx { width: 100%; }
   .js .ar.R .tx { text-align: right; }
+  /* §5 rule 3's centre lane, 2026-08-08. Also what fixes "the first image isnt
+     near the text": a portrait's box is the whole stage, so its disc sits at
+     x=717 while its left-aligned words started at x=72 — 640px apart, which reads
+     as an uncentred picture when the picture is dead centre. layout.ts puts every
+     portrait in lane 1, so this one rule centres both. */
+  .js .ar.C .tx { text-align: center; }
   /* Positioned independently of the .tx flex flow — main.ts writes its rect
      every frame from frame()'s already-computed `art` box (§5 rule 3: art and
      text share one box, but never contend for the same space). */
@@ -400,6 +406,7 @@ const nf = (n: number) => n.toLocaleString('en-US');
     opacity: 0.42; margin-bottom: 11px;
   }
   .js .ar.R .rule { margin-left: auto; }
+  .js .ar.C .rule { margin-inline: auto; }
   /* PROMINENCE, 2026-08-04. The dates, the description lines and the whispers
      read as "small and subtle" on a real screen (Dustin, at 1920). §8 fixes the
      COPY verbatim and none of it changes here — this is the other half: the

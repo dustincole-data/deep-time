@@ -150,8 +150,8 @@ Instrumented, not eyeballed. Before the contract, a sweep of 688 scroll position
 2. **What is left is the stage**, divided into a fixed grid of slot rects that never overlap each other or the reserved zones — **2 columns × 2 rows on desktop, 1 × 2 on mobile**, plus one **whisper band** across the top of the stage for field events.
 3. **An arrival is ONE box.** Art and text together, inside exactly one slot, **text bottom-anchored and the art drawn into whatever height is left above it**. Art never floats free. This alone removes the entire card × art class.
 4. **Travel happens inside the box.** The card glides ≤28 px within its slot and fades; it never crosses into another slot.
-5. **A card takes its column's full height whenever nothing else shares that column** — so in the sparse ~94% the art is larger, and only in genuine crowding does a card fall back to its single band. On mobile this is what keeps art at a usable size at all.
-6. **Slot assignment is round-robin with a correctness fallback.** Where density would put two arrivals in one slot at once, the later one's fade window is **shortened** until it fits. There is no floor on that shortening. **Density can cost an arrival screen-time; it can never cost it a collision.**
+5. **A card takes its column's full height.** *Amended 2026-08-08 — this was "whenever nothing else shares that column", and rule 6 now makes it unconditional.* Nothing ever falls back to a single band, which is what lets rule 2 below give every picture one size.
+6. **Column assignment is round-robin with a correctness fallback.** Where density would put two arrivals in one **column** at once, the later one's fade window is **shortened** until it fits. There is no floor on that shortening. **Density can cost an arrival screen-time; it can never cost it a collision.** *Amended 2026-08-08 — it queued on slots until then; see ruling H.*
 
 **Two things the contract forces, both real design decisions:**
 
@@ -182,6 +182,44 @@ Instrumented, not eyeballed. Before the contract, a sweep of 688 scroll position
 **Rule 5 is kept.** The card still takes the full column, so its text keeps every pixel it had and mobile still gets the lone-card box §5 calls the only thing keeping art usable there. Only the picture is capped, at **1.6× the size the same card would have got inside one band** — measured after: **1.60× at desktop, 1.44× on a phone**. The art stays bottom-anchored above its text, so the saving is spent as air at the top of the box.
 
 **Open, and Dustin's to close:** 1.6 buys consistency by shrinking the dominant case — the tall median goes 214 → 119 px, so most of the page's art is now roughly half the size it shipped at. 2.2 measures ~120 px per subject and 3.0 is effectively the old look. It is one constant, `ART_TALL_MAX`.
+
+> **SUPERSEDED 2026-08-08 by ruling H.** Ruling F bounded the inconsistency at a ratio; ruling H removes it. `ART_TALL_MAX` and `ART_H_FRAC_I` are both gone from the code. Kept here because ruling H's argument is the measurement ruling F was built on, one round later.
+
+### Ruling H — one size per tier, three lanes, and the ladder moves up a level
+
+**Added 2026-08-08, on Dustin's call from screenshots of the live page:** *"the first image isnt near the text. second image is tiny. third not centered … Anything outside of that should be the same size, so the tiny images should match and be bigger and match all the other image sizes. Nothing should be uncentered, and all the global images that show the whole world should always pop up in the middle. All the other images should just pop up in random places. They should alternate left, right, and center, but not overlap other stuff."*
+
+**One of the three complaints is not about the art.** Both discs called uncentred measure dead centre — subject centre x=716 and x=717 against a stage centre of 717. What reads as uncentred is the **text**: a portrait's box is the whole stage (`x72 w1290`) and its words were left-aligned inside it, so the disc sat at x=717 while the sentence started at x=72, **640 px away**. Fixed in markup, not geometry — the rect never moves.
+
+**Rule 2 — every non-portrait subject draws at one of two sizes.** Two constants are solved per layout: `U_M`, the largest size every subject's full-column box can hold at its own tier factor, and `U_I = 0.85 × U_M`. They are a **cap** — `frame()` still clamps to what the box holds — so at 100 % text every subject draws exactly its tier's number, and at enlarged text §10's degradation is untouched.
+
+| | events | creatures | binding subject |
+|---|---:|---:|---|
+| 1440×900 · 1920×1080 | **138.9** | **118.1** | `sex` 138.9 |
+| 390×844 | **137.0** | **116.4** | `sex` 137.0 |
+| 390×780 | **122.6** | **104.2** | `sex` 122.6 |
+
+The page's smallest picture goes **67.5 → 138.9 px, +106 %**, and the spread within a tier goes **3.1× → 1.0×**. `sex` binds every viewport — a 276×700 canvas at a 0.45 opaque fill, against a second-tightest of 168.5 — so **one asset costs the page 21 %**; the remedy is a tighter trim and it sits inside the open square-trim ruling.
+
+**The tier split was rendering backwards, and that is why ruling F's version of it is gone.** Measured at 1440×900, 100 % text: milestones 67.5 / **127.1** / 206.3 against inhabitants 80.8 / **143.0** / 187.1 — a median M/I ratio of **0.9**, with 13 of 22 milestones below the inhabitant median and 16 of 19 inhabitants above the milestone median. `ART_H_FRAC_I`'s 1.5× of signal was riding on a `base` that varied 3.1×. Both tiers now solve to a constant, so 0.85 is the whole of the difference and the whole of it is visible. Prominence's other half — the `16 px` vs `13.5 px` line and the `0.84` vs `0.72` date in §11 — was never broken and is untouched.
+
+**Rule 3 — subjects cycle left / right / centre, inside their own column.** `frame()` offered a subject its column's left or right EDGE and nothing else: measured, every ink centre sat at 117–311 px or 1198–1320 px with the whole **380–1054 px middle empty** — ruling E's *"the middle is dead"* one level down. Desktop now has six ink positions where it had two. **A subject's centre is its COLUMN's centre, never the stage's**: a card's box is one column (rule 3 of this section), so stage centre stays a portrait's alone and *"all the global images … always pop up in the middle"* keeps its meaning.
+
+**What it cost, priced before it was built.** A fixed size means a crowded card's box must hold it, and a band is half a column — the largest size every box could hold *as placed* was **67.5 px, exactly the page's smallest picture**. Two other options were measured and rejected: holding the placement and dropping what will not fit costs **9 of 41 pictures at 1440×900 and 13 of 41 at 390×844** (zero drop today at 100 % text). So rule 6's ladder moves from slot contention to **column** contention — the same three steps in the same direction:
+
+| | cards touched | screen-time given up | worst single card | `brief (<600px)` | dwell → 0 |
+|---|---:|---:|---|---|---|
+| 1440×900 | 4 / 51 | 928 px | `cooksonia` 1650 → 1348 | 2 → **2** | 0 |
+| 390×844 | 8 / 51 | 207 px | `antarctica-freezes` 674 → 612 | 3 → **3** | 0 |
+| 390×780 | 2 / 51 | 37 px | `antarctica-freezes` 648 → 613 | 3 → **3** | 0 |
+
+Nothing crosses the 600 px readability floor that was not already under it. Max concurrent **cards** falls 4 → 2 on desktop and 2 → 1 on a phone, which is a change to the rare case by construction: §5 measured max concurrent arrivals at 4 with ≥2 only 6 % of the time.
+
+**§11 rule 1 reads for the first time.** The biggest subject drew 206.3 against the smallest portrait's 220.9 — a **1.07×** lead that is true and invisible. One size for the subjects puts it at **1.59×**.
+
+**200 % text is unchanged**, and deliberately so. The constants solve at 100 % metrics always — solving from the live layout would let the 200 % squeeze set the size of the 100 % page. At 1440×900/200 % the boxes top out at 147.2 px, so the cap touches one subject and **`art dropped` stays at 11 of 51**. Uniformity is a claim at 100 % text only, the same scoping the picture-floor check already carries.
+
+**Gated.** `gate-collision.ts` gains three assertions, each verified to go red under perturbation: a tier drawing at more than one size, a subject outdrawing a portrait, and the three lanes (including a subject taking stage centre where there is more than one column).
 
 ---
 
@@ -855,6 +893,8 @@ Same recipe, one addition and one prohibition:
 3. **A portrait owns the stage for its dwell**, occupying the full slot grid, so nothing else may be on stage with it. Gated by `planet-check.py`.
 4. **The Moon yields** — it fades out across a portrait's entry and returns on release. Two discs reads as a solar-system diagram, not a portrait.
 5. **The portrait must agree with the field it sits on.** Each planet's dominant colour is a sample of the same data channel the field is drawing at that pixel. If a keyframe changes, the art is re-checked, not just re-placed.
+6. **A portrait's WORDS are centred under its disc.** *Added 2026-08-08 with [ruling H](#ruling-h--one-size-per-tier-three-lanes-and-the-ladder-moves-up-a-level).* The disc was always centred and always measured centred; the words were left-aligned in a box that is the whole stage, so they started 640 px from the picture they belong to and the pair read as uncentred. A portrait takes lane 1, the same centre lane a subject takes inside its column — one mechanism, and the rect does not move, so the collision contract is untouched.
+7. **A portrait is sized by its box, never by rule 2's constants.** Ruling F's exemption, carried forward: §11 gives a portrait the stage on purpose, and handing it a subject's 138.9 px would put the whole Earth back at the size of a trilobite. This is what makes rule 1 — *the biggest picture the page draws* — true by construction rather than by luck, and since 2026-08-08 it is true by a margin that reads: **1.59×**, against 1.07× before.
 
 **Dwell is the true duration of the state depicted**, inside a 600–1,200 px band:
 

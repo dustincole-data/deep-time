@@ -26,6 +26,7 @@ import {
   plateYieldAt,
   plateYielders,
   sameRect,
+  subjectRect,
   showsArt,
   showsLine,
   textHeight,
@@ -158,7 +159,7 @@ describe('an arrival is ONE box (§5, rules 3 and 4)', () => {
       // §5 / §11 rule 3 — a planet portrait's box is the STAGE, because it owns
       // the whole slot grid for its dwell. Added 2026-08-06 with the rule itself.
       const legal = [z.whisper, ...z.slots, ...z.colFull, z.stage];
-      for (const p of place(arrivals, z)) {
+      for (const p of place(arrivals, z, ART_METRICS)) {
         expect([p.id, legal.some((r) => sameRect(r, p.rect))]).toEqual([p.id, true]);
         if (p.portrait) expect([p.id, sameRect(p.rect, z.stage)]).toEqual([p.id, true]);
         if (p.tier === 'F') expect([p.id, sameRect(p.rect, z.whisper)]).toEqual([p.id, true]);
@@ -169,7 +170,7 @@ describe('an arrival is ONE box (§5, rules 3 and 4)', () => {
 
   it('keeps the glide at or under 28 px and holds a whisper still', () => {
     for (const vp of GATE_VIEWPORTS) {
-      for (const p of place(arrivals, zones(vp))) {
+      for (const p of place(arrivals, zones(vp), ART_METRICS)) {
         expect(p.glide).toBeLessThanOrEqual(28);
         if (p.tier === 'F') expect(p.glide).toBe(0);
       }
@@ -179,7 +180,7 @@ describe('an arrival is ONE box (§5, rules 3 and 4)', () => {
   it('never lets the glide carry text or art out of the box', () => {
     for (const vp of GATE_VIEWPORTS) {
       const z = zones(vp);
-      for (const p of place(arrivals, z)) {
+      for (const p of place(arrivals, z, ART_METRICS)) {
         for (const at of windowSamples(p)) {
           const vis = frame([p], at);
           expect([p.id, at, vis.length]).toEqual([p.id, at, 1]);
@@ -197,7 +198,7 @@ describe('an arrival is ONE box (§5, rules 3 and 4)', () => {
     // clearance, and nothing else. Reserving a further glide on top of it is what
     // starved the art in a band slot.
     const z = zones(DESKTOP);
-    const placed = place(arrivals, z).filter((p) => p.hasArt);
+    const placed = place(arrivals, z, ART_METRICS).filter((p) => p.hasArt);
     expect(placed.length).toBeGreaterThan(0);
     for (const p of placed) {
       const gaps = windowSamples(p).map((at) => {
@@ -211,7 +212,7 @@ describe('an arrival is ONE box (§5, rules 3 and 4)', () => {
 
 describe('dwell and the fade window (§5, rules 5 and 6)', () => {
   it('is gap-adaptive, clamped 150–660 px — and 600–1,200 for a portrait', () => {
-    for (const p of place(arrivals, zones(DESKTOP))) {
+    for (const p of place(arrivals, zones(DESKTOP), ART_METRICS)) {
       // §5: "Planet portraits take their own band, 600–1,200 px."
       expect(p.dwell).toBeLessThanOrEqual(p.portrait ? 1200 : 660);
       expect(p.dwell).toBeGreaterThanOrEqual(0);
@@ -226,7 +227,7 @@ describe('dwell and the fade window (§5, rules 5 and 6)', () => {
   });
 
   it('gives the last arrival its full 660 px, because the finale follows (§9)', () => {
-    const placed = place(arrivals, zones(DESKTOP));
+    const placed = place(arrivals, zones(DESKTOP), ART_METRICS);
     const last = placed[placed.length - 1]!;
     expect(last.id).toBe('human-chimp-split');
     expect(last.gap).toBe(Number.POSITIVE_INFINITY);
@@ -238,7 +239,7 @@ describe('dwell and the fade window (§5, rules 5 and 6)', () => {
   it('shortens a fade rather than sharing a slot — density costs time, never a collision', () => {
     for (const vp of [...GATE_VIEWPORTS, ...GATE_VIEWPORTS.map((v) => ({ ...v, textScale: 2 }))]) {
       const z = zones(vp);
-      const placed = place(arrivals, z);
+      const placed = place(arrivals, z, ART_METRICS);
       for (let i = 0; i < placed.length; i++) {
         for (let j = i + 1; j < placed.length; j++) {
           const a = placed[i]!;
@@ -252,7 +253,7 @@ describe('dwell and the fade window (§5, rules 5 and 6)', () => {
 
   it('takes the whole column whenever nothing shares it', () => {
     const z = zones(DESKTOP);
-    const placed = place(arrivals, z);
+    const placed = place(arrivals, z, ART_METRICS);
     const cards = placed.filter((p) => p.tier !== 'F');
     // §5: the sparse ~94% is where the art gets to be large. *T. rex*,
     // Chicxulub and the first primates (added 2026-07-31, 49/251/553 px apart)
@@ -285,9 +286,9 @@ describe('what the contract forces on mobile (§5, §8)', () => {
   });
 
   it('is layout-neutral: swapping contents inside a box moves no rectangle', () => {
-    const withLine = place(arrivals, m).map((p) => p.rect);
+    const withLine = place(arrivals, m, ART_METRICS).map((p) => p.rect);
     const z2 = zones(PHONE);
-    const again = place(arrivals, z2).map((p) => p.rect);
+    const again = place(arrivals, z2, ART_METRICS).map((p) => p.rect);
     for (let i = 0; i < withLine.length; i++) expect(sameRect(withLine[i]!, again[i]!)).toBe(true);
   });
 
@@ -295,7 +296,7 @@ describe('what the contract forces on mobile (§5, §8)', () => {
     // §5 measured it: without the dropped line, 16 of 37 subjects showed no art
     // on a phone. With it, 3 — plus the six abstract ones, which gave art up by
     // design until 2026-08-07, when real art replaced every one of them.
-    const placed = place(arrivals, m).filter((p) => p.tier !== 'F');
+    const placed = place(arrivals, m, ART_METRICS).filter((p) => p.tier !== 'F');
     const dropped = placed.filter((p) => !p.hasArt && !ABSTRACT.includes(p.id));
     expect(dropped.length).toBeLessThanOrEqual(3);
   });
@@ -304,7 +305,7 @@ describe('what the contract forces on mobile (§5, §8)', () => {
 describe('the frame is a pure function of scrollY (§3)', () => {
   it('returns identical geometry for two calls at the same position', () => {
     const z = zones(DESKTOP);
-    const placed = place(arrivals, z);
+    const placed = place(arrivals, z, ART_METRICS);
     for (const y of [0, 2425, 50_350, 98_675, 116_425]) {
       expect(frame(placed, y)).toEqual(frame(placed, y));
     }
@@ -312,7 +313,7 @@ describe('the frame is a pure function of scrollY (§3)', () => {
 
   it('shows nothing before the first fade window opens', () => {
     const z = zones(DESKTOP);
-    const placed = place(arrivals, z);
+    const placed = place(arrivals, z, ART_METRICS);
     expect(frame(placed, 0)).toHaveLength(0);
     expect(frame(placed, 2425)).not.toHaveLength(0);
   });
@@ -320,7 +321,7 @@ describe('the frame is a pure function of scrollY (§3)', () => {
   it('never has more than four arrivals on screen at once (§5)', () => {
     for (const vp of GATE_VIEWPORTS) {
       const z = zones(vp);
-      const placed = place(arrivals, z);
+      const placed = place(arrivals, z, ART_METRICS);
       let max = 0;
       for (let y = 0; y <= 123_600; y += 25) max = Math.max(max, frame(placed, y).length);
       expect([vp.w, max]).toEqual([vp.w, max]);
@@ -339,7 +340,7 @@ describe('enlarged text (§10, rulings A/B/C)', () => {
       // The whisper band only ever grows past its fixed fraction when the copy needs it.
       const frac = z.mobile ? 0.055 : 0.05;
       expect(z.whisper.h).toBeCloseTo(vp.h * frac, 6);
-      for (const p of place(arrivals, z)) expect([p.id, p.lineDroppedToFit]).toEqual([p.id, false]);
+      for (const p of place(arrivals, z, ART_METRICS)) expect([p.id, p.lineDroppedToFit]).toEqual([p.id, false]);
     }
   });
 
@@ -385,7 +386,7 @@ describe('enlarged text (§10, rulings A/B/C)', () => {
     for (const vp of GATE_VIEWPORTS) {
       const isKnownGap = vp.w === KNOWN_GAP_VP.w && vp.h === KNOWN_GAP_VP.h;
       const z = at2(vp);
-      for (const p of place(arrivals, z)) {
+      for (const p of place(arrivals, z, ART_METRICS)) {
         if (isKnownGap) continue;
         expect([vp.w, vp.h, p.id, p.textH + p.glide * 2 <= p.rect.h + 1e-6]).toEqual([
           vp.w,
@@ -402,7 +403,7 @@ describe('enlarged text (§10, rulings A/B/C)', () => {
     // down to one slot; shortening only the incoming lead-in is not enough there.
     for (const vp of GATE_VIEWPORTS) {
       const z = at2(vp);
-      const placed = place(arrivals, z);
+      const placed = place(arrivals, z, ART_METRICS);
       for (let i = 0; i < placed.length; i++) {
         for (let j = i + 1; j < placed.length; j++) {
           const a = placed[i]!;
@@ -469,7 +470,7 @@ describe('enlarged text (§10, rulings A/B/C)', () => {
     const exempt = (id: string) => belowFloor.has(id) || followsPortrait.has(id);
     for (const vp of GATE_VIEWPORTS) {
       const z = at2(vp);
-      for (const p of place(arrivals, z).filter((x) => x.tier !== 'F')) {
+      for (const p of place(arrivals, z, ART_METRICS).filter((x) => x.tier !== 'F')) {
         const read = p.onScreenPx >= 600 || exempt(p.id);
         expect([vp.w, p.id, read]).toEqual([vp.w, p.id, true]);
         const held = p.dwell >= 150 || exempt(p.id);
@@ -562,7 +563,7 @@ describe('the measured text scale (§10, 2026-08-05)', () => {
 
 describe('the finale (§9)', () => {
   const overrun = (() => {
-    const placed = place(arrivals, zones(DESKTOP));
+    const placed = place(arrivals, zones(DESKTOP), ART_METRICS);
     const last = placed[placed.length - 1]!;
     return last.y + last.dwell - CONSTANTS.RUN_END;
   })();
@@ -869,7 +870,7 @@ describe('the text model', () => {
 
   it('lets the art go before the text does, at 46 px of headroom', () => {
     const z = zones(DESKTOP);
-    for (const p of place(arrivals, z)) {
+    for (const p of place(arrivals, z, ART_METRICS)) {
       if (p.hasArt) expect([p.id, p.availH > ART_MIN_H]).toEqual([p.id, true]);
     }
   });
@@ -1001,14 +1002,14 @@ describe('a planet portrait owns the stage (§5, §11 rule 3)', () => {
 
   it('marks exactly the planets, from the data and not from a list', () => {
     const z = zones(DESKTOP);
-    const seen = place(arrivals, z).filter((p) => p.portrait).map((p) => p.id);
+    const seen = place(arrivals, z, ART_METRICS).filter((p) => p.portrait).map((p) => p.id);
     expect(seen.sort()).toEqual([...PORTRAITS].sort());
   });
 
   it('gives each one the whole stage, and nobody else on it', () => {
     for (const vp of GATE_VIEWPORTS) {
       const z = zones(vp);
-      const P = place(arrivals, z);
+      const P = place(arrivals, z, ART_METRICS);
       for (const p of P.filter((x) => x.portrait)) {
         expect([vp.w, p.id, sameRect(p.rect, z.stage)]).toEqual([vp.w, p.id, true]);
         for (const o of P) {
@@ -1023,7 +1024,7 @@ describe('a planet portrait owns the stage (§5, §11 rule 3)', () => {
     // The defect in one number: 74.6 px on a 453 px stage, against a card median
     // of 123.7 px. A portrait must now be the biggest thing the page ever draws.
     const z = zones(DESKTOP);
-    const P = place(arrivals, z);
+    const P = place(arrivals, z, ART_METRICS);
     const size = (id: string) => {
       const v = frame(P, P.find((p) => p.id === id)!.y, ART_METRICS).find((x) => x.id === id);
       const f = ART_METRICS[id]?.fill ?? [0, 0, 1, 1];
@@ -1034,10 +1035,28 @@ describe('a planet portrait owns the stage (§5, §11 rule 3)', () => {
     for (const id of PORTRAITS) expect([id, size(id) >= biggestCard]).toEqual([id, true]);
   });
 
-  it('is exempt from ruling F, which exists to compare like with like', () => {
+  it('is exempt from rule 2, which exists to compare like with like', () => {
+    /* Ruling F's exemption, carried forward to what replaced it. A portrait is
+       sized by its box on purpose (§11 rule 3 gives it the stage), so it takes no
+       page constant — `artTarget` is Infinity and `frame()` falls back to
+       `availH`. Handing a portrait a subject's 138.9 px would put the whole Earth
+       back at the size of a trilobite. */
     for (const vp of GATE_VIEWPORTS) {
-      for (const p of place(arrivals, zones(vp))) {
-        if (p.portrait) expect([vp.w, p.id, p.artCeil]).toEqual([vp.w, p.id, Infinity]);
+      for (const p of place(arrivals, zones(vp), ART_METRICS)) {
+        if (p.portrait) expect([vp.w, p.id, p.artTarget]).toEqual([vp.w, p.id, Infinity]);
+      }
+    }
+  });
+
+  it('centres a portrait own WORDS under its disc, not just the disc', () => {
+    /* Dustin, 2026-08-08: "the first image isnt near the text." Both discs he
+       called uncentred measure dead centre; what reads as uncentred is that a
+       portrait owns the whole 1290 px stage and its words were left-aligned
+       inside it, so the disc sat at x=717 and the sentence started at x=72. Lane
+       1 is the fix, and `main.ts` writes it onto the element as `.C`. */
+    for (const vp of GATE_VIEWPORTS) {
+      for (const p of place(arrivals, zones(vp), ART_METRICS)) {
+        if (p.portrait) expect([vp.w, p.id, p.lane]).toEqual([vp.w, p.id, 1]);
       }
     }
   });
@@ -1058,7 +1077,7 @@ describe('the picture has a floor of its own (ART_MIN_DRAWN)', () => {
   it('never draws a subject under the floor at any viewport or text scale', () => {
     for (const vp of [...GATE_VIEWPORTS, ...GATE_VIEWPORTS.map((v) => ({ ...v, textScale: 2 }))]) {
       const z = zones(vp);
-      const P = place(arrivals, z);
+      const P = place(arrivals, z, ART_METRICS);
       for (const p of P) {
         for (const v of frame([p], p.y, ART_METRICS)) {
           if (v.art) expect([vp.w, p.id, subject(v) >= ART_MIN_DRAWN]).toEqual([vp.w, p.id, true]);
@@ -1071,7 +1090,7 @@ describe('the picture has a floor of its own (ART_MIN_DRAWN)', () => {
     // The whole set at 1440×900/200%, where an honest clock zone leaves a card
     // ~209 px: pictures go, and every one of the 57 arrivals still renders.
     const z = zones({ ...DESKTOP, textScale: 2 });
-    const P = place(arrivals, z);
+    const P = place(arrivals, z, ART_METRICS);
     const drawn = P.flatMap((p) => frame([p], p.y, ART_METRICS));
     expect(drawn.length).toBe(P.length);
     expect(drawn.filter((v) => v.art === null).length).toBeGreaterThan(0);
@@ -1079,7 +1098,7 @@ describe('the picture has a floor of its own (ART_MIN_DRAWN)', () => {
 
   it('clears the floor everywhere at 100% text, which is the size claim', () => {
     for (const vp of GATE_VIEWPORTS) {
-      const P = place(arrivals, zones(vp));
+      const P = place(arrivals, zones(vp), ART_METRICS);
       const sizes = P.flatMap((p) => frame([p], p.y, ART_METRICS)).filter((v) => v.art).map(subject);
       expect([vp.w, Math.min(...sizes) >= ART_MIN_DRAWN]).toEqual([vp.w, true]);
     }
@@ -1096,7 +1115,7 @@ describe('the Boring Billion plate steps aside for a picture (§6, 2026-08-06)',
 
   it('names the arrivals whose art reaches the words, and only those', () => {
     const z = zones({ w: 390, h: 844 });
-    const P = place(arrivals, z);
+    const P = place(arrivals, z, ART_METRICS);
     const ids = plateYielders(P, plateCopyRect(z));
     // Non-empty, and every one of them inside the Boring Billion — the plate
     // never steps aside for something it does not share the screen with.
@@ -1110,7 +1129,7 @@ describe('the Boring Billion plate steps aside for a picture (§6, 2026-08-06)',
        given picture happens to land, and a phone and a desktop answer alike. */
     for (const vp2 of [DESKTOP, { w: 1920, h: 1080 }, { w: 390, h: 780 }]) {
       const zd = zones(vp2);
-      const names = plateYielders(place(arrivals, zd), plateCopyRect(zd)).map((p) => p.id).sort();
+      const names = plateYielders(place(arrivals, zd, ART_METRICS), plateCopyRect(zd)).map((p) => p.id).sort();
       expect([vp2.w, names]).toEqual([
         vp2.w,
         ['first-complex-cells', 'first-sponges', 'rodinia', 'sex'],
@@ -1123,7 +1142,7 @@ describe('the Boring Billion plate steps aside for a picture (§6, 2026-08-06)',
        precisely the overlap the layout contract bans." So at every scroll where a
        picture touches the words, the plate is already at zero. */
     const z = zones({ w: 390, h: 844 });
-    const P = place(arrivals, z);
+    const P = place(arrivals, z, ART_METRICS);
     const copy = plateCopyRect(z);
     const yielders = plateYielders(P, copy);
     for (let y = BB[0]; y <= BB[1]; y += 25) {
@@ -1138,7 +1157,7 @@ describe('the Boring Billion plate steps aside for a picture (§6, 2026-08-06)',
 
   it('comes back — the plate is not simply switched off for the era', () => {
     const z = zones({ w: 390, h: 844 });
-    const P = place(arrivals, z);
+    const P = place(arrivals, z, ART_METRICS);
     const yielders = plateYielders(P, plateCopyRect(z));
     let full = 0;
     for (let y = BB[0]; y <= BB[1]; y += 25) if (plateYieldAt(yielders, y) === 0) full++;
@@ -1146,7 +1165,7 @@ describe('the Boring Billion plate steps aside for a picture (§6, 2026-08-06)',
   });
 });
 
-describe('a lone card cannot outgrow a banded one without limit (ruling F)', () => {
+describe('every subject draws at one of two sizes (rule 2)', () => {
   /* MEASURED ON THE SUBJECT, WITH THE PAGE'S OWN METRICS — 2026-08-06. This
      helper used to call `frame(P, y)` with no metrics, so it measured 51 squares
      of full-bleed canvas: the same blind spot `gate-collision.ts` had, in the one
@@ -1159,39 +1178,117 @@ describe('a lone card cannot outgrow a banded one without limit (ruling F)', () 
   };
   const median = (a: number[]) => a.slice().sort((x, y) => x - y)[a.length >> 1] ?? 0;
 
-  it('holds the median jump near the cap, not the 2.9× it measured', () => {
-    /* 2.5×, not 2.2×. ART_TALL_MAX caps the tall card's TARGET, and a banded card
-       is usually clamped below its own target by `fit` — so the ratio of what is
-       DRAWN lands a little above the constant. Measured 2026-08-06 across the
-       gate viewports: 2.5× desktop, 2.2× phone, against 2.9× before ruling F and
-       against a bottom of the range that moved 28.0 → 46.4 px the same day. */
+  /* Ruling F's own test lived here and asserted a RATIO — "the tall median is no
+     more than 2.55× the band median". It is gone with the thing it measured: rule
+     2 gives every subject one of two page constants outright, so there is no
+     ratio left to bound and no band to bound it against. What replaces it is the
+     stronger claim, asserted directly. */
+
+  it('draws every subject of a tier at exactly one size, at 100% text', () => {
+    /* The defect in one line: min 67.5 / median 143 / max 206.3 px at 1440×900, a
+       3.1× spread, because the size was the box's spare height. After: one number
+       per tier per viewport, 138.9 / 118.1 desktop, 137.0 / 116.4 at 390×844,
+       122.6 / 104.2 at 390×780. Tolerance is a float epsilon, not a band — the
+       point of rule 2 is that these are equal, not close. */
     for (const vp of GATE_VIEWPORTS) {
       const z = zones(vp);
-      const P = place(arrivals, z);
-      const sizes = P.filter((p) => p.hasArt && !p.portrait).map((p) => ({ tall: p.tall, s: apparent(P, p.id, p.y) }));
-      const tall = median(sizes.filter((x) => x.tall).map((x) => x.s));
-      const band = median(sizes.filter((x) => !x.tall).map((x) => x.s));
-      if (!tall || !band) continue;
-      expect([vp.w, tall / band <= 2.55]).toEqual([vp.w, true]);
+      const P = place(arrivals, z, ART_METRICS);
+      for (const tier of ['M', 'I'] as const) {
+        const drawn = P.filter((p) => p.hasArt && !p.portrait && p.tier === tier).map((p) =>
+          apparent(P, p.id, p.y),
+        );
+        if (drawn.length < 2) continue;
+        const spread = Math.max(...drawn) - Math.min(...drawn);
+        expect([vp.w, tier, spread < 1e-6]).toEqual([vp.w, tier, true]);
+      }
     }
   });
 
-  it('caps the picture without taking the column back off the card (rule 5)', () => {
-    // Rule 5 is about the BOX, and it is untouched: a lone card still owns its
-    // whole column, so its text keeps every pixel of room it had.
+  it('makes an event bigger than a creature, the way round the spec says', () => {
+    /* Ruling F set this split at 0.66 and it rendered at 0.9 — BACKWARDS —
+       because the multiplier rode on a `base` that varied 3.1×. Now both tiers
+       solve to a constant, so the ratio IS the constant. */
+    for (const vp of GATE_VIEWPORTS) {
+      const z = zones(vp);
+      const P = place(arrivals, z, ART_METRICS);
+      const one = (t: 'M' | 'I') =>
+        median(P.filter((p) => p.hasArt && !p.portrait && p.tier === t).map((p) => apparent(P, p.id, p.y)));
+      const [m, i] = [one('M'), one('I')];
+      if (!m || !i) continue;
+      expect([vp.w, i < m, Math.abs(i / m - 0.85) < 1e-6]).toEqual([vp.w, true, true]);
+    }
+  });
+
+  it('lifts the smallest picture on the page rather than levelling down to it', () => {
+    // "the tiny images should match and be bigger" — both halves. The floor was
+    // 67.5 px at 1440×900 and 73.3 at 390×844; nothing may draw under 100 now.
+    // GATE_VIEWPORTS is 100 % text throughout, which is the scope of the claim.
+    for (const vp of GATE_VIEWPORTS) {
+      const z = zones(vp);
+      const P = place(arrivals, z, ART_METRICS);
+      const drawn = P.filter((p) => p.hasArt && !p.portrait).map((p) => apparent(P, p.id, p.y));
+      expect([vp.w, Math.min(...drawn) > 100]).toEqual([vp.w, true]);
+    }
+  });
+
+  it('keeps a portrait the biggest thing the page draws, by a margin that reads', () => {
+    /* §11 rule 1. It was technically true and visually not: the biggest subject
+       drew 206.3 against the smallest portrait's 220.9, a 1.07× lead nobody can
+       see. One size for the subjects widens it to 1.59×. */
+    for (const vp of GATE_VIEWPORTS) {
+      const z = zones(vp);
+      const P = place(arrivals, z, ART_METRICS);
+      const subs = P.filter((p) => p.hasArt && !p.portrait).map((p) => apparent(P, p.id, p.y));
+      const ports = P.filter((p) => p.portrait).map((p) => apparent(P, p.id, p.y));
+      expect([vp.w, Math.min(...ports) / Math.max(...subs) > 1.4]).toEqual([vp.w, true]);
+    }
+  });
+
+  it('gives every card its column, which is what a fixed size needs (rule 5)', () => {
+    // Rule 5 is now unconditional: the ladder queues on columns, so nothing ever
+    // shares one and every card's box is the full column.
+    for (const vp of GATE_VIEWPORTS) {
+      const z = zones(vp);
+      for (const p of place(arrivals, z, ART_METRICS)) {
+        // A portrait owns the whole stage instead, which is a bigger box still.
+        if (p.tier === 'F' || p.portrait) continue;
+        expect([vp.w, p.id, p.tall]).toEqual([vp.w, p.id, true]);
+        expect([vp.w, p.id, sameRect(p.rect, z.colFull[z.slots[p.slot]!.col]!)]).toEqual([
+          vp.w,
+          p.id,
+          true,
+        ]);
+      }
+    }
+  });
+
+  it('puts subjects in three lanes and leaves stage centre to the portraits', () => {
+    /* Dustin, 2026-08-08: "They should alternate left, right, and center." Before
+       this, `frame()` offered a subject its column's left or right EDGE and
+       nothing else — measured, every ink centre sat at 117–311 px or 1198–1320 px
+       with the whole 380–1054 px middle empty. */
     const z = zones(DESKTOP);
-    for (const p of place(arrivals, z)) {
-      // A portrait is exempt from ruling F entirely — §11 gives it the stage on
-      // purpose, so there is no "same card in a band" to cap it against.
-      if (!p.tall || p.tier === 'F' || p.portrait) continue;
-      expect([p.id, sameRect(p.rect, z.colFull[z.slots[p.slot]!.col]!)]).toEqual([p.id, true]);
+    const P = place(arrivals, z, ART_METRICS);
+    const subs = P.filter((p) => p.tier !== 'F' && !p.portrait);
+    expect(new Set(subs.map((p) => p.lane))).toEqual(new Set([0, 1, 2]));
+    // No two consecutive subjects share a lane — the cycle is what makes it read
+    // as alternation rather than as chance.
+    for (let i = 1; i < subs.length; i++) expect(subs[i]!.lane).not.toBe(subs[i - 1]!.lane);
+    // Stage centre belongs to a portrait alone: a subject's centre lane is its
+    // COLUMN's centre, and no column centre is the stage's.
+    const stageCx = z.stage.x + z.stage.w / 2;
+    for (const p of subs) {
+      const v = frame(P, p.y, ART_METRICS).find((x) => x.id === p.id);
+      if (!v?.art) continue;
+      const s = subjectRect(v.art, ART_METRICS[p.id]);
+      expect([p.id, Math.abs(s.x + s.w / 2 - stageCx) > 1]).toEqual([p.id, true]);
     }
   });
 
   it('keeps the art inside its box after the cap', () => {
     for (const vp of GATE_VIEWPORTS) {
       const z = zones(vp);
-      const P = place(arrivals, z);
+      const P = place(arrivals, z, ART_METRICS);
       for (const p of P) {
         const v = frame(P, p.y).find((x) => x.id === p.id);
         if (v?.art) expect([vp.w, p.id, contains(v.box, v.art)]).toEqual([vp.w, p.id, true]);

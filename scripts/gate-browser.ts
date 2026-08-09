@@ -189,7 +189,7 @@ function serveDist(): Promise<{ url: string; close: () => Promise<void> }> {
 /** Sample points: every arrival's key transitions, the Boring Billion window, plus a coarse stride. */
 function samplePoints(): number[] {
   const z = zones({ w: 1440, h: 900 });
-  const placed = place(arrivals, z);
+  const placed = place(arrivals, z, ART_METRICS);
   const pts = new Set<number>();
   for (const p of placed) {
     pts.add(Math.round(p.y));
@@ -218,7 +218,7 @@ function samplePoints(): number[] {
  * it has arrived. The 100px stride underneath catches everything between.
  */
 function finalePoints(vp: Viewport): number[] {
-  const placed = place(arrivals, zones(vp));
+  const placed = place(arrivals, zones(vp), ART_METRICS);
   const last = placed[placed.length - 1]!;
   const B = finaleBeats(Math.max(0, last.y + last.dwell - CONSTANTS.RUN_END));
 

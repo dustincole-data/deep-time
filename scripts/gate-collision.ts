@@ -141,7 +141,10 @@ const fmtRect = (r: Rect) => `[${r2(r.x)},${r2(r.y)} ${r2(r.w)}×${r2(r.h)}]`;
 
 function run(vp: Viewport): Result {
   const z = zones(vp);
-  const placed = place(arrivals, z);
+  // The SAME metrics `frame()` gets. Rule 2 solves the two size constants from
+  // what each subject's box can hold, so a gate that placed without them would be
+  // measuring a page whose pictures are a different size from the shipped one.
+  const placed = place(arrivals, z, ART_METRICS);
   const known = isKnownGap(vp);
   const counts: Counts = {
     'zone geometry': 0,
@@ -166,7 +169,14 @@ function run(vp: Viewport): Result {
     'anything × the plate’s words': 0,
     'picture under the floor': 0,
     'portrait does not own the stage': 0,
+    'rule 2 — a tier draws at more than one size': 0,
+    'rule 1 — a subject outdraws a portrait': 0,
+    'rule 3 — the three lanes': 0,
   };
+  /* RULE 2's evidence, gathered as the sweep runs. The drawn size is constant
+     across an arrival's window — `fit` reads `availH` and the column, neither of
+     which moves with scroll — so one reading per id is the whole claim. */
+  const drawn = new Map<string, number>();
   const failures: string[] = [];
   const fail = (key: string, msg: string) => {
     counts[key] = (counts[key] ?? 0) + 1;
@@ -347,6 +357,15 @@ function run(vp: Viewport): Result {
       if ((vp.textScale ?? 1) === 1) {
         if (v.art) {
           const s = subjectRect(v.art, ART_METRICS[v.id]);
+          drawn.set(v.id, Math.sqrt(s.w * s.h));
+          /* RULE 3 — stage centre is a portrait's alone. A subject's centre lane
+             is its COLUMN's centre, and on a multi-column stage no column centre
+             is the stage's. At one column they coincide by definition, and a
+             portrait is never on screen beside anything, so there is nothing to
+             separate: the check is the claim, scoped to where the claim exists. */
+          const p0 = placed.find((q) => q.id === v.id)!;
+          if (z.nCols > 1 && !p0.portrait && Math.abs(s.x + s.w / 2 - (z.stage.x + z.stage.w / 2)) <= 1)
+            fail('rule 3 — the three lanes', `${v.id} takes stage centre at y=${r2(y)}, which belongs to a portrait`);
           // Apparent size, the same measure `frame()` drops on — a wide organism
           // and a narrow one are not punished for their shape.
           if (Math.sqrt(s.w * s.h) < ART_MIN_DRAWN - 1e-6)
@@ -408,6 +427,49 @@ function run(vp: Viewport): Result {
         }
       }
     }
+  }
+
+  /* --- 4b. THE THREE ART RULES (§5 rule 2/3, §11 rule 1) — Dustin, 2026-08-08.
+     Not collisions, which is exactly why nothing here could see them: "the tiny
+     images should match" and "nothing should be uncentered" are claims about
+     SIZE and POSITION, and a purely topological contract answers neither.
+
+     SCOPED TO 100 % TEXT, the same scoping the picture-floor check above already
+     carries and for the same reason: at 200 % the boxes cannot hold the page's
+     size and §10 rules that text costs art. Rule 2's constants are a cap, so
+     enlarged text degrades exactly as it did before they existed. */
+  if ((vp.textScale ?? 1) === 1) {
+    const byTier: Record<string, number[]> = { M: [], I: [] };
+    const portraits: number[] = [];
+    for (const [id, s] of drawn) {
+      const p = placed.find((q) => q.id === id)!;
+      if (p.portrait) portraits.push(s);
+      else byTier[p.tier]?.push(s);
+    }
+    for (const t of ['M', 'I'] as const) {
+      const a = byTier[t]!;
+      if (a.length < 2) continue;
+      const [lo, hi] = [Math.min(...a), Math.max(...a)];
+      if (hi - lo > 1e-6)
+        fail(
+          'rule 2 — a tier draws at more than one size',
+          `tier ${t}: ${a.length} subjects spanning ${r2(lo)}–${r2(hi)}px (${r2(hi - lo)}px apart)`,
+        );
+    }
+    const subjects = [...byTier.M!, ...byTier.I!];
+    if (subjects.length && portraits.length) {
+      const [biggest, smallestPortrait] = [Math.max(...subjects), Math.min(...portraits)];
+      // §11 rule 1 — and by a margin that READS. It was 1.07× before rule 2, which
+      // is true and invisible; one size for the subjects puts it at 1.59×.
+      if (smallestPortrait / biggest < 1.4)
+        fail(
+          'rule 1 — a subject outdraws a portrait',
+          `the smallest portrait draws ${r2(smallestPortrait)}px against a ${r2(biggest)}px subject — a ${r2(smallestPortrait / biggest)}× lead`,
+        );
+    }
+    const lanes = new Set(placed.filter((p) => p.tier !== 'F' && !p.portrait).map((p) => p.lane));
+    if (lanes.size !== 3)
+      fail('rule 3 — the three lanes', `subjects use ${lanes.size} lane(s), not 3: {${[...lanes].join(',')}}`);
   }
 
   /* --- 5. THE FINALE (§9) — the fan, read against the same reserved zones --- */

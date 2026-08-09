@@ -517,6 +517,19 @@ The HUD's footprint **is** the clock's reserved rect — every row grows it and 
 
 **The count carries every zero, and it replaced `2,425 / 115,000 px` rather than adding a row** *(2026-08-09, Dustin: "somewhere I would like to have a little number that shows the number of years with all of the zeros. It counts down all the way to today")*. `yearsAgo()` already ran to exactly **0 at the last pixel of the run**; nothing on the page showed it spelled out. It steps by `YEARS_PER_PX`, so **the last four digits are always zeros** — the page's true resolution showing, which is why the rate line sits directly beneath it. The px counter was the line to spend: the scale bar says position graphically, and the HUD's footprint IS the reserved clock rect, so a new row would have taken `art dropped` from **11 to 18 of 51** at 1440×900/200 % text. Measured, this placement moves no rect at any of the six gate columns.
 
+**The clock has four rungs, and never a zero it does not mean** *(2026-08-09)*. It had two — `Ga` above a billion years, rounded `Ma` below — and `Math.round(years / 1e6)` is **0 for everything under 500,000 years**. So the last **12 px** of a 115,000 px run read `0 MILLION YEARS AGO` directly above a count line reading `40,000 YEARS`, and **every year of human history was inside that zero**. The rungs are `spokenDate`'s vocabulary verbatim, so the clock now says out loud what the screen reader has said since the notation was glossed:
+
+| rung | reads | taken from |
+|---|---|---|
+| billions | `4.60` · `BILLION YEARS AGO` | 4.60 Ga → 995 Ma |
+| millions | `990` · `MILLION YEARS AGO` | 995 Ma → 1 Ma |
+| thousands | `960` · `THOUSAND YEARS AGO` | the last **25 px** |
+| the present | `0` · `YEARS AGO` | the last pixel, where `yearsAgo` clamps |
+
+- **A rung is taken only if its own *rounded* number lands in [1, 1000).** That single rule is what promotes instead of printing a number wider than the rung: at 999.7 ka the thousands round to 1,000, so it reads `1 MILLION`; at 999.6 Ma the millions round to 1,000, so `toFixed(2)` already reads `1.00` and the billions take it. **Nothing the page can paint is four digits wide**, which is what the model's `HUD_NUM_WIDEST` budget is written against — and the budget is deliberately left at the wider `4,567` because shrinking a reservation buys the stage nothing and could only move a rect the wrong way.
+- **It cost the layout nothing, measured.** The unit label's widest string goes `million years ago` → `thousand years ago`, one character longer, and `hudHeight` is **identical to the byte at all eight gate columns** — the widening buys no wrap, so no HUD row, so no movement in the reserved clock rect. That was the risk worth measuring: the HUD's footprint **is** that rect, and one more row takes `art dropped` from **11 to 18 of 51** at 1440×900/200 % text.
+- **The count line is not made redundant by the lower rungs.** It is this same quantity *with every zero* (`4.60` → `4,600,000,000`) — the relationship it has at every other point in the scroll, and the reason the rate line sits directly beneath it.
+
 - **`MODELLED` is a group header, said once.** One row instead of two repetitions of `(modelled)` held for four minutes — and it is *less* ambiguous, scoping exactly the two numbers under it.
 - **Mobile drops the modelled block**, leaving clock · era · scale reminder. Nothing is lost: the Moon fact reaches the phone as the 4,450 Ma whisper.
 - **Era labels are six**, switching at ICS boundaries: `HADEAN` → `ARCHEAN` (4,031) → `PROTEROZOIC` (2,500) → `PALEOZOIC` (538.8) → `MESOZOIC` (251.902) → `CENOZOIC` (66.043). Eons for the Precambrian, eras for the Phanerozoic — the only compromise that avoids labelling 88% of the page with one word or the last 12% with one.
@@ -555,11 +568,16 @@ The closing line:
 
 Both numbers are exact and neither may be rounded: the withheld ten start at 4.4 Ma (`4.4e6 ÷ 40,000 = 110`), and `12 ka ÷ 40,000 = 0.3 px`. **A true-scale site cannot round its own punchline.** Rejected alternatives: a measured *your-clock* line (a number that changes every visit is a number nobody can quote back), *one pixel* (describes the screen rather than landing a fact), and *metres* (true only at the CSS reference of 96 px/inch, never on a real screen).
 
-The epilogue — what the visitor is left holding:
+**THE EPILOGUE IS CUT — 2026-08-09, Dustin's call, and it stays cut.** *"The ending: we don't need to point out that we left two items out. Just leave the humans. The first ending about humans being a very small part of the whole thing. We don't need all of the other junk about almost leaving stuff out."* The page ends on the closing line and `↑ again`, and nothing else.
 
-> Two things could not fit on this page. *T. rex* is 50 pixels from the asteroid. The first primates are 250 — they arrive with the impact that made room for them.
+The paragraph below is retained as the record of a rejected ending. **Do not ship it.** It survived two rewrites — cut 2026-07-31 when *T. rex* and the first primates became real arrivals and its claim went false, restored 2026-08-01 with the story flipped (*"both came within a rule of being cut and stayed anyway"*) — and the second version is what was live until this ruling. Both are gone for the same reason: it was a paragraph about **the page's own editing decisions**, and the visitor who has just scrolled 115,000 pixels is holding *the humans*, not the changelog.
 
-Then `↑ again`, and nothing else. This turns **the scale's edit of the page** into a second-order version of the same thesis: not just *humans are small*, but *the scale is so severe it deleted things from this page*.
+> ~~Two things came within a rule of being cut. *T. rex* sits 49 pixels from the asteroid; the first primates sit 251 — both closer than the 600-pixel floor allows anywhere else on this page, and both stayed anyway.~~
+
+**It ships as the empty string, not a deleted key.** `index.astro` guards on it, `main.ts`'s `epilogueEl` is nullable, and `blipBandHeight` solves its slot as a `max` — so the machinery is intact and a future epilogue is one string away. Two consequences the model and the runtime each had to be told:
+
+- **`fan()` prices the epilogue's own `margin-top: 1.5em` only when there is an epilogue.** `blockH('')` is already 0; a margin held open for an element that never renders is height the closing rect reserves and the page never uses.
+- **The closing line now holds through the last beat.** A slot only swaps if it has a second tenant — the kicker still trades with `↑ again`, but the line's partner is gone, and fading it out on the old ramp would have ended the site on a title and a link. **The line is the ending.**
 
 ---
 
@@ -616,7 +634,7 @@ The ten pictures land in one rect — **the stamp** — and the form of it was c
 | **the ten** | 4,725 → 5,325 | 1.2 s | A **fast run at 42 px** — line after line piling onto the same point, no new destination ever appearing. Amber, below the seam caption. **Each row drops its picture into the stamp on the same pixel**, so the block assembles as the rows land. |
 | **hold** | 5,325 → 6,025 | 1.4 s | Nothing. The full fan and the full stamp on screen. The sit-back — and the thing being sat back from is now the stamp. **On mobile the fan goes out at the start of this beat and the stamp takes the screen alone** (staging rule 4). |
 | **the line** | 6,025 → 6,725 | 1.4 s | The closing sentence. |
-| **left holding** | 6,725 → 7,000 | 0.6 s | The epilogue, and `↑ again`. Last state; holds indefinitely. |
+| **left holding** | 6,725 → 7,000 | 0.6 s | ~~The epilogue~~ **the closing line, held** — and `↑ again`. Last state; holds indefinitely. |
 
 **Two of the seven beats are deliberately empty.** That is not padding — 1.2 s of nothing before the ten is what converts a list into an avalanche. **Cutting it is the first thing that will be proposed and must be refused.**
 
@@ -625,6 +643,8 @@ The ten pictures land in one rect — **the stamp** — and the form of it was c
 1. **The 7 Ma card's overrun: let it finish.** It lands at 116,425 px and wants 660 px of dwell, so it releases 485 px into the finale, over a draining field. A hard release at the boundary would give the site's *last* card 0.35 s — the shortest read on the page. **Scale-safe**: the clock is pinned at 0 through the whole finale, so a card's dwell is a UI behaviour, never a time claim.
 2. **The ten arrive as a fast run, not one hit.** 42 px apart. You watch them accumulate onto one point; a single block reads as a paragraph.
 3. **Placement is measured, not taste.** Rows are **shrink-to-fit boxes anchored to the fan's right edge**, so the left of the stage is genuinely free. Desktop leaves a **763 px** free column, so the closing line sits *beside* the fan. Mobile leaves **9 px** — so below ~190 px of free column the line comes *after*: the fan goes fully out, **then** the line comes in. Sequential, not a crossfade, because two texts at 30% opacity stacked on each other is precisely the overlap the layout contract bans.
+
+   **This is also the ruling the plate's two double-tenanted slots apply *inside* a block** — `↑ again` takes the kicker's slot, the epilogue took the closing line's — which is what lets `blipBandHeight` solve each slot as a `max` and cost the last beat no height. **Amended 2026-08-09 with the epilogue's cut ([§8](#8--the-copy-deck)): a slot only swaps if it has a second tenant.** The kicker still trades out for `↑ again`; the closing line's partner is gone, so it **holds, lit, through the last beat** rather than fading on a ramp with nothing behind it. Solving the slot as a `max` is what makes this free — an empty tenant costs the band nothing, so the ending's geometry is unchanged and no rect moves. The `max` stands; only the *fade* is conditional.
 
    **Ruling E applies here too, added 2026-08-04 on "finale: huge empty space".** The fan is right-anchored to the bar and the closing block was left-anchored to the viewport, so the two ends pulled apart as the monitor grew: the gap between the closing block's right edge and the stamp's left measured **0 px at 1440×900 and 422 px at 1920×1080** — a hole through the middle of the composition, and **not a fault of the stamp**, which is capped by the fan's own widest row by construction and never grew at all. The ending now **freezes the span between the closing block's left edge and the fan's right edge** at its 1440×900 value, so the surplus becomes clean left margin *outside* the ending rather than a gap *through* it. **The bar is not clamped** — §9 keeps it the same object at the same right edge, and moving it is what [§15](#15--settled-do-not-relitigate) forbids.
 4. **The `TRUE SCALE` caption runs vertically**, inside the bar's reserved zone. A horizontal caption reaches left and collides with the top fan rows.

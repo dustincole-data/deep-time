@@ -183,6 +183,42 @@ export function fanDate(ma: number): string {
   return `${ma.toLocaleString('en-US')} Ma`;
 }
 
+/**
+ * The clock's reading at `years` — number and unit as two strings, because they
+ * change at completely different rates (§8): the number ~460 times over the
+ * scroll, the unit three times in 115,000 px.
+ *
+ * FOUR RUNGS, 2026-08-09. It had two — `Ga` above a billion, rounded `Ma` below
+ * — and `Math.round(years / 1e6)` is 0 for everything under 500,000 years, so
+ * the clock read `0 MILLION YEARS AGO` for the last 12 px of the run while
+ * `#hud-years` directly beneath it read `40,000 YEARS`. Every year of human
+ * history was inside that zero. The rungs are `spokenDate`'s vocabulary
+ * verbatim, so the clock now says out loud what the screen reader has said
+ * since the notation was glossed: `Ma` → million, `ka` → thousand, `yr` →
+ * years. `yearsAgo` clamps at 0, so the last pixel of the run reads
+ * `0 YEARS AGO` — the present, not a rounding artefact.
+ *
+ * A RUNG IS TAKEN ONLY IF ITS OWN ROUNDED NUMBER LANDS IN [1, 1000). That one
+ * rule is what promotes rather than printing a number wider than the rung: at
+ * 999.7 ka the thousands round to 1,000, so it reads `1 MILLION YEARS AGO`, and
+ * at 999.6 Ma the millions round to 1,000, so `4.60`'s own `toFixed(2)` already
+ * reads `1.00` and the billions take it. Nothing here can render four digits,
+ * which is what `layout.ts`'s HUD_NUM_WIDEST budget is written against.
+ *
+ * `#hud-years` is NOT made redundant by the lower rungs: it is this same
+ * quantity with every zero (`4.60` → `4,600,000,000`), the relationship it has
+ * at every other point in the scroll.
+ */
+export function clockReading(years: number): { num: string; unit: string } {
+  const n = (v: number) => v.toLocaleString('en-US');
+  const ga = years / 1e9;
+  const ka = Math.round(years / 1e3);
+  if (ga >= 0.995) return { num: ga.toFixed(2), unit: 'billion years ago' };
+  if (ka >= 1000) return { num: n(Math.round(years / 1e6)), unit: 'million years ago' };
+  if (ka >= 1) return { num: n(ka), unit: 'thousand years ago' };
+  return { num: n(Math.round(years)), unit: 'years ago' };
+}
+
 /** Drop the *genus* emphasis markers — what a screen reader and every gate reads. */
 export const plain = (s: string): string => s.replace(/\*/g, '');
 

@@ -32,6 +32,7 @@
 import {
   arrivals,
   arrivalY,
+  clockReading,
   CONSTANTS,
   eraAt,
   finaleBeats,
@@ -700,13 +701,16 @@ function draw(now: number) {
      frame at a visitor who has never met the notation, and nothing on the page
      ever expanded it — Dustin's call: kill the jargon rather than gloss it.
      Number and unit are separate nodes because they change at completely
-     different rates: the number ~460 times over the scroll, the unit exactly
-     once, when the count crosses 1 Ga. `layout.ts`'s HUD_NUM_WIDEST and
-     HUD_UNIT_WIDEST are the other half of these two lines. */
-  const ga = years / 1e9;
-  const big = ga >= 1;
-  const num = big ? ga.toFixed(2) : Math.round(years / 1e6).toLocaleString('en-US');
-  const unit = big ? 'billion years ago' : 'million years ago';
+     different rates: the number ~460 times over the scroll, the unit three
+     times in 115,000 px. `layout.ts`'s HUD_NUM_WIDEST and HUD_UNIT_WIDEST are
+     the other half of these two lines.
+
+     THE LADDER, 2026-08-09. The reading is `clockReading`'s, not this frame's:
+     it had two rungs and read `0 MILLION YEARS AGO` for the final 12 px, over a
+     `#hud-years` line that read `40,000 YEARS`. It is a pure function in
+     `timeline.ts` so the model that budgets these two strings and the sweep
+     that gates them can both read the thing the page actually renders. */
+  const { num, unit } = clockReading(years);
   if (num !== lastNum) {
     hudNum.textContent = num;
     lastNum = num;
@@ -895,7 +899,12 @@ function drawFinale(f: number) {
   const swapOut = smooth(B.endStart + 200, B.endStart + 420, f);
   const swapIn = smooth(B.endStart + 420, B.endStart + 700, f);
   plateKickerEl.style.opacity = String(kickerIn * (1 - swapOut) * 0.55);
-  closingLineEl.style.opacity = String(lineIn * (1 - swapOut));
+  /* THE LINE HOLDS WHEN NOTHING REPLACES IT — 2026-08-09, with the epilogue's
+     cut. A slot only swaps if it has a second tenant: the kicker still trades
+     with `↑ again`, but the line's partner is gone, so fading it out would end
+     the site on a title and a link. Dustin's call on the cut names the line as
+     the ending — "just leave the humans" — so it stays lit for the last beat. */
+  closingLineEl.style.opacity = String(lineIn * (epilogueEl ? 1 - swapOut : 1));
   if (epilogueEl) epilogueEl.style.opacity = String(swapIn * 0.62);
   againEl.style.opacity = String(swapIn * 0.6);
   /* HIDDEN MEANS UNREACHABLE. `↑ again` is a real link to `#top`, which no element

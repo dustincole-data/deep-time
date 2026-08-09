@@ -8,6 +8,7 @@ import {
   CONSTANTS,
   arrivals,
   arrivalY,
+  clockReading,
   eraAt,
   fanDate,
   flood,
@@ -20,6 +21,7 @@ import {
   whispers,
   withheld,
   yearsAgo,
+  EARTH_AGE,
   INTRO,
   RUN,
   READABILITY_FLOOR_PX,
@@ -306,6 +308,61 @@ describe('the HUD eras (§8)', () => {
     expect(eraAt(251.902)).toBe('MESOZOIC');
     expect(eraAt(66.043)).toBe('CENOZOIC');
     expect(eraAt(0)).toBe('CENOZOIC');
+  });
+});
+
+describe('the HUD clock (§8) — four rungs, and never a zero it does not mean', () => {
+  /* THE BUG THIS CLOSES, 2026-08-09. The clock had two rungs, and the lower one
+     was `Math.round(years / 1e6)` — 0 for everything under 500,000 years. So the
+     final 12 px of a 115,000 px run read `0 MILLION YEARS AGO` while `#hud-years`
+     directly beneath it read `40,000 YEARS`, and every year of human history was
+     inside that zero. The run is swept at its own resolution: `yearsAgo` steps by
+     YEARS_PER_PX, so one sample per pixel IS every reading the page can paint at
+     an integer scroll position. */
+  const READINGS = Array.from({ length: RUN + 1 }, (_, px) => ({
+    px,
+    years: yearsAgo(INTRO + px),
+    ...clockReading(yearsAgo(INTRO + px)),
+  }));
+
+  it('never reads a bare zero before the last pixel of the run', () => {
+    const zeros = READINGS.filter((r) => r.years > 0 && Number(r.num.replace(/,/g, '')) === 0);
+    expect(zeros.map((r) => `${r.px}px: ${r.num} ${r.unit}`)).toEqual([]);
+  });
+
+  it('ends on the present, and spends all four rungs on the way', () => {
+    expect(clockReading(EARTH_AGE)).toEqual({ num: '4.60', unit: 'billion years ago' });
+    expect(clockReading(66.043e6)).toEqual({ num: '66', unit: 'million years ago' });
+    expect(clockReading(40_000)).toEqual({ num: '40', unit: 'thousand years ago' });
+    expect(clockReading(yearsAgo(INTRO + RUN))).toEqual({ num: '0', unit: 'years ago' });
+    expect(new Set(READINGS.map((r) => r.unit))).toEqual(
+      new Set(['billion years ago', 'million years ago', 'thousand years ago', 'years ago']),
+    );
+    /* The three lower rungs are `spokenDate`'s expansions VERBATIM (§10), so the
+       clock now says out loud what the screen reader has said since the notation
+       was glossed. `Ga` has no glyph on any card, so `billion` is the clock's own. */
+    expect(spokenDate('1 Ma')).toBe('1 million years ago');
+    expect(spokenDate('1 ka')).toBe('1 thousand years ago');
+    expect(spokenDate('1 yr')).toBe('1 years ago');
+  });
+
+  it('promotes rather than printing a rung four digits wide', () => {
+    /* A rung is taken only if its own ROUNDED number lands in [1, 1000). Without
+       that, a fractional scrollY lands `1,000 THOUSAND YEARS AGO` at 999.7 ka and
+       `1,000 MILLION YEARS AGO` at 999.6 Ma — both wider than the reading
+       `layout.ts`'s HUD_NUM_WIDEST budget was written against. */
+    expect(clockReading(999_700)).toEqual({ num: '1', unit: 'million years ago' });
+    expect(clockReading(999_600_000)).toEqual({ num: '1.00', unit: 'billion years ago' });
+    const wide = READINGS.filter((r) => r.num.replace(/[.,]/g, '').length > 3);
+    expect(wide.map((r) => `${r.px}px: ${r.num}`)).toEqual([]);
+  });
+
+  it('is monotone down the page — the clock never runs backwards', () => {
+    const RANK = { 'billion years ago': 3, 'million years ago': 2, 'thousand years ago': 1, 'years ago': 0 };
+    const value = (r: (typeof READINGS)[number]) =>
+      RANK[r.unit as keyof typeof RANK] * 1e4 + Number(r.num.replace(/,/g, ''));
+    const back = READINGS.filter((r, i) => i > 0 && value(r) > value(READINGS[i - 1]!));
+    expect(back.map((r) => `${r.px}px: ${r.num} ${r.unit}`)).toEqual([]);
   });
 });
 

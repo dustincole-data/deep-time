@@ -74,7 +74,7 @@ None of that holds here. At the flood: the field has drained to black, the clock
 | **hold** | 5,320 → 6,020 | 1.4 s | Nothing. The full fan on screen | **§15 — protected** |
 | **the flood** | 6,020 → 8,600 | 5.2 s | The fan goes out. ~50 record images arrive, chronological, on a ramping pitch, until the screen is buried | **new** |
 | **the plate** | 8,600 → 9,000 | 0.8 s | Kicker, then the title, then the closing line, in the band the flood was solved around | **new** |
-| **left holding** | 9,000 → 10,000 | 2.0 s | The epilogue, and `↑ again`. Last state; holds indefinitely | unchanged |
+| **left holding** | 9,000 → 10,000 | 2.0 s | ~~The epilogue~~ **the closing line, held** — and `↑ again`. Last state; holds indefinitely | unchanged |
 
 **Both empty beats survive intact.** §15 says cutting either *"will be proposed and must be refused"* — this design proposes neither. `breath` and `hold` keep their full spans, and the flood is placed after `hold` precisely because 1.4 s of stillness is the correct setup for it.
 
@@ -154,14 +154,14 @@ One rect, three tenants in sequence, images never entering it.
 
 - **The title is a label for the picture, not a narration of it.** §8's voice holds: third person, no `you`, no `we`, no build-up. *All of human history* names what the visitor is looking at; the line underneath destroys it. The kicker ties the block to the instrument — the last tick is the 7 Ma split, and everything in the flood is after it.
 - **The closing line is §8's, verbatim, unrounded.** Neither number moves. *"A true-scale site cannot round its own punchline."*
-- **The epilogue and `↑ again` follow in the same rect**, in the `left holding` beat.
+- **~~The epilogue and~~ `↑ again` follows in the same rect**, in the `left holding` beat. **AMENDED 2026-08-09 — the epilogue is cut** (spec §8, Dustin's call: *"just leave the humans"*). Its slot's other tenant is the closing line, and a slot with one tenant does not swap, so the line **holds lit** through `left holding` instead of fading for a replacement that never arrives. The band is still solved as a `max` per slot, so nothing here moves.
 - **At 200% text the plate grows and the flood shrinks to fit it.** §10's ruling — text costs art, never legibility — applies unchanged. If the band grows past the point where either `.blip` rect can hold a usable print, **the flood drops entirely and the plate carries the ending alone.**
 
   > **AMENDED 2026-08-05, from the built page.** This clause originally said *the rows* carry the ending, "exactly as staging rule 7 already specifies for the stamp." **Not the rows.** §9's rule 7 handed the dropped stamp back to the ten rows because in that design the fan was still on screen at the end. This one clears the fan at the *start* of the flood, at every viewport, sequentially (§3) — so by the time the plate speaks there are no rows left to carry anything.
   >
   > The geometry says the same thing twice over. Measured at head, the band and the fan occupy the same screen: at 1440×900 with 200% text the band is y 63.9–836.1 and the fan rows are y 45.1–857.1, and **38 of the 40 rows intersect the band**, as do the seam caption and the closing rect; at 390×780 it is all 40. Even at 100% text, 15 rows intersect it. Keeping both is text × text — the one pair "stuff can't overlap" has never licensed anywhere, finale included (§4's table).
   >
-  > **The drop costs the pictures and nothing else:** the kicker, the title, the closing line, the epilogue and `↑ again` are all in the band, and the band is solved to them.
+  > **The drop costs the pictures and nothing else:** the kicker, the title, the closing line and `↑ again` are all in the band, and the band is solved to them.
 
 ---
 

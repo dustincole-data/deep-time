@@ -1035,7 +1035,17 @@
     "false once both became real arrivals (Dustin's call). RESOLVED 2026-08-01, Dustin's call:",
     "flip the story instead of dropping it — both stayed by breaking the 600px floor (§7) on",
     "purpose, at 49px and 251px from Chicxulub. Numbers recomputed from `constants` by the tests,",
-    "same as the rest of this copy."
+    "same as the rest of this copy.",
+    "copy.epilogue CUT AGAIN 2026-08-09, and this time it stays cut. Dustin: \"the ending: we",
+    "don't need to point out that we left two items out. Just leave the humans. The first ending",
+    "about humans being a very small part of the whole thing. We don't need all of the other",
+    "junk about almost leaving stuff out.\" The page ends on `copy.closing` and nothing else.",
+    "EMPTY STRING, NOT A DELETED KEY: index.astro guards on it, main.ts's `epilogueEl` is",
+    "nullable, and `blipBandHeight` solves the slot as a max — so the machinery survives and a",
+    "future epilogue is one string away. `layout.ts` prices its 1.5em gap only when it is",
+    "non-empty, and main.ts holds the closing line THROUGH the last beat when there is no",
+    "epilogue to trade the slot with: the swap was what took the line off the screen, and the",
+    "line is the ending."
   ],
   "boringBillion": {
     "_comment": [
@@ -1075,7 +1085,7 @@
       "plateTitle": ["All of", "human history"],
       "seamCaption": "never drawn on the page you just scrolled.",
       "closing": "The last ten happened in the final 110 of 115,000 pixels. Everything humans have farmed, written, built or remembered is the last three tenths of one pixel.",
-      "epilogue": "Two things on this page came within a rule of being cut. *Tyrannosaurus rex* sits 49 pixels from the asteroid; the first primates sit 251 — both closer than the 600-pixel floor allows anywhere else on this page, and both stayed anyway.",
+      "epilogue": "",
       "again": "↑ again"
     }
   }

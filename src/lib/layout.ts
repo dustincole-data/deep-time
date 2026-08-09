@@ -858,12 +858,20 @@ export const hudLean = (vp: Required<Viewport>, mobile: boolean): boolean => mob
    already applies to the whisper band, sourced from the same constants the page
    renders from so a copy change cannot leave the model behind. */
 /* main.ts spells the unit out (2026-08-07), stacked: the number on its own
-   line, the unit as a small label under it. Widest number is the four-digit
-   comma'd `Ma` form; widest unit is `million` (a wider word than `billion`).
-   Kept as strings, not widths, because `lineCount` is what prices a wrap and
-   the unit label does wrap on a phone at an enlarged scale. */
+   line, the unit as a small label under it. Kept as strings, not widths,
+   because `lineCount` is what prices a wrap and the unit label does wrap on a
+   phone at an enlarged scale.
+
+   The unit is the longest of `clockReading`'s four — `thousand`, a longer word
+   than `billion` or `million`. The number is a deliberate OVER-budget: no rung
+   can render four digits (a rung is taken only if its own rounded number lands
+   in [1, 1000), so `999.7 ka` promotes to `1 MILLION` rather than printing
+   `1,000`), and the widest string the page can actually paint is `4.60`. The
+   five-character budget is kept because shrinking a reservation buys nothing
+   the stage asked for and could only ever move a rect the wrong way.
+   `layout.test.ts` sweeps every pixel of the run against both. */
 const HUD_NUM_WIDEST = '4,567';
-const HUD_UNIT_WIDEST = 'million years ago';
+const HUD_UNIT_WIDEST = 'thousand years ago';
 /** index.astro:133, verbatim. */
 const HUD_RATE = `1 px = ${YEARS_PER_PX.toLocaleString('en-US')} years`;
 /**
@@ -2176,10 +2184,14 @@ export function fan(z: Zones): Fan {
   const epSpec: TypeSpec = { size: 13 * k, lineHeight: 1.6, tracking: 0, upper: false, weight: 1 };
   const againSpec: TypeSpec = { size: 10 * k, lineHeight: 1.25, tracking: 0.28, upper: true, weight: 1 };
   const c = FINALE_CFG.copy;
+  /* The epilogue's own `margin-top: 1.5em` is priced ONLY when there is an
+     epilogue. Cut 2026-08-09 it is the empty string, and index.astro renders no
+     element at all — so a gap held open for it is height this rect reserves and
+     the page never uses. `blockH('')` is already 0; the margin is not. */
+  const epH = blockH(plain(c.epilogue), epSpec, closeW);
   const closeH =
     blockH(plain(c.closing), lineSpec, closeW) +
-    1.5 * epSpec.size +
-    blockH(plain(c.epilogue), epSpec, closeW) +
+    (epH > 0 ? 1.5 * epSpec.size + epH : 0) +
     1.8 * againSpec.size +
     blockH(plain(c.again), againSpec, closeW);
 

@@ -174,7 +174,7 @@ const plateRuleEl = blipPlate.querySelector<HTMLElement>('.pr')!;
 const againEl = blipPlate.querySelector<HTMLElement>('.again')!;
 const closeEl = $('closing-block');
 const closingLineEl = closeEl.querySelector<HTMLElement>('.closing')!;
-/** null while the epilogue is cut — see `finaleNote` in timeline.json. */
+/** null whenever `copy.epilogue` is empty — see `finaleNote` in timeline.json. */
 const epilogueEl = closeEl.querySelector<HTMLElement>('.epilogue');
 
 /* ============================================================================
@@ -899,11 +899,12 @@ function drawFinale(f: number) {
   const swapOut = smooth(B.endStart + 200, B.endStart + 420, f);
   const swapIn = smooth(B.endStart + 420, B.endStart + 700, f);
   plateKickerEl.style.opacity = String(kickerIn * (1 - swapOut) * 0.55);
-  /* THE LINE HOLDS WHEN NOTHING REPLACES IT — 2026-08-09, with the epilogue's
-     cut. A slot only swaps if it has a second tenant: the kicker still trades
-     with `↑ again`, but the line's partner is gone, so fading it out would end
-     the site on a title and a link. Dustin's call on the cut names the line as
-     the ending — "just leave the humans" — so it stays lit for the last beat. */
+  /* THE LINE HOLDS WHEN NOTHING REPLACES IT — 2026-08-09, written for the
+     epilogue's cut and still live: a slot only swaps if it has a second tenant,
+     and with the epilogue empty, fading the line out would end the site on a
+     title and a link. The epilogue was refilled later the same day (the
+     calendar-year comparison), so the swap is back ON — but the guard is what
+     makes emptying that one string a complete revert, and it stays. */
   closingLineEl.style.opacity = String(lineIn * (epilogueEl ? 1 - swapOut : 1));
   if (epilogueEl) epilogueEl.style.opacity = String(swapIn * 0.62);
   againEl.style.opacity = String(swapIn * 0.6);

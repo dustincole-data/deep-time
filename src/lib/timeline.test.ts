@@ -11,6 +11,7 @@ import {
   clockReading,
   eraAt,
   fanDate,
+  FINALE_CFG,
   flood,
   milestones,
   milestoneY,
@@ -271,6 +272,38 @@ describe('the withheld ten (§7)', () => {
     // tenths of one pixel." A true-scale site cannot round its own punchline (§8).
     expect(pxFromNow(withheld[0]!)).toBe(110);
     expect(pxFromNow(withheld.find((w) => w.id === 'farming')!)).toBe(0.3);
+  });
+
+  it('spends the four numbers the epilogue quotes, exactly', () => {
+    /* The epilogue, refilled 2026-08-09: "Those 4.6 billion years as a single
+       calendar year: humans appear at 11:26 p.m. on 31 December, farming in the
+       last ninety seconds, writing in the last forty, the industrial revolution
+       in the last two." A pixel is the page's own unit and a visitor owns nothing
+       to weigh it against, so the ending restates the same span in one everybody
+       already has. Recomputed here, same discipline as the two pixel figures above.
+
+       Each bound is asserted from BOTH sides: an upper bound alone would still
+       pass if a figure were wildly small, and the word chosen ("ninety", not
+       "sixty") is a claim about which bound is the tight one. */
+    const CAL_SECONDS = 365 * 24 * 60 * 60;
+    const secs = (id: string) =>
+      (withheld.find((w) => w.id === id)!.yearsAgo / EARTH_AGE) * CAL_SECONDS;
+
+    // 11:26 p.m. — the clock time, to the minute, that `Homo sapiens` lands on.
+    const mins = Math.round(secs('homo-sapiens') / 60);
+    expect(24 * 60 - mins).toBe(23 * 60 + 26);
+
+    expect(secs('farming')).toBeGreaterThan(60);
+    expect(secs('farming')).toBeLessThan(90);
+    expect(secs('writing')).toBeGreaterThan(30);
+    expect(secs('writing')).toBeLessThan(40);
+    expect(secs('industrial-revolution')).toBeGreaterThan(1);
+    expect(secs('industrial-revolution')).toBeLessThan(2);
+
+    /* 200 CHARACTERS IS THE BUDGET, not a preference — see `finaleNote`. The slot
+       is solved as a `max` against `copy.closing`, so up to here it costs the band
+       nothing at any gate variant; 206 takes a row on both phones. */
+    expect(FINALE_CFG.copy.epilogue.length).toBeLessThanOrEqual(200);
   });
 
   it('is chronological and never carries a line', () => {

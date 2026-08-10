@@ -290,7 +290,9 @@ const nf = (n: number) => n.toLocaleString('en-US');
             measurement. The plate reuses this block rather than duplicating it. */}
         <div id="closing-block">
           <p class="closing">{FINALE_CFG.copy.closing}</p>
-          {/* Cut 2026-07-31 — see finaleNote in timeline.json. Open question, not yet re-authored. */}
+          {/* Refilled 2026-08-09 with the calendar-year comparison — see finaleNote in
+              timeline.json for why it is this slot and not the closing line's. The guard
+              stays: an empty string is a valid state and puts the ending back on the line. */}
           {FINALE_CFG.copy.epilogue && <p class="epilogue" set:html={emphasise(FINALE_CFG.copy.epilogue)} />}
         </div>
       </div>

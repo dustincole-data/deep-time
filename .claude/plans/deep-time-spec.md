@@ -20,7 +20,7 @@ The site exists to deliver one moment. Every decision below was judged by whethe
 | **Scientific accuracy is non-negotiable** | A site whose claim is "true to scale" cannot fudge a date, a scale or a colour. Every milestone has an authoritative source ([§7](#7-the-verified-set--the-single-source-of-truth)); every modelled quantity is labelled `MODELLED`; every contested date carries its hedge in the card. |
 | **The scale never changes** | 1 px = 40,000 years, from the first pixel to the last, including at the payoff. There is no warp, no scale break, no rescale for reduced motion, and no different page height on any device. |
 | **Nothing overlaps, anywhere, ever** | Dustin, verbatim: *"stuff can't overlap. spacing must be good throughout site with text and elements etc."* Enforced by the [layout contract](#5--the-no-collision-layout-contract) and swept by script. A **ship gate**, not a review note. |
-| **Mobile is first-class** | A real-device phone pass is a ship gate. |
+| **Mobile is first-class** | Enforced by measurement, not by ceremony: **four of the eight gate variants are phones** (390×844 and 390×780, at 100% and 200% text), and §5's art rules are asserted at every one of them. The *real-device pass* was struck as a ship gate 2026-08-09 ([§15](#15--settled-do-not-relitigate)); the standard it was meant to protect did not move. |
 | **~3–5 minutes, single sitting** | 123,600 px ÷ 500 px/s = **4.1 minutes**. |
 | **Art spend** | gpt-image-1, style locked. **Proof first, Dustin approves before any batch.** No exploratory burn. |
 
@@ -1101,7 +1101,7 @@ The cadence prototype — real field, real keyed cut-outs, real slot layout — 
 | Snowball — white field, particles at maximum | **58.0** | 16.7 | 16.8 | 33.5 | **0** |
 | Ediacaran → Cambrian tail — the densest arrivals | **59.9** | 16.7 | 16.8 | 33.4 | **0** |
 
-One honest caveat: absolute fps drifts with whatever else the host machine is doing (later batches of the same code ran 38–45 fps). Rankings within an interleaved A/B are stable; absolute numbers across batches are not. **A real-device pass remains the ship gate.**
+One honest caveat: absolute fps drifts with whatever else the host machine is doing (later batches of the same code ran 38–45 fps). Rankings within an interleaved A/B are stable; absolute numbers across batches are not. **This is why the gate below is the throttled p50/p95 and the count of frames over 50 ms, never an absolute fps number.**
 
 ### Assets
 
@@ -1184,7 +1184,7 @@ The decoded figure is the one that matters — a phone dies on resident bitmaps,
 | **Non-text contrast** | every arrival ≥ 3:1 across its own boundary — asserted from the art manifest at build | — |
 | **Collisions** | zero pairwise intersections over the scroll sweep, at **four** viewports (1440×900, **1920×1080**, 390×844, 390×780) **and at 200% text** | **8 modelled variants ✅ · 8 real-browser ✅** (2026-08-05 — the real-browser pass gained the four 200%-text variants, and the runtime gained the measurement that makes them reachable) |
 | **Milestone floor** | zero sub-600 px gaps across all 55 arrivals | ✅ |
-| **Real device** | one full scroll on Dustin's phone, both ends, before ship | — |
+| **Real device** | ~~one full scroll on Dustin's phone, both ends, before ship~~ **struck as a gate 2026-08-09** ([§15](#15--settled-do-not-relitigate)) | — |
 
 ### The degradation ladder
 
@@ -1291,6 +1291,7 @@ Everything in the build is decided. **Two art-order questions remain, and both s
 | **The blurred-copy glow** | Measured at 1.00:1. Worth nothing. Replaced by the servo halo |
 | **A field lightness ceiling** | Bought nothing over the servo alone, and would have cost the daylight arc |
 | **Universe scale, or the future** | Out of scope. This is Earth, past to present |
+| **A real-device phone pass as a ship gate** | **Struck 2026-08-09 on Dustin's ruling.** It was never his requirement: it entered as an agent's `open/next` note on 2026-08-02, was carried forward unexamined through ~15 handoffs, and grew into a 28-check protocol costing him ten minutes. The evidence ran against it — **every mobile defect that actually shipped was found by Dustin using the site**, not by a protocol (the black-blink he reported as *still* happening; the art dropping out after Snowball Earth, caught post-deploy). A checklist caught neither. Phones stay first-class by [§1](#1--the-thesis-and-the-constraints-that-are-not-negotiable) and are four of the eight gate variants; a bug he hits on his own phone is still a bug and still gets fixed. **What is struck is the ceremony, not the standard — and it does not return to any `open/next` list** |
 
 ---
 
